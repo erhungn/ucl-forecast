@@ -10,6 +10,12 @@ Sporting Braga. Everything else goes to outputs/name_review.csv, in sections:
 
 * ``european-unmapped``        openfootball club with no football-data counterpart
 * ``wikipedia-euro-unmapped``  gap-data club in a covered association: needs an id
+
+Three deterministic routes resolve a gap name before it reaches the review list:
+an exact match after normalisation against a football-data name; the schedule
+bridge, which pins a Wikipedia name to an openfootball one through the matches
+both sources describe; and a name that normalises identically to an alias
+already approved for a club in the same association.
 * ``wikipedia-euro-own-id``    gap-data club from an uncached league: keeps its name
 * ``fd-intra-source-variant``  two football-data names that may be one club
 * ``wikipedia-fixture-name``   fixture team name with no canonical yet
@@ -29,6 +35,7 @@ import pandas as pd
 from ucl.config import DATA_RAW, OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
 from ucl.data import football_data, names, openfootball, wikipedia
+from ucl.data.european import schedule_bridge
 
 REVIEW_COLUMNS = ["section", "item", "country", "detail", "proposal"]
 DECISIONS_PATH = DATA_RAW / "name_decisions.csv"
@@ -178,32 +185,80 @@ def main(argv: list[str] | None = None) -> int:
         gap = wikipedia.load_results(cutoff)
     except FileNotFoundError:
         gap = None
+    wiki_exact: list[tuple[str, str, str, str]] = []
+    wiki_bridged: list[tuple[str, str, str]] = []
+    wiki_alias_identical: list[tuple[str, str, str, str]] = []
     if gap is not None and len(gap):
+        mapping_now = names.load_mapping()
         wiki_mapped = set(names.alias_to_canonical("wikipedia"))
+        of_canonical = names.alias_to_canonical("openfootball")
+        # Every approved alias, keyed by association and normalised form: a gap
+        # name identical to one of these is the same string a human already
+        # accepted for that club.
+        alias_index: dict[tuple[str, str], set[str]] = {}
+        for row in mapping_now.itertuples():
+            alias_index.setdefault(
+                (row.country, names.normalize_club_name(row.source_name)), set()
+            ).add(row.canonical)
+        bridge, bridge_problems = schedule_bridge()
+        for line in bridge_problems:
+            print(f"  bridge problem: {line}")
+
         gap_clubs: dict[str, str] = {}
         for row in gap.itertuples():
             gap_clubs.setdefault(row.home, row.home_country)
             gap_clubs.setdefault(row.away, row.away_country)
+
         for name, country in sorted(gap_clubs.items()):
             assoc = names.association(country)
             if name in wiki_mapped:
                 continue
-            must_map = assoc in covered
-            hit = fd_index.get((assoc, names.normalize_club_name(name)), set())
+            if assoc not in covered:
+                rows.append(
+                    {
+                        "section": "wikipedia-euro-own-id",
+                        "item": name, "country": assoc,
+                        "detail": "league not cached, keeps its own name as id",
+                        "proposal": "",
+                    }
+                )
+                continue
+            key = names.normalize_club_name(name)
+            hit = fd_index.get((assoc, key), set())
+            if len(hit) == 1:
+                wiki_exact.append((name, assoc, next(iter(hit)), key))
+                continue
+            # Deterministic fallback: the schedule bridge pins this Wikipedia
+            # name to an openfootball name, which already has an id.
+            bridged = bridge.get(name)
+            if bridged and bridged in of_canonical:
+                wiki_bridged.append((name, assoc, of_canonical[bridged]))
+                continue
+            approved = alias_index.get((assoc, key), set())
+            if len(approved) == 1:
+                wiki_alias_identical.append((name, assoc, next(iter(approved)), key))
+                continue
+            candidates = sorted(
+                unmapped_fd.get(assoc, []),
+                key=lambda c: -difflib.SequenceMatcher(
+                    None, key, names.normalize_club_name(c)
+                ).ratio(),
+            )[:3]
             rows.append(
                 {
-                    "section": ("wikipedia-euro-unmapped" if must_map
-                                else "wikipedia-euro-own-id"),
-                    "item": name,
-                    "country": assoc,
+                    "section": "wikipedia-euro-unmapped",
+                    "item": name, "country": assoc,
                     "detail": (
-                        f"normalised {names.normalize_club_name(name)!r}; "
-                        + ("in a covered association, so it must be mapped"
-                           if must_map else "league not cached, keeps its own name as id")
+                        f"normalised {key!r}; not in the 2024-25 schedule bridge"
+                        + (f"; bridges to {bridged!r} which has no id" if bridged else "")
                     ),
-                    "proposal": next(iter(hit)) if len(hit) == 1 else "",
+                    "proposal": " | ".join(candidates),
                 }
             )
+        print(f"\nwikipedia gap names: {len(wiki_exact)} exact-normalised, "
+              f"{len(wiki_bridged)} schedule-bridged, "
+              f"{len(wiki_alias_identical)} identical to an approved alias, "
+              f"{sum(1 for r in rows if r['section'] == 'wikipedia-euro-unmapped')} unresolved")
 
     # Fixture team names (Wikipedia spellings) that have no canonical yet.
     # A fixture spelling is settled once it is a mapped wikipedia alias.
@@ -242,9 +297,22 @@ def main(argv: list[str] | None = None) -> int:
         for name, country, cands in ambiguous:
             print(f"  {name} ({country}) -> {cands}")
 
-    if args.apply and matched:
+    if args.apply and (matched or wiki_exact or wiki_bridged or wiki_alias_identical):
         mapping = names.load_mapping()
+        known_canonicals = set(mapping.canonical)
+        fd_to_canonical = names.alias_to_canonical("football_data")
         new_rows = []
+        for name, country, fd_name, key in wiki_exact:
+            canonical = fd_to_canonical.get(fd_name, fd_name)
+            if canonical not in known_canonicals and fd_name not in fd_to_canonical:
+                new_rows.append((canonical, country, "football_data", fd_name,
+                                 f"exact-normalised:{key}"))
+            new_rows.append((canonical, country, "wikipedia", name,
+                             f"exact-normalised:{key}"))
+        for name, country, canonical in wiki_bridged:
+            new_rows.append((canonical, country, "wikipedia", name, "schedule-bridged"))
+        for name, country, canonical, key in wiki_alias_identical:
+            new_rows.append((canonical, country, "wikipedia", name, f"alias-identical:{key}"))
         for name, country, fd_name, key in matched:
             # Per-row provenance: the key that actually matched, so each row can
             # be audited without re-running the matcher.

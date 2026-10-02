@@ -67,3 +67,57 @@ def coverage(frame: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
         .sort_values(["season", "competition", "phase", "source"])
     )
+
+
+def schedule_bridge(
+    pairs: tuple[tuple[str, str], ...] = (("2024-25", "UEL"), ("2024-25", "UECL")),
+) -> tuple[dict[str, str], list[str]]:
+    """Map Wikipedia club names onto openfootball ones via a shared schedule.
+
+    For a season-competition both sources cover, the two describe the same
+    matches, so the name correspondence is determined by the fixtures rather
+    than guessed: this is the same bridge the fixture pot join and the parser
+    validation use. Returns ``(wikipedia name -> openfootball name, problems)``.
+    """
+    from ucl.data.fixtures import bridge_names
+
+    def shaped(frame: pd.DataFrame) -> pd.DataFrame:
+        out = frame[["home", "away", "home_country", "away_country"]].copy()
+        # A constant key: a club is identified by its set of (venue, opponent).
+        out["matchday"] = 0
+        return out
+
+    mapping: dict[str, str] = {}
+    problems: list[str] = []
+    for season_label, competition in pairs:
+        pages = [
+            p for p in wikipedia.PAGES
+            if p.season == season_label and p.competition == competition
+        ]
+        frames = [
+            wikipedia.parse_matches(
+                (wikipedia.CACHE_DIR / p.file_name).read_text(encoding="utf-8"),
+                season=p.season, competition=p.competition, source_file=p.file_name,
+            )
+            for p in pages
+            if (wikipedia.CACHE_DIR / p.file_name).exists()
+        ]
+        if not frames:
+            problems.append(f"{season_label} {competition}: no cached Wikipedia pages")
+            continue
+        wiki = pd.concat(frames, ignore_index=True)
+        stem = "el" if competition == "UEL" else "conf"
+        path = openfootball.CACHE_DIR / f"{season_label}_{stem}.txt"
+        if not path.exists():
+            problems.append(f"{season_label} {competition}: {path.name} not cached")
+            continue
+        of = openfootball.parse_file(path, season=season_label, competition=competition)
+        resolved, issues = bridge_names(shaped(wiki), shaped(of))
+        for name, target in resolved.items():
+            existing = mapping.setdefault(name, target)
+            if existing != target:
+                problems.append(
+                    f"{name!r} bridges to {existing!r} and {target!r} in different competitions"
+                )
+        problems.extend(f"{season_label} {competition}: {issue}" for issue in issues)
+    return mapping, problems

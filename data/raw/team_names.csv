@@ -488,3 +488,76 @@ Sporting CP,POR,wikipedia,Sporting CP,exact-normalised:sporting
 VfB Stuttgart,GER,wikipedia,VfB Stuttgart,exact-normalised:stuttgart
 Viking,NOR,wikipedia,Viking,exact-normalised:viking
 Villarreal,ESP,wikipedia,Villarreal,exact-normalised:villarreal
+Aberdeen,SCO,wikipedia,Aberdeen,exact-normalised:aberdeen
+Ajax,NED,wikipedia,Ajax,exact-normalised:ajax
+Anderlecht,BEL,wikipedia,Anderlecht,exact-normalised:anderlecht
+Atalanta,ITA,wikipedia,Atalanta,exact-normalised:atalanta
+Hacken,SWE,wikipedia,BK Häcken,exact-normalised:hacken
+Basel,SUI,wikipedia,Basel,exact-normalised:basel
+Benfica,POR,wikipedia,Benfica,exact-normalised:benfica
+Besiktas,TUR,wikipedia,Beşiktaş,exact-normalised:besiktas
+Bologna,ITA,wikipedia,Bologna,exact-normalised:bologna
+Brann,NOR,wikipedia,Brann,exact-normalised:brann
+CFR Cluj,ROU,wikipedia,CFR Cluj,exact-normalised:cfr cluj
+Celtic,SCO,wikipedia,Celtic,exact-normalised:celtic
+FC Copenhagen,DEN,wikipedia,Copenhagen,exact-normalised:copenhagen
+Crystal Palace,ENG,wikipedia,Crystal Palace,exact-normalised:crystal palace
+FCSB,ROU,wikipedia,FCSB,exact-normalised:fcsb
+Fiorentina,ITA,wikipedia,Fiorentina,exact-normalised:fiorentina
+GAIS,SWE,football_data,GAIS,exact-normalised:gais
+GAIS,SWE,wikipedia,GAIS,exact-normalised:gais
+GKS Katowice,POL,football_data,GKS Katowice,exact-normalised:gks katowice
+GKS Katowice,POL,wikipedia,GKS Katowice,exact-normalised:gks katowice
+Genk,BEL,wikipedia,Genk,exact-normalised:genk
+Gent,BEL,wikipedia,Gent,exact-normalised:gent
+Getafe,ESP,football_data,Getafe,exact-normalised:getafe
+Getafe,ESP,wikipedia,Getafe,exact-normalised:getafe
+Go Ahead Eagles,NED,wikipedia,Go Ahead Eagles,exact-normalised:go ahead eagles
+Gornik Zabrze,POL,football_data,Gornik Zabrze,exact-normalised:gornik zabrze
+Gornik Zabrze,POL,wikipedia,Górnik Zabrze,exact-normalised:gornik zabrze
+Hammarby,SWE,wikipedia,Hammarby IF,exact-normalised:hammarby
+Hibernian,SCO,wikipedia,Hibernian,exact-normalised:hibernian
+Lausanne,SUI,wikipedia,Lausanne-Sport,exact-normalised:lausanne
+Lech Poznan,POL,wikipedia,Lech Poznań,exact-normalised:lech poznan
+Lillestrom,NOR,wikipedia,Lillestrøm,exact-normalised:lillestrom
+Lugano,SUI,wikipedia,Lugano,exact-normalised:lugano
+Lyon,FRA,wikipedia,Lyon,exact-normalised:lyon
+Mainz,GER,wikipedia,Mainz 05,exact-normalised:mainz
+Malmo FF,SWE,wikipedia,Malmö FF,exact-normalised:malmo
+Midtjylland,DEN,wikipedia,Midtjylland,exact-normalised:midtjylland
+Monaco,FRA,wikipedia,Monaco,exact-normalised:monaco
+Motherwell,SCO,wikipedia,Motherwell,exact-normalised:motherwell
+Nice,FRA,wikipedia,Nice,exact-normalised:nice
+PAOK,GRE,wikipedia,PAOK,exact-normalised:paok
+Panathinaikos,GRE,wikipedia,Panathinaikos,exact-normalised:panathinaikos
+Rangers,SCO,wikipedia,Rangers,exact-normalised:rangers
+Freiburg,GER,wikipedia,SC Freiburg,exact-normalised:freiburg
+Samsunspor,TUR,wikipedia,Samsunspor,exact-normalised:samsunspor
+Sion,SUI,football_data,Sion,exact-normalised:sion
+Sion,SUI,wikipedia,Sion,exact-normalised:sion
+St. Gallen,SUI,wikipedia,St. Gallen,exact-normalised:st gallen
+Strasbourg,FRA,wikipedia,Strasbourg,exact-normalised:strasbourg
+Sturm Graz,AUT,wikipedia,Sturm Graz,exact-normalised:sturm graz
+Thun,SUI,football_data,Thun,exact-normalised:thun
+Thun,SUI,wikipedia,Thun,exact-normalised:thun
+Trabzonspor,TUR,wikipedia,Trabzonspor,exact-normalised:trabzonspor
+Tromso,NOR,wikipedia,Tromsø,exact-normalised:tromso
+Twente,NED,wikipedia,Twente,exact-normalised:twente
+Utrecht,NED,wikipedia,Utrecht,exact-normalised:utrecht
+Vaduz,SUI,wikipedia,Vaduz,exact-normalised:vaduz
+Young Boys,SUI,wikipedia,Young Boys,exact-normalised:young boys
+AZ Alkmaar,NED,wikipedia,AZ,schedule-bridged
+Sp Braga,POR,wikipedia,Braga,schedule-bridged
+Hearts,SCO,wikipedia,Heart of Midlothian,schedule-bridged
+Jagiellonia,POL,wikipedia,Jagiellonia Białystok,schedule-bridged
+Legia,POL,wikipedia,Legia Warsaw,schedule-bridged
+Olympiakos,GRE,wikipedia,Olympiacos,schedule-bridged
+SK Rapid,AUT,wikipedia,Rapid Wien,schedule-bridged
+St. Gilloise,BEL,wikipedia,Union Saint-Gilloise,schedule-bridged
+Buyuksehyr,TUR,wikipedia,İstanbul Başakşehir,schedule-bridged
+Austria Vienna,AUT,wikipedia,Austria Wien,alias-identical:austria wien
+Rakow,POL,wikipedia,Raków Częstochowa,alias-identical:rakow czestochowa
+Vallecano,ESP,wikipedia,Rayo Vallecano,alias-identical:rayo vallecano
+Salzburg,AUT,wikipedia,Red Bull Salzburg,alias-identical:red bull salzburg
+U. Cluj,ROU,wikipedia,Universitatea Cluj,alias-identical:universitatea cluj
+Univ. Craiova,ROU,wikipedia,Universitatea Craiova,alias-identical:universitatea craiova
