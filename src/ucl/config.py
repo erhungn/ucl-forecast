@@ -31,12 +31,12 @@ START_RATING = 1500.0
 #: its own intercept `h` carries home advantage, and counting both would double it.
 HOME_ADVANTAGE = 65.0
 
-#: Tuned on 2024-25 (milestone 2.5). Both were lowered: the ratings were
-#: over-reacting, and k_european most of all - the association offsets already
-#: carry the cross-league scale, so European results do not need to move
-#: ratings hard on top of that.
-K_DOMESTIC = 15.0
-K_EUROPEAN = 8.0
+#: Tuning on 2024-25 preferred 15 and 8, but the 2025-26 holdout did not
+#: confirm it and no difference was statistically significant, so the
+#: pre-registered protocol rejects the tuning and these stay as they were.
+#: See outputs/backtest_summary.csv and the milestone 2.5 report.
+K_DOMESTIC = 20.0
+K_EUROPEAN = 25.0
 
 #: A club first seen in a league starts below that league's mean, since most
 #: arrive by promotion. Clubs whose association has no cached league start at
@@ -44,14 +44,16 @@ K_EUROPEAN = 8.0
 NEW_CLUB_OFFSET = -50.0
 
 #: Fraction of a club's deviation from its regression target carried into the
-#: next season. Tuned up from 0.90: squads persist more than that implied.
-SEASON_CARRYOVER = 0.95
+#: next season; 0.90 keeps most of it, because squads persist. Tuning preferred
+#: 0.95, rejected on the holdout.
+SEASON_CARRYOVER = 0.90
 
-#: Weight of an update by margin, as (1 + goal difference) ** exponent. Tuned to
-#: 0.0, i.e. a 5-0 moves ratings exactly as much as a 1-0. The World Football Elo
-#: rule it replaces over-rewarded thrashings and was inflating clubs that rack up
-#: big wins in weak domestic leagues. None restores that rule.
-GD_EXPONENT: float | None = 0.0
+#: Weight of an update by margin, as (1 + goal difference) ** exponent; None is
+#: the World Football Elo rule. Tuning preferred 0.0 - margin ignored entirely -
+#: and that was the single clearest qualitative fix, dropping Como from 19th to
+#: 32nd, but the holdout did not confirm it, so the rule stands until a
+#: multi-season backtest can resolve it.
+GD_EXPONENT: float | None = None
 
 #: What a club regresses toward between seasons: its league's mean.
 CARRYOVER_TARGET = "league_mean"
