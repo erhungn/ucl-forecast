@@ -1,0 +1,30 @@
+{
+  "candidate": "squad_value",
+  "post_hoc": false,
+  "primary": "pooled",
+  "cluster": {
+    "difference": -0.0003132361466506273,
+    "low": -0.0006917335859747146,
+    "high": 8.466120256346427e-05,
+    "excludes_zero": false,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "per_match": {
+    "difference": -0.0003132361466506273,
+    "low": -0.0007266116130748233,
+    "high": 0.00010924070749321243,
+    "excludes_zero": false,
+    "clusters": null,
+    "n": 19188
+  },
+  "all_matches": {
+    "difference": -0.0003132361466506273,
+    "low": -0.0006917335859747146,
+    "high": 8.466120256346427e-05,
+    "excludes_zero": false,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": false
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "file": "appearances.csv",
+    "source_url": "kaggle://davidcariboo/player-scores/appearances.csv",
+    "downloaded_at_utc": "2026-10-02T17:09:24.095742+00:00",
+    "sha256": "c4ba5327f9005e4a9914c0f78c3b07132ef2cf1a4babda379bbf54ffd207ebec",
+    "bytes": 198398405
+  },
+  {
+    "file": "clubs.csv",
+    "source_url": "kaggle://davidcariboo/player-scores/clubs.csv",
+    "downloaded_at_utc": "2026-10-02T17:09:24.079711+00:00",
+    "sha256": "26dc6113d8206246145add2c7a318a657b3995fccdb0c9004d65ca6ae5e5968b",
+    "bytes": 208374
+  },
+  {
+    "file": "player_valuations.csv",
+    "source_url": "kaggle://davidcariboo/player-scores/player_valuations.csv",
+    "downloaded_at_utc": "2026-10-02T17:09:24.079986+00:00",
+    "sha256": "9caf4ff707905f71463a04253c5ac640b3ff9575e07912fd7c50365697efa47d",
+    "bytes": 39647280
+  },
+  {
+    "file": "players.csv",
+    "source_url": "kaggle://davidcariboo/player-scores/players.csv",
+    "downloaded_at_utc": "2026-10-02T17:09:24.172419+00:00",
+    "sha256": "b94216cf2ff8777b5eddd4fd91402c19e757b366fbdeb4f4437580c302ff2d66",
+    "bytes": 19624138
+  }
+]

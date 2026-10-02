@@ -1,26 +1,27 @@
 {
   "candidate": "market",
+  "post_hoc": false,
   "primary": "european",
   "cluster": {
-    "difference": 0.002538748929870454,
-    "low": 0.0007480560028119628,
-    "high": 0.004348598034879758,
+    "difference": 0.0023152574684015344,
+    "low": 0.0002228701564473489,
+    "high": 0.004482907173794165,
     "excludes_zero": true,
     "clusters": 405,
     "n": 1832
   },
   "per_match": {
-    "difference": 0.002538748929870454,
-    "low": 0.0008519812131056017,
-    "high": 0.004143728391607657,
+    "difference": 0.0023152574684015344,
+    "low": 0.0003627319571933131,
+    "high": 0.0042414455683961304,
     "excludes_zero": true,
     "clusters": null,
     "n": 1832
   },
   "all_matches": {
-    "difference": 7.380460679973957e-05,
-    "low": -0.0005694445213124918,
-    "high": 0.0007059870573724933,
+    "difference": -0.0002046111323045179,
+    "low": -0.0009454791115364119,
+    "high": 0.0004920689941028983,
     "excludes_zero": false,
     "clusters": 1309,
     "n": 19188

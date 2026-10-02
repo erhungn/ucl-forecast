@@ -30,7 +30,11 @@ from ucl.config import BACKTEST_SEASONS, OUTPUTS_DIR
 # model silently collapses to the baseline. The grid starts where the covariate
 # actually exists; the degenerate region is reported, not searched.
 HALF_LIVES = [61.0, 91.0, 183.0, 365.0, 548.0, 730.0, 1096.0]
-PRIMARY = {"market": "european", "congestion": "pooled"}
+PRIMARY = {"market": "european", "market_elo": "european", "congestion": "pooled",
+           "squad_value": "pooled"}
+#: market_elo is candidate 1b, declared after candidate 1 failed: the same
+#: market strengths mapped into Elo units per league instead of standardised.
+POST_HOC = {"market_elo"}
 
 
 def folds():
@@ -48,11 +52,13 @@ def main(argv: list[str] | None = None) -> int:
     european_only = primary == "european"
 
     started = time.perf_counter()
-    print(f"=== candidate {candidate!r}: forward chaining, primary test = {primary} ===")
+    label = f"{candidate!r}" + (" [POST HOC - declared after candidate 1 failed]"
+                                if candidate in POST_HOC else "")
+    print(f"=== candidate {label}: forward chaining, primary test = {primary} ===")
     rows, paired = [], []
     for test, train in folds():
         tick = time.perf_counter()
-        if candidate == "market":
+        if candidate in ("market", "market_elo"):
             scores = {hl: pooled_objective_covariate(
                 train, candidate, half_life_days=hl, european_only=european_only)
                 for hl in HALF_LIVES}
@@ -126,7 +132,8 @@ def main(argv: list[str] | None = None) -> int:
               f"grid edge ({min(HALF_LIVES):.0f}-{max(HALF_LIVES):.0f} days)")
 
     with open(OUTPUTS_DIR / f"candidate_{candidate}_decision.json", "w", encoding="utf-8") as fh:
-        json.dump({"candidate": candidate, "primary": primary, "cluster": cluster,
+        json.dump({"candidate": candidate, "post_hoc": candidate in POST_HOC,
+                   "primary": primary, "cluster": cluster,
                    "per_match": per_match, "all_matches": full, "accepted": accepted}, fh, indent=2)
         fh.write("\n")
     print(f"\ntotal {time.perf_counter() - started:.0f}s")

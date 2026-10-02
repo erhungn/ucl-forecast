@@ -116,14 +116,32 @@ def _fit_one_league(
 
 def fit_market_ratings(
     domestic: pd.DataFrame, cutoff: date, *, half_life_days: float,
-    weight_floor: float = 1e-3,
+    weight_floor: float = 1e-3, scale: str = "z",
+    elo: dict[str, float] | None = None,
 ) -> MarketRatings:
     """Fit one set of strengths per league from decayed closing odds.
 
     ``domestic`` is :func:`ucl.data.football_data.load_results` output, already
     filtered to before ``cutoff``; rows without ``AvgC*`` are skipped.
+
+    ``scale`` selects the units the covariate is expressed in:
+
+    * ``"z"`` - standardised within each league. Comparable only inside a
+      league, so a cross-league difference says how far above its own league's
+      average each club sits and nothing about the leagues themselves.
+    * ``"elo"`` - mapped into Elo points by regressing pre-cutoff Elo on the
+      market strength within each league, which keeps the league's Elo mean and
+      so carries league quality. Requires ``elo``.
     """
     priced = domestic.dropna(subset=list(ODDS_COLUMNS)).copy()
+    # Club ids, not raw football-data names: the covariate is looked up by
+    # canonical id, and 14 of 202 names differ - including Man City, Atletico,
+    # Dortmund, PSG and Sporting, i.e. most of the clubs that reach Europe.
+    from ucl.data import names as _names
+
+    lookup = _names.alias_to_canonical("football_data")
+    priced["home"] = priced.home.map(lookup).fillna(priced.home)
+    priced["away"] = priced.away.map(lookup).fillna(priced.away)
     age = (np.datetime64(cutoff) - priced.date.to_numpy().astype("datetime64[D]"))
     priced["weight"] = 0.5 ** (age.astype("timedelta64[D]").astype(float) / half_life_days)
     priced = priced[priced.weight >= weight_floor]
@@ -162,12 +180,32 @@ def fit_market_ratings(
         spread = strength[keep].std(ddof=0) or 1.0
         centre = strength[keep].mean()
         leagues += 1
+
+        slope = intercept = None
+        if scale == "elo":
+            # Regress this league's Elo on its market strength. The fitted line
+            # passes through the league's Elo mean, so the mapped rating keeps
+            # league quality while the market supplies the ordering within it.
+            pairs = [(strength[i], elo[c]) for c, i in index.items()
+                     if keep[i] and elo is not None and c in elo]
+            if len(pairs) >= 4:
+                x = np.array([p[0] for p in pairs])
+                y = np.array([p[1] for p in pairs])
+                variance = x.var()
+                slope = float(np.cov(x, y, bias=True)[0, 1] / variance) if variance else 0.0
+                intercept = float(y.mean() - slope * x.mean())
+
         for club, i in index.items():
             raw[club] = float(strength[i])
             league_of[club] = f"{country}/{league}"
             effective[club] = float(counts[i])
-            if keep[i]:
-                # Standardised within the league: the only comparison odds support.
+            if not keep[i]:
+                continue
+            if scale == "elo":
+                if slope is None:
+                    continue
+                z[club] = (intercept + slope * float(strength[i])) / 400.0
+            else:
                 z[club] = float((strength[i] - centre) / spread)
 
     return MarketRatings(

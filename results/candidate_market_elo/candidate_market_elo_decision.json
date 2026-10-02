@@ -1,0 +1,30 @@
+{
+  "candidate": "market_elo",
+  "post_hoc": true,
+  "primary": "european",
+  "cluster": {
+    "difference": 0.00031303301727174615,
+    "low": -0.0017227952876139798,
+    "high": 0.0023515190975569008,
+    "excludes_zero": false,
+    "clusters": 405,
+    "n": 1832
+  },
+  "per_match": {
+    "difference": 0.00031303301727174615,
+    "low": -0.0015706151008640242,
+    "high": 0.0022848404075144204,
+    "excludes_zero": false,
+    "clusters": null,
+    "n": 1832
+  },
+  "all_matches": {
+    "difference": -0.0008119297398161732,
+    "low": -0.0015194317571544476,
+    "high": -0.00011154729523730709,
+    "excludes_zero": true,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": false
+}

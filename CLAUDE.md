@@ -127,3 +127,10 @@ outputs/         # csv tables + figures
 - Home advantage is applied **once**, in the Elo update. The Poisson model uses
   the raw rating difference and carries home advantage in its own intercept.
 - The market is a **diagnostic only** and never enters an objective.
+- **Stopping rule, reached.** Four covariate candidates were tested under this
+  protocol and all failed: Dixon-Coles, market-implied ratings (both the
+  standardised and the Elo-units mappings), fixture congestion, and squad market
+  value. Elo plus association offsets is treated as the ceiling on this data; do
+  not add further covariates without new evidence or a materially better data
+  source. The one open lead is squad value, whose null came with only 22-25%
+  European coverage.

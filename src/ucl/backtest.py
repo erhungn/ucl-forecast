@@ -573,8 +573,8 @@ def add_rest_days(frame: pd.DataFrame) -> pd.DataFrame:
     return ordered
 
 
-@lru_cache(maxsize=32)
-def _fitted_market(cutoff: date, half_life_days: float):
+@lru_cache(maxsize=64)
+def _fitted_market(cutoff: date, half_life_days: float, scale: str = "z"):
     """Elo ratings plus market-implied ratings and the two-covariate model."""
     from ucl.data import football_data
     from ucl.models.covariates import fit_covariate_model
@@ -584,11 +584,34 @@ def _fitted_market(cutoff: date, half_life_days: float):
     offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
     ratings = replay(training, offsets, DEFAULT_PARAMS)
     market = fit_market_ratings(
-        football_data.load_results(cutoff), cutoff, half_life_days=half_life_days)
+        football_data.load_results(cutoff), cutoff, half_life_days=half_life_days,
+        scale=scale, elo=ratings.ratings)
     frame = ratings.pre_match.copy()
     frame["d_market"] = market.difference(frame.home_id.to_numpy(), frame.away_id.to_numpy())
     model = fit_covariate_model(frame, symmetric=("d_market",))
     return ratings, market, model
+
+
+@lru_cache(maxsize=16)
+def _fitted_squad_value(cutoff: date, season_label: str):
+    """Elo ratings plus the pre-season squad-value model.
+
+    The as-of date is 6 July of the season's starting year, not the cutoff,
+    because the source is frozen at that point for 2026-27 and every season is
+    held to the same staleness.
+    """
+    from ucl.data import transfermarkt
+    from ucl.models.covariates import fit_covariate_model
+
+    training = _training_frame(cutoff)
+    offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
+    ratings = replay(training, offsets, DEFAULT_PARAMS)
+    values = transfermarkt.squad_values(transfermarkt.as_of_for_season(season_label))
+    frame = ratings.pre_match.copy()
+    frame["d_value"] = transfermarkt.value_difference(
+        values, frame.home_id.to_numpy(), frame.away_id.to_numpy())
+    model = fit_covariate_model(frame, symmetric=("d_value",))
+    return ratings, values, model
 
 
 @lru_cache(maxsize=8)
@@ -606,14 +629,19 @@ def _fitted_congestion(cutoff: date):
 
 def score_season_covariate(
     season_label: str, candidate: str, *, half_life_days: float = 365.0,
-    modes: tuple[str, ...] = ("frozen",),
+    scale: str = "z", modes: tuple[str, ...] = ("frozen",),
 ) -> pd.DataFrame:
     """Score a season under a candidate covariate model, frozen ratings."""
     cfg = SEASONS[season_label]
     domestic, euro = _evaluation_frames(season_label)
 
-    if candidate == "market":
-        ratings, market, model = _fitted_market(cfg.cutoff_date, half_life_days)
+    if candidate in ("market", "market_elo"):
+        ratings, market, model = _fitted_market(
+            cfg.cutoff_date, half_life_days, "elo" if candidate == "market_elo" else scale)
+    elif candidate == "squad_value":
+        from ucl.data import transfermarkt
+
+        ratings, values, model = _fitted_squad_value(cfg.cutoff_date, season_label)
     elif candidate == "congestion":
         ratings, model = _fitted_congestion(cfg.cutoff_date)
         history = _training_frame(cfg.cutoff_date)[["date", "home_id", "away_id"]]
@@ -629,11 +657,16 @@ def score_season_covariate(
             elo_home = usable.home_id.map(ratings.ratings).to_numpy(dtype=float)
             elo_away = usable.away_id.map(ratings.ratings).to_numpy(dtype=float)
 
-            if candidate == "market":
+            if candidate in ("market", "market_elo"):
                 difference = market.difference(
                     usable.home_id.to_numpy(), usable.away_id.to_numpy())
                 rate_home, rate_away = model.rates(
                     elo_home, elo_away, symmetric={"d_market": difference})
+            elif candidate == "squad_value":
+                difference = transfermarkt.value_difference(
+                    values, usable.home_id.to_numpy(), usable.away_id.to_numpy())
+                rate_home, rate_away = model.rates(
+                    elo_home, elo_away, symmetric={"d_value": difference})
             else:
                 combined = pd.concat(
                     [history, usable[["date", "home_id", "away_id"]]], ignore_index=True)
