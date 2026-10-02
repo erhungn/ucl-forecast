@@ -21,6 +21,44 @@ RANDOM_SEED = 20260907
 # Default number of Monte Carlo iterations.
 N_SIMULATIONS = 50_000
 
+# --- Elo ------------------------------------------------------------------
+# Tuned on the backtest seasons in milestone 5; these are the starting points.
+
+START_RATING = 1500.0
+
+#: Added to the home club's rating when forming the Elo expectation. This is the
+#: Elo-update home advantage only. The Poisson match model must NOT reuse it:
+#: its own intercept `h` carries home advantage, and counting both would double it.
+HOME_ADVANTAGE = 65.0
+
+K_DOMESTIC = 20.0
+#: European ties are the only thing linking national leagues, so they move
+#: ratings slightly more than a domestic match.
+K_EUROPEAN = 25.0
+
+#: A club first seen in a league starts below that league's mean, since most
+#: arrive by promotion. Clubs whose association has no cached league start at
+#: their association baseline instead, with no penalty to apply.
+NEW_CLUB_OFFSET = -50.0
+
+#: Fraction of a club's deviation from its regression target carried into the
+#: next season; 0.90 keeps most of it, because squads persist.
+SEASON_CARRYOVER = 0.90
+
+#: Burn-in start. The extra-league files reach back this far.
+ELO_BURN_IN_START = date(2012, 1, 1)
+
+# --- Baseline Poisson match model -----------------------------------------
+# log(lambda_home) = a + h + b * d,  log(lambda_away) = a - b * d,
+# where d = (elo_home - elo_away) / 400 WITHOUT the Elo home advantage.
+POISSON_FALLBACK = {"a": 0.3001, "h": 0.25, "b": 1.0}
+
+# --- Knockout -------------------------------------------------------------
+EXTRA_TIME_SCALE = 1.0 / 3.0
+#: Shoot-out win probability shifts this much per Elo point of difference.
+PENALTY_TILT = 0.0004
+PENALTY_TILT_CLIP = (0.35, 0.65)
+
 
 @dataclass(frozen=True)
 class SeasonConfig:
