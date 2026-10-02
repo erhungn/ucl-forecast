@@ -31,9 +31,42 @@ from ucl.data import european, football_data, names
 from ucl.data.cutoff import assert_no_lookahead
 
 __all__ = [
-    "MATCH_COLUMNS", "EloResult", "match_frame", "fit_association_offsets",
-    "replay", "elo_as_of", "goal_difference_multiplier",
+    "MATCH_COLUMNS", "EloParams", "EloResult", "match_frame",
+    "fit_association_offsets", "replay", "elo_as_of", "goal_difference_multiplier",
 ]
+
+
+@dataclass(frozen=True)
+class EloParams:
+    """Every tunable of the rating system, so a backtest can vary them.
+
+    ``gd_exponent`` None keeps the World Football Elo weighting (1, 1.5, then
+    (11+gd)/8); a number uses ``(1 + gd) ** exponent`` instead, which at 0 makes
+    every win count the same regardless of margin.
+
+    ``carryover_target`` chooses what a club regresses toward between seasons:
+    its league's mean, its own long-run level, or nothing at all.
+    """
+
+    k_domestic: float = config.K_DOMESTIC
+    k_european: float = config.K_EUROPEAN
+    home_advantage: float = config.HOME_ADVANTAGE
+    gd_exponent: float | None = config.GD_EXPONENT
+    season_carryover: float = config.SEASON_CARRYOVER
+    carryover_target: str = config.CARRYOVER_TARGET
+    new_club_offset: float = config.NEW_CLUB_OFFSET
+
+    def as_dict(self) -> dict:
+        return {
+            "k_domestic": self.k_domestic, "k_european": self.k_european,
+            "home_advantage": self.home_advantage, "gd_exponent": self.gd_exponent,
+            "season_carryover": self.season_carryover,
+            "carryover_target": self.carryover_target,
+        }
+
+
+DEFAULT_PARAMS = EloParams()
+CARRYOVER_TARGETS = ("league_mean", "club_long_run", "none")
 
 MATCH_COLUMNS = [
     "date", "home_id", "away_id", "home_assoc", "away_assoc", "hg", "ag",
@@ -169,9 +202,17 @@ def fit_association_offsets(
 
 # --- the replay ------------------------------------------------------------
 
-def goal_difference_multiplier(goal_difference: int) -> float:
-    """The World Football Elo weighting: 1, 1.5, then (11 + gd) / 8."""
+def goal_difference_multiplier(
+    goal_difference: int, exponent: float | None = None
+) -> float:
+    """Weight an update by the margin.
+
+    ``exponent`` None is the World Football Elo rule (1, 1.5, then (11+gd)/8);
+    otherwise ``(1 + gd) ** exponent``, so 0 ignores the margin entirely.
+    """
     gd = abs(int(goal_difference))
+    if exponent is not None:
+        return float((1.0 + gd) ** exponent)
     if gd <= 1:
         return 1.0
     if gd == 2:
@@ -217,7 +258,11 @@ class EloResult:
         return frame.sort_values("elo", ascending=False).head(n).reset_index(drop=True)
 
 
-def replay(matches: pd.DataFrame, offsets: dict[str, float]) -> EloResult:
+def replay(
+    matches: pd.DataFrame,
+    offsets: dict[str, float],
+    params: EloParams = DEFAULT_PARAMS,
+) -> EloResult:
     """Replay every match in date order and return ratings and pre-match snapshots.
 
     Between seasons each club is regressed toward its target: its league's mean
@@ -242,14 +287,34 @@ def replay(matches: pd.DataFrame, offsets: dict[str, float]) -> EloResult:
             return baseline(assoc)
         peers = [r for c, r in ratings.items() if association_of.get(c) == assoc]
         mean = float(np.mean(peers)) if peers else baseline(assoc)
-        return mean + config.NEW_CLUB_OFFSET
+        return mean + params.new_club_offset
 
-    def regression_target(club: str) -> float:
-        assoc = association_of.get(club, "")
+    history: dict[str, list[float]] = {}
+
+    def league_mean(assoc: str) -> float:
         if assoc not in domestic_assoc:
             return baseline(assoc)
         peers = [r for c, r in ratings.items() if association_of.get(c) == assoc]
         return float(np.mean(peers)) if peers else baseline(assoc)
+
+    def club_long_run(club: str) -> float:
+        """Exponentially weighted mean of the club's own season-end ratings.
+
+        Decay 0.5 per season, most recent first. A club with fewer than two
+        seasons behind it has no long-run level yet, so it falls back to the
+        league mean.
+        """
+        past = history.get(club, [])
+        if len(past) < 2:
+            return league_mean(association_of.get(club, ""))
+        weights = np.array([0.5 ** i for i in range(len(past))])
+        values = np.array(past[::-1])
+        return float((weights * values).sum() / weights.sum())
+
+    def regression_target(club: str) -> float:
+        if params.carryover_target == "club_long_run":
+            return club_long_run(club)
+        return league_mean(association_of.get(club, ""))
 
     pre_home = np.empty(len(matches))
     pre_away = np.empty(len(matches))
@@ -271,11 +336,17 @@ def replay(matches: pd.DataFrame, offsets: dict[str, float]) -> EloResult:
                 # others - and set iteration order is not stable between runs.
                 members = sorted(clubs_by_assoc.get(assoc, set()))
                 if members:
-                    target = regression_target(members[0])
+                    # Targets are computed from the ratings as they stand before
+                    # any club is regressed, so the result cannot depend on order.
                     for club in members:
-                        ratings[club] = target + config.SEASON_CARRYOVER * (
-                            ratings[club] - target
-                        )
+                        history.setdefault(club, []).append(ratings[club])
+                    if params.carryover_target != "none":
+                        targets = {club: regression_target(club) for club in members}
+                        for club in members:
+                            target = targets[club]
+                            ratings[club] = target + params.season_carryover * (
+                                ratings[club] - target
+                            )
             season_of[assoc] = row.season
 
         for club, assoc in ((row.home_id, row.home_assoc), (row.away_id, row.away_assoc)):
@@ -287,10 +358,14 @@ def replay(matches: pd.DataFrame, offsets: dict[str, float]) -> EloResult:
         home, away = ratings[row.home_id], ratings[row.away_id]
         pre_home[position], pre_away[position] = home, away
 
-        expected = 1.0 / (1.0 + 10.0 ** (-(home + config.HOME_ADVANTAGE - away) / 400.0))
+        expected = 1.0 / (1.0 + 10.0 ** (-(home + params.home_advantage - away) / 400.0))
         actual = 1.0 if row.hg > row.ag else (0.5 if row.hg == row.ag else 0.0)
-        k = config.K_EUROPEAN if row.is_european else config.K_DOMESTIC
-        change = k * goal_difference_multiplier(row.hg - row.ag) * (actual - expected)
+        k = params.k_european if row.is_european else params.k_domestic
+        change = (
+            k
+            * goal_difference_multiplier(row.hg - row.ag, params.gd_exponent)
+            * (actual - expected)
+        )
         ratings[row.home_id] = home + change
         ratings[row.away_id] = away - change
 
@@ -307,10 +382,17 @@ def replay(matches: pd.DataFrame, offsets: dict[str, float]) -> EloResult:
     )
 
 
-def elo_as_of(cutoff: date) -> EloResult:
-    """Ratings at ``cutoff``: offsets fitted, then every prior match replayed."""
+def elo_as_of(cutoff: date, params: EloParams = DEFAULT_PARAMS) -> EloResult:
+    """Ratings at ``cutoff``: offsets fitted, then every prior match replayed.
+
+    Both steps see only matches before ``cutoff``: ``match_frame`` filters and
+    asserts it, and the association offsets are fitted on that same frame, so a
+    backtest at an earlier cutoff cannot inherit anything from later football.
+    """
     matches = match_frame(cutoff)
-    offsets, offset_diagnostics = fit_association_offsets(matches)
-    result = replay(matches, offsets)
+    offsets, offset_diagnostics = fit_association_offsets(
+        matches, home_advantage=params.home_advantage
+    )
+    result = replay(matches, offsets, params)
     result.diagnostics.update({f"offset_{k}": v for k, v in offset_diagnostics.items()})
     return result

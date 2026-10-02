@@ -31,10 +31,12 @@ START_RATING = 1500.0
 #: its own intercept `h` carries home advantage, and counting both would double it.
 HOME_ADVANTAGE = 65.0
 
-K_DOMESTIC = 20.0
-#: European ties are the only thing linking national leagues, so they move
-#: ratings slightly more than a domestic match.
-K_EUROPEAN = 25.0
+#: Tuned on 2024-25 (milestone 2.5). Both were lowered: the ratings were
+#: over-reacting, and k_european most of all - the association offsets already
+#: carry the cross-league scale, so European results do not need to move
+#: ratings hard on top of that.
+K_DOMESTIC = 15.0
+K_EUROPEAN = 8.0
 
 #: A club first seen in a league starts below that league's mean, since most
 #: arrive by promotion. Clubs whose association has no cached league start at
@@ -42,8 +44,17 @@ K_EUROPEAN = 25.0
 NEW_CLUB_OFFSET = -50.0
 
 #: Fraction of a club's deviation from its regression target carried into the
-#: next season; 0.90 keeps most of it, because squads persist.
-SEASON_CARRYOVER = 0.90
+#: next season. Tuned up from 0.90: squads persist more than that implied.
+SEASON_CARRYOVER = 0.95
+
+#: Weight of an update by margin, as (1 + goal difference) ** exponent. Tuned to
+#: 0.0, i.e. a 5-0 moves ratings exactly as much as a 1-0. The World Football Elo
+#: rule it replaces over-rewarded thrashings and was inflating clubs that rack up
+#: big wins in weak domestic leagues. None restores that rule.
+GD_EXPONENT: float | None = 0.0
+
+#: What a club regresses toward between seasons: its league's mean.
+CARRYOVER_TARGET = "league_mean"
 
 #: Burn-in start. The extra-league files reach back this far.
 ELO_BURN_IN_START = date(2012, 1, 1)
