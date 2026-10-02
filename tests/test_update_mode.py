@@ -90,7 +90,11 @@ def test_the_update_run_fixes_the_played_matches_and_simulates_the_rest():
 
 
 def test_the_information_set_is_printed():
-    result = _run("--season", "2026-27", "-n", "5", "--through-matchday", "1")
+    # --out matters here: without it this run would overwrite the real
+    # forecast_2026-27_md1.csv with five iterations, and simulate.py reads the
+    # previous matchday's file to compute its deltas.
+    result = _run("--season", "2026-27", "-n", "5", "--through-matchday", "1",
+                  "--out", "t_info.csv")
     assert "information set" in result.stdout
     assert "domestic/football_data" in result.stdout
     assert "european/wikipedia" in result.stdout

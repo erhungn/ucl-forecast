@@ -33,3 +33,11 @@ __pycache__/
 # The Transfermarkt club-name mapping and the decisions behind it.
 !data/raw/transfermarkt_club_map.csv
 !data/raw/transfermarkt_decisions.csv
+
+# The app environment and its secrets; live/ is tracked on purpose, since each
+# file there is a dated point-in-time forecast the app's history is built on.
+.venv-app/
+.streamlit/secrets.toml
+live/*/update.log
+live/*/update.log.1
+live/*/*.tmp

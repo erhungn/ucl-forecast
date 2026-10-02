@@ -19,9 +19,16 @@ import pandas as pd
 from ucl.data import fixtures as fx
 from ucl.data import names, wikipedia
 
-__all__ = ["MappingError", "live_page", "load_played", "information"]
+__all__ = [
+    "MappingError", "live_page", "load_played", "completed_matchdays",
+    "information", "staleness", "DOMESTIC_STALE_DAYS",
+]
 
 COLUMNS = ["matchday", "date", "home_id", "away_id", "hg", "ag", "status"]
+
+#: A domestic cache this many days behind the as-of date is a real hole rather
+#: than the fixture calendar, and every forecast says so.
+DOMESTIC_STALE_DAYS = 7
 
 
 class MappingError(RuntimeError):
@@ -93,6 +100,29 @@ def completed_matchdays(played: pd.DataFrame, fixtures: pd.DataFrame) -> list[in
     expected = fixtures.groupby("matchday").size()
     actual = played.groupby("matchday").size()
     return sorted(md for md in expected.index if actual.get(md, 0) == expected[md])
+
+
+def staleness(information: pd.DataFrame, as_of) -> str | None:
+    """The domestic-staleness note for an information set, or None if current.
+
+    One definition, used by the simulator's printed information set and by the
+    app. The app reads the frame back from CSV, where the dates have become
+    strings, so both are coerced here rather than at each call site.
+    """
+    domestic = information[information.source.str.startswith("domestic")]
+    dates = pd.to_datetime(domestic.used_to, errors="coerce").dropna()
+    if not len(dates):
+        return None
+    last = max(dates).date()
+    gap = (pd.Timestamp(as_of).date() - last).days
+    # A day or two is just the fixture calendar; a week or more is a real hole.
+    if gap < DOMESTIC_STALE_DAYS:
+        return None
+    return (
+        f"domestic results end {last}, {gap} days before the as-of date; that "
+        f"form is missing from the ratings. A refresh into "
+        f"data/raw/football_data_current/ would close it."
+    )
 
 
 def information(season_label: str = "2026-27", as_of=None) -> pd.DataFrame:

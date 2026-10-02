@@ -1,0 +1,13 @@
+# Settings for the local forecast app. The address is deliberately not set
+# here: scripts/run_app.sh passes it, so the default stays localhost-only and
+# exposing the app on the network is always an explicit act.
+[server]
+headless = true
+port = 8501
+fileWatcherType = "auto"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"

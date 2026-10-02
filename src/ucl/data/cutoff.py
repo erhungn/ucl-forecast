@@ -2,6 +2,10 @@
 
 Every loader filters its rows to strictly before a cutoff and then asserts it.
 The cutoff is always an explicit argument: see :class:`ucl.config.SeasonConfig`.
+
+In-season the cutoff generalises to an as-of date, derived from the matchday
+the forecast runs through; :func:`as_of_for_matchday` is the one definition of
+that rule, shared by the simulator and the weekly update.
 """
 
 from __future__ import annotations
@@ -10,7 +14,10 @@ from datetime import date
 
 import pandas as pd
 
-__all__ = ["LookAheadError", "assert_no_lookahead", "filter_to_cutoff"]
+__all__ = [
+    "LookAheadError", "assert_no_lookahead", "filter_to_cutoff",
+    "as_of_for_matchday",
+]
 
 
 class LookAheadError(AssertionError):
@@ -57,6 +64,25 @@ def assert_no_lookahead(
             f"{label}: {len(offending)} row(s) dated on or after the cutoff "
             f"{cutoff}: {shown}{more}"
         )
+
+
+def as_of_for_matchday(fixtures: pd.DataFrame, matchday: int, cutoff: date) -> date:
+    """The information-set date for a forecast run through ``matchday``.
+
+    Everything decided before the next matchday is in the information set, so
+    the as-of date is the day before that matchday's first fixture. Through
+    matchday 0 it is the season's own cutoff.
+
+    For the last matchday there is no next one, and the fallback is the day
+    before the final round's own last fixture - which is *inside* that round.
+    That is a wart rather than a choice: by then every match is played and
+    fixed, so the ratings the as-of date selects no longer change the forecast.
+    """
+    if matchday <= 0:
+        return cutoff
+    later = fixtures[fixtures.matchday == matchday + 1]
+    first = later.date.min() if len(later) else fixtures.date.max()
+    return (pd.Timestamp(first) - pd.Timedelta(1, "D")).date()
 
 
 def filter_to_cutoff(

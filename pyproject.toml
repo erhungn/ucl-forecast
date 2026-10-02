@@ -18,6 +18,11 @@ dependencies = [
 dev = [
     "pytest==9.1.1",
 ]
+# The local forecast app. Installed into its own .venv-app so the model
+# environment stays exactly what requirements.lock.txt records.
+app = [
+    "streamlit==1.64.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ucl"]

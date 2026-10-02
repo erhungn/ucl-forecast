@@ -22,7 +22,8 @@ from scipy.stats import poisson
 from ucl import config
 from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
-from ucl.data import league_results, names, odds, odds
+from ucl.data import league_results, names, odds
+from ucl.data.cutoff import as_of_for_matchday
 from ucl.models.covariates import fit_squad_value_model
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
@@ -72,12 +73,8 @@ def main(argv: list[str] | None = None) -> int:
     # Everything decided before the next matchday is in the information set.
     if args.as_of:
         as_of = pd.Timestamp(args.as_of).date()
-    elif matchday <= 0:
-        as_of = cfg.cutoff_date
     else:
-        later = fixtures[fixtures.matchday == matchday + 1]
-        first = later.date.min() if len(later) else fixtures.date.max()
-        as_of = (pd.Timestamp(first) - pd.Timedelta("1D")).date()
+        as_of = as_of_for_matchday(fixtures, matchday, cfg.cutoff_date)
 
     played = pd.DataFrame(columns=league_results.COLUMNS)
     if matchday > 0:
@@ -98,14 +95,9 @@ def main(argv: list[str] | None = None) -> int:
     if matchday > 0:
         print(f"  league phase: matchdays 1-{matchday} fixed at their actual scores "
               f"({len(played)} matches), {len(remaining)} fixtures simulated")
-    domestic_last = info[info.source.str.startswith("domestic")].used_to.dropna()
-    if len(domestic_last):
-        gap = (as_of - max(domestic_last)).days
-        # A day or two is just the fixture calendar; a week or more is a real hole.
-        if gap >= 7:
-            print(f"  NOTE: domestic results end {max(domestic_last)}, {gap} days before "
-                  f"the as-of date; that form is missing from the ratings. A refresh into "
-                  f"data/raw/football_data_current/ would close it.")
+    stale = league_results.staleness(info, as_of)
+    if stale:
+        print(f"  NOTE: {stale}")
 
     ratings = elo_as_of(as_of)
     teams = sorted(set(fixtures.home_id) | set(fixtures.away_id))
@@ -251,8 +243,11 @@ def main(argv: list[str] | None = None) -> int:
         frame = moved.drop(columns=[c for c in moved.columns if c.endswith("_prev")])
         frame.to_csv(out, index=False, float_format="%.6f")
 
-    # The next matchday, from the frozen model at the current ratings.
+    # The next matchday, from the frozen model at the current ratings. This
+    # table needs no Monte Carlo - it is the fitted model evaluated at the
+    # as-of ratings - so it is identical whatever --iterations says.
     next_matchday = fixtures[fixtures.matchday == matchday + 1]
+    written = [out.name]
     if len(next_matchday):
         from ucl.backtest import probabilities_from_rates
 
@@ -262,21 +257,42 @@ def main(argv: list[str] | None = None) -> int:
             next_matchday.home_id.to_numpy(), next_matchday.away_id.to_numpy(),
             elo_home, elo_away)
         probabilities = probabilities_from_rates(rate_home, rate_away)
-        print(f"\n=== matchday {matchday + 1}: {len(next_matchday)} fixtures ===")
-        print(f"  {'home':22s} {'away':22s} {'home':>6s} {'draw':>6s} {'away':>6s}"
-              f"  {'likely':>8s} {'P':>6s}")
+        outcomes = ("home", "draw", "away")
+        rows = []
         for i, row in enumerate(next_matchday.itertuples()):
             goals = np.arange(0, 11)
             joint = (poisson.pmf(goals[:, None], rate_home[i])
                      * poisson.pmf(goals[None, :], rate_away[i]))
             h, a = np.unravel_index(joint.argmax(), joint.shape)
-            print(f"  {row.home_id:22s} {row.away_id:22s} {probabilities[i, 0]:6.3f} "
-                  f"{probabilities[i, 1]:6.3f} {probabilities[i, 2]:6.3f}  "
-                  f"{h}-{a:<6} {joint.max():6.3f}")
+            pick = int(probabilities[i].argmax())
+            rows.append({
+                "season": cfg.label, "matchday": matchday + 1,
+                "date": row.date.date(),
+                # Club ids, as the evaluation tables use, so the two join.
+                "home": row.home_id, "away": row.away_id,
+                "p_home": probabilities[i, 0], "p_draw": probabilities[i, 1],
+                "p_away": probabilities[i, 2], "pick": outcomes[pick],
+                "p_pick": probabilities[i, pick],
+                "modal_score": f"{h}-{a}", "p_modal": float(joint.max()),
+            })
+        preview = pd.DataFrame(rows)
+        # One frame drives both the table and the file, so they cannot disagree.
+        print(f"\n=== matchday {matchday + 1}: {len(preview)} fixtures ===")
+        print(f"  {'home':22s} {'away':22s} {'home':>6s} {'draw':>6s} {'away':>6s}"
+              f"  {'likely':>8s} {'P':>6s}")
+        for row in preview.itertuples():
+            print(f"  {row.home:22s} {row.away:22s} {row.p_home:6.3f} "
+                  f"{row.p_draw:6.3f} {row.p_away:6.3f}  "
+                  f"{row.modal_score:<8s} {row.p_modal:6.3f}")
         print("  (the modal scoreline carries only ~8-12% probability; it is not a prediction)")
+        # Deliberately not renamed by --out: the forecast may be a scratch run,
+        # this table is deterministic and is what the app reads.
+        preview_path = OUTPUTS_DIR / f"next_matchday_{matchday + 1}_{cfg.label}.csv"
+        preview.to_csv(preview_path, index=False, float_format="%.6f")
+        written.append(preview_path.name)
 
     print(f"\nsetup {setup:.1f}s, simulation {elapsed:.1f}s "
-          f"({elapsed / n * 1000:.2f} ms/iteration), written to {out.name}")
+          f"({elapsed / n * 1000:.2f} ms/iteration), written to {', '.join(written)}")
     return 0 if all(checks.values()) else 1
 
 

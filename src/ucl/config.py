@@ -14,6 +14,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_RAW = PROJECT_ROOT / "data" / "raw"
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+#: Published artefacts of the weekly update, and the only thing the local app
+#: reads. Separate from ``outputs/`` because that directory is scratch: the
+#: test suite runs the simulator into it with a handful of iterations.
+LIVE_DIR = PROJECT_ROOT / "live"
 
 # Global seed for every RNG in the project.
 RANDOM_SEED = 20260907

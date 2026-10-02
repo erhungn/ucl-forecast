@@ -1,0 +1,60 @@
+{
+  "season": "2026-27",
+  "state": "ok",
+  "message": "",
+  "pid": 22355,
+  "model": "v1",
+  "iterations": 50000,
+  "seed": 20260907,
+  "git_commit": "95a3d547edb0ec3f4165eabb5f17120f794d6c20",
+  "started_at_utc": "2026-10-02T19:46:17+00:00",
+  "collisions": [],
+  "pruned": [],
+  "wikipedia_refreshed": false,
+  "through_matchday": 1,
+  "as_of": "2026-10-12",
+  "played_matches": 18,
+  "completed_matchdays": [
+    1
+  ],
+  "partial_matchdays": {},
+  "next_matchday": 2,
+  "next_matchday_first_date": "2026-10-13",
+  "inputs_hash": "sha256:c89f56639d52deccf1a6d3d5aafe9fe52d024c85d02ab7be68921e5034eb0c58",
+  "simulate_returncode": 0,
+  "verification_passed": true,
+  "sources": {
+    "domestic/football_data": {
+      "cached_to": "2026-09-21",
+      "used_to": "2026-09-21"
+    },
+    "domestic/football_data_history": {
+      "cached_to": "2021-05-23",
+      "used_to": "2021-05-23"
+    },
+    "domestic/football_data_current": {
+      "cached_to": "None",
+      "used_to": "None"
+    },
+    "european/openfootball": {
+      "cached_to": "2026-05-30",
+      "used_to": "2026-05-30"
+    },
+    "european/wikipedia": {
+      "cached_to": "2026-09-10",
+      "used_to": "2026-09-10"
+    },
+    "squad_value/transfermarkt": {
+      "cached_to": "2026-06-28",
+      "used_to": "2026-07-06"
+    }
+  },
+  "finished_at_utc": "2026-10-02T19:50:52+00:00",
+  "duration_seconds": 274.8,
+  "artefacts": [
+    "forecast_md1.csv",
+    "next_matchday_2.csv",
+    "matchday_1_evaluation.csv",
+    "information_set.csv"
+  ]
+}

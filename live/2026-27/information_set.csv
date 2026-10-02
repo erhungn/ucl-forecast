@@ -1,0 +1,7 @@
+source,status,files,cached_to,used_to,fetched
+domestic/football_data,present,73,2026-09-21,2026-09-21,2026-10-02T11:01:43
+domestic/football_data_history,present,55,2021-05-23,2021-05-23,2026-10-02T14:46:36
+domestic/football_data_current,absent,0,,,
+european/openfootball,present,25,2026-05-30,2026-05-30,
+european/wikipedia,present,23,2026-09-10,2026-09-10,
+squad_value/transfermarkt,frozen (source paused),4,2026-06-28,2026-07-06,

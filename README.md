@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 350 tests, ~60s
+.venv/bin/python -m pytest                                       # 377 tests, ~60s
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -239,8 +239,16 @@ evidence once the covariate itself has been looked at.
 
 ```bash
 python scripts/colab/fetch_current.py --season 2627 --prune-stale   # from Colab
-.venv/bin/python scripts/simulate.py --through-matchday 2 --refresh
+.venv/bin/python scripts/weekly_update.py                           # everything else
 ```
+
+`weekly_update.py` is the whole cycle in one command: it checks the caches,
+refreshes the league-phase page once, detects the last **complete** matchday,
+re-forecasts through it, scores what was played, and publishes to
+`live/<season>/`, which is the only directory the app reads. It refuses rather
+than guesses - mid-round, on a skipped round, on a cache collision (unless
+`--prune-stale`), or when a verification check fails - and it does no work at
+all when the inputs are unchanged.
 
 The information set is an **as-of date**, not a hard-coded cutoff: all cached
 matches before it are applied, played UCL matches are fixed at their actual
@@ -253,10 +261,34 @@ european/wikipedia             present                 2026-09-10   2026-09-10
 squad_value/transfermarkt      frozen (source paused)  2026-06-28   2026-07-06
 ```
 
-Results refresh weekly (UCL from the Wikipedia league-phase page with
-`--refresh`; domestic through the Colab fetch). **Squad value cannot be
-refreshed** - its `used_to` stays at 2026-07-06 while the others advance,
-visibly, in every run.
+Results refresh weekly (UCL from the Wikipedia league-phase page; domestic
+through the Colab fetch). **Squad value cannot be refreshed** - its `used_to`
+stays at 2026-07-06 while the others advance, visibly, in every run.
+
+## Local app
+
+A single-user Streamlit app over the published forecasts: the title race, the
+next matchday's 1X2 probabilities, movement across matchdays, the played
+matches scored against a uniform baseline, and the information set with the
+update button.
+
+```bash
+python3 -m venv .venv-app
+.venv-app/bin/python -m pip install -r requirements.app.lock.txt -e .
+scripts/run_app.sh            # http://localhost:8501
+scripts/run_app.sh --lan      # also reachable from a phone on the same Wi-Fi
+```
+
+Streamlit lives in its own `.venv-app` so `requirements.lock.txt` stays exactly
+the model's environment; `weekly_update.py` always runs the pipeline with
+`.venv/bin/python` whichever interpreter serves the UI. The app only reads
+`live/` and `results/model_v1/`.
+
+**`--lan` serves the app unauthenticated to every device on the network.** The
+five pages give nothing away, but the update button starts a five-minute job
+and, with its prune box ticked, deletes cached raw data. Put an `update_token`
+in `.streamlit/secrets.toml` (gitignored) and the button goes behind it; omit
+`--lan` and the app is localhost-only.
 
 ## Known limitations
 
@@ -305,10 +337,14 @@ src/ucl/
   sim/               league_phase.py, tiebreakers.py, bracket.py, knockout.py
   backtest.py        forward chaining, paired losses, cluster bootstrap
   evaluate.py        log-loss, RPS, Brier, calibration
-scripts/             15 entry points: fetch, fit, simulate, backtest, tune_*, build_*, check_*
+  webapp/            logic behind the local app (no Streamlit imports but one)
+scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, build_*,
+                     check_*, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
-tests/               350 tests
+app/                 Streamlit entry point and the five views
+tests/               377 tests
 results/             one archived folder per experiment, accepted or rejected
+live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)
 ```
 
