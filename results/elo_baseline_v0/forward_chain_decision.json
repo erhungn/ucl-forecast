@@ -1,0 +1,27 @@
+{
+  "primary": {
+    "difference": -0.0004030218239665806,
+    "low": -0.0012580368529887143,
+    "high": 0.0004915158837358006,
+    "excludes_zero": false,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "per_match": {
+    "difference": -0.0004030218239665806,
+    "low": -0.0011441450791408786,
+    "high": 0.00031618420105668173,
+    "excludes_zero": false,
+    "clusters": null,
+    "n": 19188
+  },
+  "european_sensitivity": {
+    "difference": 0.0028512639525205383,
+    "low": 0.0015016254452146168,
+    "high": 0.004297688482681717,
+    "excludes_zero": true,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": false
+}

@@ -96,10 +96,34 @@ outputs/         # csv tables + figures
 ```
 
 ## Milestones
-1. Data pipeline + team-name mapping across sources + cutoff assertions
-2. Elo baseline model and simulator end-to-end (no Dixon-Coles yet)
-3. Tiebreaker and bracket tests passing
-4. Dixon-Coles with Elo covariate, fitted and compared to Elo baseline
-5. Backtests on 2024-25 and 2025-26
+1. Data pipeline + team-name mapping across sources + cutoff assertions - DONE
+2. Elo baseline model and simulator end-to-end (no Dixon-Coles yet) - DONE
+3. Tiebreaker and bracket tests passing - DONE (done with milestone 2)
+3.5 Backtest harness and Elo tuning - DONE. Reordered ahead of Dixon-Coles:
+   the simulator was sound and the ratings were the weak part, so tuning them
+   first gives milestone 4 a fixed reference. Frozen as `elo-baseline-v0`.
+4. Dixon-Coles with Elo covariate, fitted and compared to the Elo baseline
+5. Backtests: forward chaining over 2021-22 to 2025-26 (was 2024-25 and
+   2025-26 only; extended once history reached 2016-17)
 6. Frozen 2026-27 pre-tournament forecast; later, an "update after
    matchday k" mode
+
+## What the backtests established (do not relitigate without new evidence)
+- **Protocol.** Forward chaining: for each test season, tune on the seasons
+  before it and score it once. The pre-declared primary test is x3-weighted
+  pooled log-loss, frozen mode, with a **cluster bootstrap over (season, home
+  club)** - a mis-rated club biases all its matches the same way, so per-match
+  resampling understates uncertainty. Accept a change only if the pooled 95% CI
+  excludes zero. Everything else is a sensitivity.
+- **Elo tuning returned a null** (pooled delta -0.00040, CI [-0.00126,
+  +0.00049]), so the defaults stand: K 20/25, home advantage 65, carryover 0.90
+  toward the league mean.
+- **The goal-difference rule is fixed by judgement at the classic World Football
+  Elo weighting.** It is not identified by the data: the exponent pinned to 0.0
+  tuned on one season and to 0.90 tuned on four, trading off against K.
+- **Never tune on pure European log-loss**: out of sample it is significantly
+  worse (pooled delta +0.00285, CI [+0.00150, +0.00430]). ~500 European matches
+  a season is too thin; the domestic sample carries the statistical power.
+- Home advantage is applied **once**, in the Elo update. The Poisson model uses
+  the raw rating difference and carries home advantage in its own intercept.
+- The market is a **diagnostic only** and never enters an objective.
