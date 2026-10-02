@@ -1,0 +1,131 @@
+canonical,country,source,source_name,provenance
+Arsenal,ENG,football_data,Arsenal,verified against cache
+Arsenal,ENG,openfootball,Arsenal,verified against cache
+Arsenal,ENG,openfootball,Arsenal FC,verified against cache
+Arsenal,ENG,uefa,Arsenal,verified against uefa.com
+Aston Villa,ENG,football_data,Aston Villa,verified against cache
+Aston Villa,ENG,openfootball,Aston Villa,verified against cache
+Aston Villa,ENG,openfootball,Aston Villa FC,verified against cache
+Aston Villa,ENG,uefa,Aston Villa,verified against uefa.com
+Liverpool,ENG,football_data,Liverpool,verified against cache
+Liverpool,ENG,openfootball,Liverpool,verified against cache
+Liverpool,ENG,openfootball,Liverpool FC,verified against cache
+Liverpool,ENG,uefa,Liverpool,verified against uefa.com
+Manchester City,ENG,football_data,Man City,verified against cache
+Manchester City,ENG,openfootball,Manchester City,verified against cache
+Manchester City,ENG,openfootball,Manchester City FC,verified against cache
+Manchester City,ENG,uefa,Manchester City,verified against uefa.com
+Manchester United,ENG,football_data,Man United,verified against cache
+Manchester United,ENG,openfootball,Manchester United,verified against cache
+Manchester United,ENG,uefa,Manchester United,verified against uefa.com
+Barcelona,ESP,football_data,Barcelona,verified against cache
+Barcelona,ESP,openfootball,Barcelona,verified against cache
+Barcelona,ESP,openfootball,FC Barcelona,verified against cache
+Barcelona,ESP,uefa,Barcelona,verified against uefa.com
+Real Madrid,ESP,football_data,Real Madrid,verified against cache
+Real Madrid,ESP,openfootball,Real Madrid,verified against cache
+Real Madrid,ESP,openfootball,Real Madrid CF,verified against cache
+Real Madrid,ESP,uefa,Real Madrid,verified against uefa.com
+Atletico Madrid,ESP,football_data,Ath Madrid,verified against cache
+Atletico Madrid,ESP,openfootball,Atletico Madrid,verified against cache
+Atletico Madrid,ESP,openfootball,Club Atlético de Madrid,verified against cache
+Atletico Madrid,ESP,uefa,Atleti,verified against uefa.com
+Real Betis,ESP,football_data,Betis,verified against cache
+Real Betis,ESP,openfootball,Real Betis,verified against cache
+Real Betis,ESP,uefa,Real Betis,verified against uefa.com
+Villarreal,ESP,football_data,Villarreal,verified against cache
+Villarreal,ESP,openfootball,Villarreal,verified against cache
+Villarreal,ESP,openfootball,Villarreal CF,verified against cache
+Villarreal,ESP,uefa,Villarreal,verified against uefa.com
+Inter,ITA,football_data,Inter,verified against cache
+Inter,ITA,openfootball,Inter,verified against cache
+Inter,ITA,openfootball,FC Internazionale Milano,verified against cache
+Inter,ITA,uefa,Inter,verified against uefa.com
+Roma,ITA,football_data,Roma,verified against cache
+Roma,ITA,openfootball,AS Roma,verified against cache
+Roma,ITA,uefa,Roma,verified against uefa.com
+Napoli,ITA,football_data,Napoli,verified against cache
+Napoli,ITA,openfootball,Napoli,verified against cache
+Napoli,ITA,openfootball,SSC Napoli,verified against cache
+Napoli,ITA,uefa,Napoli,verified against uefa.com
+Como,ITA,football_data,Como,verified against cache
+Como,ITA,uefa,Como,verified against uefa.com
+Bayern Munich,GER,football_data,Bayern Munich,verified against cache
+Bayern Munich,GER,openfootball,Bayern Munich,verified against cache
+Bayern Munich,GER,openfootball,FC Bayern München,verified against cache
+Bayern Munich,GER,uefa,Bayern München,verified against uefa.com
+Borussia Dortmund,GER,football_data,Dortmund,verified against cache
+Borussia Dortmund,GER,openfootball,Borussia Dortmund,verified against cache
+Borussia Dortmund,GER,uefa,Borussia Dortmund,verified against uefa.com
+RB Leipzig,GER,football_data,RB Leipzig,verified against cache
+RB Leipzig,GER,openfootball,RB Leipzig,verified against cache
+RB Leipzig,GER,uefa,Leipzig,verified against uefa.com
+VfB Stuttgart,GER,football_data,Stuttgart,verified against cache
+VfB Stuttgart,GER,openfootball,VfB Stuttgart,verified against cache
+VfB Stuttgart,GER,uefa,Stuttgart,verified against uefa.com
+Paris Saint-Germain,FRA,football_data,Paris SG,verified against cache
+Paris Saint-Germain,FRA,openfootball,Paris Saint Germain,verified against cache
+Paris Saint-Germain,FRA,openfootball,Paris Saint-Germain FC,verified against cache
+Paris Saint-Germain,FRA,uefa,Paris,verified against uefa.com
+Lille,FRA,football_data,Lille,verified against cache
+Lille,FRA,openfootball,Lille,verified against cache
+Lille,FRA,openfootball,Lille OSC,verified against cache
+Lille,FRA,uefa,Lille,verified against uefa.com
+Lens,FRA,football_data,Lens,verified against cache
+Lens,FRA,openfootball,Lens,verified against cache
+Lens,FRA,openfootball,RC Lens,verified against cache
+Lens,FRA,uefa,Lens,verified against uefa.com
+Feyenoord,NED,football_data,Feyenoord,verified against cache
+Feyenoord,NED,openfootball,Feyenoord,verified against cache
+Feyenoord,NED,openfootball,Feyenoord Rotterdam,verified against cache
+Feyenoord,NED,uefa,Feyenoord,verified against uefa.com
+PSV Eindhoven,NED,football_data,PSV Eindhoven,verified against cache
+PSV Eindhoven,NED,openfootball,PSV,verified against cache
+PSV Eindhoven,NED,openfootball,PSV Eindhoven,verified against cache
+PSV Eindhoven,NED,uefa,PSV,verified against uefa.com
+Porto,POR,football_data,Porto,verified against cache
+Porto,POR,openfootball,FC Porto,verified against cache
+Porto,POR,uefa,Porto,verified against uefa.com
+Sporting CP,POR,football_data,Sp Lisbon,verified against cache
+Sporting CP,POR,openfootball,Sporting CP,verified against cache
+Sporting CP,POR,openfootball,Sporting Clube de Portugal,verified against cache
+Sporting CP,POR,uefa,Sporting CP,verified against uefa.com
+Club Brugge,BEL,football_data,Club Brugge,verified against cache
+Club Brugge,BEL,openfootball,Club Brugge KV,verified against cache
+Club Brugge,BEL,uefa,Club Brugge,verified against uefa.com
+Fenerbahce,TUR,football_data,Fenerbahce,verified against cache
+Fenerbahce,TUR,openfootball,Fenerbahce,verified against cache
+Fenerbahce,TUR,openfootball,Fenerbahçe,verified against cache
+Fenerbahce,TUR,uefa,Fenerbahçe,verified against uefa.com
+Galatasaray,TUR,football_data,Galatasaray,verified against cache
+Galatasaray,TUR,openfootball,Galatasaray,verified against cache
+Galatasaray,TUR,openfootball,Galatasaray SK,verified against cache
+Galatasaray,TUR,uefa,Galatasaray,verified against uefa.com
+AEK Athens,GRE,football_data,AEK,verified against cache
+AEK Athens,GRE,openfootball,AEK Athen,verified against cache
+AEK Athens,GRE,openfootball,AEK Athens FC,verified against cache
+AEK Athens,GRE,uefa,AEK Athens,verified against uefa.com
+Bodo/Glimt,NOR,football_data,Bodo/Glimt,verified against cache
+Bodo/Glimt,NOR,openfootball,Bodo/Glimt,verified against cache
+Bodo/Glimt,NOR,openfootball,FK Bodø/Glimt,verified against cache
+Bodo/Glimt,NOR,uefa,Bodø/Glimt,verified against uefa.com
+Viking,NOR,football_data,Viking,verified against cache
+Viking,NOR,openfootball,Viking,verified against cache
+Viking,NOR,openfootball,Viking FK,verified against cache
+Viking,NOR,uefa,Viking,verified against uefa.com
+LASK,AUT,football_data,LASK,verified against cache
+LASK,AUT,openfootball,LASK,verified against cache
+LASK,AUT,openfootball,Lask Linz,verified against cache
+LASK,AUT,uefa,LASK,verified against uefa.com
+Slavia Praha,CZE,openfootball,Slavia Praha,verified against cache
+Slavia Praha,CZE,openfootball,SK Slavia Praha,verified against cache
+Slavia Praha,CZE,uefa,Slavia Praha,verified against uefa.com
+Slovan Bratislava,SVK,openfootball,Slovan Bratislava,verified against cache
+Slovan Bratislava,SVK,openfootball,ŠK Slovan Bratislava,verified against cache
+Slovan Bratislava,SVK,uefa,Slovan Bratislava,verified against uefa.com
+Shakhtar Donetsk,UKR,openfootball,Shakhtar Donetsk,verified against cache
+Shakhtar Donetsk,UKR,openfootball,FK Shakhtar Donetsk,verified against cache
+Shakhtar Donetsk,UKR,uefa,Shakhtar,verified against uefa.com
+Sabah,AZE,openfootball,Sabah FK,verified against cache
+Sabah,AZE,openfootball,Sabah FA,verified against cache
+Sabah,AZE,uefa,Sabah,verified against uefa.com

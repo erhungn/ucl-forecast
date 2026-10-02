@@ -1,0 +1,37 @@
+team,country,domestic_league,football_data_code,confirmed_by
+Arsenal,ENG,Premier League,E0,uefa.com+wikipedia
+Aston Villa,ENG,Premier League,E0,uefa.com+wikipedia
+Liverpool,ENG,Premier League,E0,uefa.com+wikipedia
+Manchester City,ENG,Premier League,E0,uefa.com+wikipedia
+Manchester United,ENG,Premier League,E0,uefa.com+wikipedia
+Barcelona,ESP,LaLiga,SP1,uefa.com+wikipedia
+Real Madrid,ESP,LaLiga,SP1,uefa.com+wikipedia
+Atletico Madrid,ESP,LaLiga,SP1,uefa.com+wikipedia
+Real Betis,ESP,LaLiga,SP1,uefa.com+wikipedia
+Villarreal,ESP,LaLiga,SP1,uefa.com+wikipedia
+Inter,ITA,Serie A,I1,uefa.com+wikipedia
+Roma,ITA,Serie A,I1,uefa.com+wikipedia
+Napoli,ITA,Serie A,I1,uefa.com+wikipedia
+Como,ITA,Serie A,I1,uefa.com+wikipedia
+Bayern Munich,GER,Bundesliga,D1,uefa.com+wikipedia
+Borussia Dortmund,GER,Bundesliga,D1,uefa.com+wikipedia
+RB Leipzig,GER,Bundesliga,D1,uefa.com+wikipedia
+VfB Stuttgart,GER,Bundesliga,D1,uefa.com+wikipedia
+Paris Saint-Germain,FRA,Ligue 1,F1,uefa.com+wikipedia
+Lille,FRA,Ligue 1,F1,uefa.com+wikipedia
+Lens,FRA,Ligue 1,F1,uefa.com+wikipedia
+Feyenoord,NED,Eredivisie,N1,uefa.com+wikipedia
+PSV Eindhoven,NED,Eredivisie,N1,uefa.com+wikipedia
+Porto,POR,Primeira Liga,P1,uefa.com+wikipedia
+Sporting CP,POR,Primeira Liga,P1,uefa.com+wikipedia
+Club Brugge,BEL,Pro League,B1,uefa.com+wikipedia
+Fenerbahce,TUR,Super Lig,T1,uefa.com+wikipedia
+Galatasaray,TUR,Super Lig,T1,uefa.com+wikipedia
+AEK Athens,GRE,Super League,G1,uefa.com+wikipedia
+Bodo/Glimt,NOR,Eliteserien,NOR,uefa.com+wikipedia
+Viking,NOR,Eliteserien,NOR,uefa.com+wikipedia
+LASK,AUT,Bundesliga,AUT,uefa.com+wikipedia
+Slavia Praha,CZE,Chance Liga,,uefa.com+wikipedia
+Slovan Bratislava,SVK,Nike Liga,,uefa.com+wikipedia
+Shakhtar Donetsk,UKR,Premier Liha,,uefa.com+wikipedia
+Sabah,AZE,Premyer Liqa,,uefa.com+wikipedia

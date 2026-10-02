@@ -7,6 +7,17 @@ data/processed/*
 outputs/*
 !**/.gitkeep
 
+# ... except the hand-curated inputs and the provenance records, which are
+# small, verified by hand, and needed to reproduce a run on another machine.
+!data/raw/teams_*.csv
+!data/raw/team_names.csv
+!data/raw/fixtures_*.csv
+# Descend into the download directories (git skips an excluded directory
+# entirely) so their manifests can be re-included, but keep the payload out.
+!data/raw/*/
+data/raw/*/*
+!data/raw/*/manifest.json
+
 # Python
 __pycache__/
 *.py[cod]
