@@ -379,3 +379,155 @@ def pooled_objective(
         losses.append(frame.loss.to_numpy())
         weights.append(weight)
     return weighted_mean(np.concatenate(losses), np.concatenate(weights))
+
+
+# --- Dixon-Coles scoring ---------------------------------------------------
+
+def match_probabilities_dc(rate_home, rate_away, rho: float) -> np.ndarray:
+    """P(home, draw, away) from the corrected scoreline matrix, vectorised."""
+    from ucl.models.dixon_coles import TAU_FLOOR
+
+    goals = np.arange(MAX_GOALS + 1)
+    rate_home = np.asarray(rate_home, dtype=float)
+    rate_away = np.asarray(rate_away, dtype=float)
+    home_pmf = poisson.pmf(goals[None, :], rate_home[:, None])
+    away_pmf = poisson.pmf(goals[None, :], rate_away[:, None])
+    joint = home_pmf[:, :, None] * away_pmf[:, None, :]
+
+    correction = np.ones((MAX_GOALS + 1, MAX_GOALS + 1))[None, :, :].repeat(len(rate_home), 0)
+    correction[:, 0, 0] = 1.0 - rate_home * rate_away * rho
+    correction[:, 0, 1] = 1.0 + rate_home * rho
+    correction[:, 1, 0] = 1.0 + rate_away * rho
+    correction[:, 1, 1] = 1.0 - rho
+    joint = joint * np.maximum(correction, TAU_FLOOR)
+
+    upper = np.triu(np.ones((MAX_GOALS + 1, MAX_GOALS + 1)), 1)
+    draw = np.eye(MAX_GOALS + 1)
+    probabilities = np.stack(
+        [(joint * upper.T).sum(axis=(1, 2)),
+         (joint * draw).sum(axis=(1, 2)),
+         (joint * upper).sum(axis=(1, 2))], axis=1)
+    return probabilities / probabilities.sum(axis=1, keepdims=True)
+
+
+@lru_cache(maxsize=512)
+def _fitted_dc(cutoff: date, half_life_days: float, ridge: float):
+    """Elo ratings at the cutoff plus a Dixon-Coles fit on the same frame."""
+    from ucl.models.dixon_coles import fit_dixon_coles
+
+    training = _training_frame(cutoff)
+    offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
+    ratings = replay(training, offsets, DEFAULT_PARAMS)
+    model = fit_dixon_coles(
+        ratings.pre_match, cutoff, half_life_days=half_life_days, ridge=ridge)
+    return ratings, model
+
+
+def score_season_dc(
+    season_label: str,
+    half_life_days: float,
+    ridge: float,
+    *,
+    modes: tuple[str, ...] = ("frozen",),
+) -> pd.DataFrame:
+    """Score a season's post-cutoff matches with Dixon-Coles.
+
+    Attack and defence are frozen at the cutoff; in walk-forward mode the Elo
+    ratings still update after every scored match, which is the same split the
+    simulator uses.
+    """
+    cfg = SEASONS[season_label]
+    ratings, model = _fitted_dc(cfg.cutoff_date, half_life_days, ridge)
+    domestic, euro = _evaluation_frames(season_label)
+
+    pieces = []
+    for mode in modes:
+        for frame, competition in ((domestic, "domestic"), (euro, "european")):
+            frame = frame.sort_values("date")
+            known = {c for c in set(frame.home_id) | set(frame.away_id) if c in ratings.ratings}
+            usable = frame[frame.home_id.isin(known) & frame.away_id.isin(known)]
+            if mode == "frozen":
+                elo_home = usable.home_id.map(ratings.ratings).to_numpy(dtype=float)
+                elo_away = usable.away_id.map(ratings.ratings).to_numpy(dtype=float)
+                rate_home, rate_away = model.rates(
+                    elo_home, elo_away, usable.home_id.to_numpy(), usable.away_id.to_numpy())
+                probabilities = match_probabilities_dc(rate_home, rate_away, model.rho)
+            else:
+                live = dict(ratings.ratings)
+                collected = []
+                for row in usable.itertuples():
+                    elo_home, elo_away = live[row.home_id], live[row.away_id]
+                    rate_home, rate_away = model.rates(
+                        [elo_home], [elo_away], [row.home_id], [row.away_id])
+                    collected.append(
+                        match_probabilities_dc(rate_home, rate_away, model.rho)[0])
+                    expected = 1.0 / (1.0 + 10.0 ** (
+                        -(elo_home + DEFAULT_PARAMS.home_advantage - elo_away) / 400.0))
+                    actual = 1.0 if row.hg > row.ag else (0.5 if row.hg == row.ag else 0.0)
+                    k = (DEFAULT_PARAMS.k_european if competition == "european"
+                         else DEFAULT_PARAMS.k_domestic)
+                    change = k * goal_difference_multiplier(
+                        row.hg - row.ag, DEFAULT_PARAMS.gd_exponent) * (actual - expected)
+                    live[row.home_id] = elo_home + change
+                    live[row.away_id] = elo_away - change
+                probabilities = np.array(collected)
+            pieces.append(pd.DataFrame({
+                "date": usable.date.to_numpy(), "competition": competition, "mode": mode,
+                "home": usable.home_id.to_numpy(), "away": usable.away_id.to_numpy(),
+                "p_home": probabilities[:, 0], "p_draw": probabilities[:, 1],
+                "p_away": probabilities[:, 2], "outcome": _outcomes(usable),
+            }))
+    return pd.concat(pieces, ignore_index=True)
+
+
+def _losses_from_rows(frame: pd.DataFrame) -> np.ndarray:
+    probabilities = frame[["p_home", "p_draw", "p_away"]].to_numpy()
+    probabilities = probabilities / probabilities.sum(axis=1, keepdims=True)
+    probabilities = np.clip(probabilities, 1e-15, 1.0)
+    return -np.log(probabilities[np.arange(len(frame)), frame.outcome.to_numpy()])
+
+
+def paired_losses_dc(
+    season_label: str,
+    half_life_days: float,
+    ridge: float,
+    *,
+    mode: str = "frozen",
+    european_weight: float = 3.0,
+) -> pd.DataFrame:
+    """Dixon-Coles against the Elo baseline on the same matches, paired."""
+    dc = score_season_dc(season_label, half_life_days, ridge, modes=(mode,))
+    dc = dc[dc["mode"] == mode].reset_index(drop=True)
+    base = _match_losses(score_season(season_label, DEFAULT_PARAMS, modes=(mode,)), mode)
+    if len(dc) != len(base) or not (dc.home.to_numpy() == base.home.to_numpy()).all():
+        raise ValueError(f"{season_label}: Dixon-Coles and the baseline do not align")
+    losses = _losses_from_rows(dc)
+    return pd.DataFrame({
+        "season": season_label, "competition": dc.competition, "home": dc.home,
+        "cluster": season_label + "/" + dc.home.astype(str),
+        "loss_tuned": losses, "loss_default": base.loss.to_numpy(),
+        "difference": losses - base.loss.to_numpy(),
+        "weight": np.where(dc.competition != "domestic", european_weight, 1.0),
+    })
+
+
+def pooled_objective_dc(
+    seasons: tuple[str, ...],
+    half_life_days: float,
+    ridge: float,
+    *,
+    european_weight: float = 3.0,
+    european_only: bool = False,
+) -> float:
+    """Dixon-Coles pooled log-loss over the given seasons, frozen mode."""
+    losses, weights = [], []
+    for season_label in seasons:
+        frame = score_season_dc(season_label, half_life_days, ridge)
+        if european_only:
+            frame = frame[frame.competition != "domestic"]
+            weight = np.ones(len(frame))
+        else:
+            weight = np.where(frame.competition != "domestic", european_weight, 1.0)
+        losses.append(_losses_from_rows(frame))
+        weights.append(weight)
+    return weighted_mean(np.concatenate(losses), np.concatenate(weights))
