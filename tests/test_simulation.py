@@ -140,3 +140,16 @@ def test_knockout_run_fills_every_round():
     # Nobody eliminated in the league phase may appear in the knockout.
     qualified = {by_position[p] for p in range(1, 25)}
     assert set(outcome["round_of_16"]) <= qualified
+
+
+def test_the_simulator_refuses_a_group_stage_season():
+    """2021-22 to 2023-24 had 32 teams in 8 groups and a different bracket."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "scripts/simulate.py", "--season", "2022-23", "-n", "1"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert "group_stage" in (result.stdout + result.stderr)

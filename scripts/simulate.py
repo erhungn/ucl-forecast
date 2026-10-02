@@ -45,6 +45,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default=None)
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
+    if cfg.tournament_format != "league_phase":
+        raise SystemExit(
+            f"{cfg.label} used the {cfg.tournament_format} format (32 teams in 8 groups), "
+            "which this simulator does not implement; it exists for the ratings backtest only"
+        )
 
     started = time.perf_counter()
     fixtures = load_fixtures(cfg.label)

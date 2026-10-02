@@ -86,6 +86,11 @@ class SeasonConfig:
     league_phase_start: date
     league_phase_end: date
     fixtures_path: Path
+    #: "league_phase" (36 teams, one table, from 2024-25) or "group_stage"
+    #: (32 teams in 8 groups, before that). The simulator only handles the
+    #: league phase; the group-stage seasons exist for the ratings backtest,
+    #: where only `cutoff_date` is used, and have no fixtures file.
+    tournament_format: str = "league_phase"
 
 
 def _fixtures(label: str) -> Path:
@@ -93,6 +98,30 @@ def _fixtures(label: str) -> Path:
 
 
 SEASONS: dict[str, SeasonConfig] = {
+    "2021-22": SeasonConfig(
+        label="2021-22",
+        cutoff_date=date(2021, 9, 13),
+        league_phase_start=date(2021, 9, 14),
+        league_phase_end=date(2021, 12, 9),
+        fixtures_path=_fixtures("2021-22"),
+        tournament_format="group_stage",
+    ),
+    "2022-23": SeasonConfig(
+        label="2022-23",
+        cutoff_date=date(2022, 9, 5),
+        league_phase_start=date(2022, 9, 6),
+        league_phase_end=date(2022, 11, 2),
+        fixtures_path=_fixtures("2022-23"),
+        tournament_format="group_stage",
+    ),
+    "2023-24": SeasonConfig(
+        label="2023-24",
+        cutoff_date=date(2023, 9, 18),
+        league_phase_start=date(2023, 9, 19),
+        league_phase_end=date(2023, 12, 13),
+        fixtures_path=_fixtures("2023-24"),
+        tournament_format="group_stage",
+    ),
     "2024-25": SeasonConfig(
         label="2024-25",
         cutoff_date=date(2024, 9, 16),
@@ -117,6 +146,9 @@ SEASONS: dict[str, SeasonConfig] = {
 }
 
 DEFAULT_SEASON = "2026-27"
+
+#: Seasons the ratings backtest scores, oldest first.
+BACKTEST_SEASONS = ("2021-22", "2022-23", "2023-24", "2024-25", "2025-26")
 
 # 2026-27 default, for scripts and reports. Loaders take a cutoff argument.
 CUTOFF_DATE = SEASONS[DEFAULT_SEASON].cutoff_date

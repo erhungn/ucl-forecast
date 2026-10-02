@@ -266,3 +266,116 @@ def _score_frame(
             "outcome": _outcomes(usable),
         }
     )
+
+
+# --- pooled scoring, paired differences, and bootstraps --------------------
+
+def _match_losses(score: SeasonScore, mode: str = "frozen") -> pd.DataFrame:
+    frame = score.rows[score.rows["mode"] == mode].reset_index(drop=True)
+    probabilities = frame[["p_home", "p_draw", "p_away"]].to_numpy()
+    probabilities = probabilities / probabilities.sum(axis=1, keepdims=True)
+    probabilities = np.clip(probabilities, 1e-15, 1.0)
+    losses = -np.log(probabilities[np.arange(len(frame)), frame.outcome.to_numpy()])
+    return frame.assign(loss=losses)
+
+
+def paired_losses(
+    season_label: str,
+    params: EloParams,
+    reference: EloParams,
+    *,
+    mode: str = "frozen",
+    european_weight: float = 3.0,
+) -> pd.DataFrame:
+    """Per-match loss under two parameter sets, aligned, with weights and clusters.
+
+    The cluster is ``(season, home club)``: every match belongs to exactly one,
+    so no match is counted twice. Clustering matters because a mis-rated club
+    biases every one of its matches the same way, which per-match resampling
+    treats as independent evidence and so understates the uncertainty.
+    """
+    tuned = _match_losses(score_season(season_label, params, modes=(mode,)), mode)
+    base = _match_losses(score_season(season_label, reference, modes=(mode,)), mode)
+    if len(tuned) != len(base) or not (tuned.home.to_numpy() == base.home.to_numpy()).all():
+        raise ValueError(f"{season_label}: the two scorings do not align match for match")
+    return pd.DataFrame(
+        {
+            "season": season_label,
+            "competition": tuned.competition,
+            "home": tuned.home,
+            "cluster": season_label + "/" + tuned.home.astype(str),
+            "loss_tuned": tuned.loss,
+            "loss_default": base.loss,
+            "difference": tuned.loss - base.loss,
+            "weight": np.where(tuned.competition != "domestic", european_weight, 1.0),
+        }
+    )
+
+
+def weighted_mean(values: np.ndarray, weights: np.ndarray) -> float:
+    return float((values * weights).sum() / weights.sum())
+
+
+def bootstrap_difference(
+    frame: pd.DataFrame,
+    *,
+    cluster: bool,
+    draws: int = 4000,
+    seed: int = 20260907,
+) -> dict:
+    """Paired bootstrap of the weighted mean difference, by match or by cluster."""
+    rng = np.random.default_rng(seed)
+    differences = frame.difference.to_numpy()
+    weights = frame.weight.to_numpy()
+    observed = weighted_mean(differences, weights)
+
+    if cluster:
+        keys = frame.cluster.to_numpy()
+        groups = pd.Series(range(len(frame))).groupby(keys).apply(list)
+        index = [np.asarray(v) for v in groups]
+        samples = np.empty(draws)
+        for draw in range(draws):
+            picked = rng.integers(0, len(index), len(index))
+            rows = np.concatenate([index[i] for i in picked])
+            samples[draw] = weighted_mean(differences[rows], weights[rows])
+    else:
+        samples = np.empty(draws)
+        size = len(frame)
+        for draw in range(draws):
+            rows = rng.integers(0, size, size)
+            samples[draw] = weighted_mean(differences[rows], weights[rows])
+
+    low, high = np.percentile(samples, [2.5, 97.5])
+    return {
+        "difference": observed,
+        "low": float(low),
+        "high": float(high),
+        "excludes_zero": bool(low * high > 0),
+        "clusters": int(frame.cluster.nunique()) if cluster else None,
+        "n": int(len(frame)),
+    }
+
+
+def pooled_objective(
+    seasons: tuple[str, ...],
+    params: EloParams,
+    *,
+    european_weight: float = 3.0,
+    european_only: bool = False,
+) -> float:
+    """Log-loss over every match of the given seasons, pooled, frozen mode.
+
+    Matches are concatenated rather than averaged per season, so the objective
+    is one likelihood over everything the training window saw.
+    """
+    losses, weights = [], []
+    for season_label in seasons:
+        frame = _match_losses(score_season(season_label, params, modes=("frozen",)))
+        if european_only:
+            frame = frame[frame.competition != "domestic"]
+            weight = np.ones(len(frame))
+        else:
+            weight = np.where(frame.competition != "domestic", european_weight, 1.0)
+        losses.append(frame.loss.to_numpy())
+        weights.append(weight)
+    return weighted_mean(np.concatenate(losses), np.concatenate(weights))

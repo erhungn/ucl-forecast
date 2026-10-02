@@ -79,3 +79,57 @@ def test_ratings_differ_between_cutoffs():
     shared = set(early) & set(late)
     changed = sum(1 for club in shared if abs(early[club] - late[club]) > 1.0)
     assert changed > 0.5 * len(shared)
+
+
+# The backtest seasons added in milestone 2.6, including the three group-stage
+# ones, must satisfy the same guarantees.
+EARLY_SEASONS = ["2021-22", "2022-23", "2023-24"]
+
+
+@pytest.mark.parametrize("season_label", EARLY_SEASONS)
+def test_group_stage_seasons_leak_nothing(season_label):
+    from ucl.config import SEASONS
+
+    cfg = SEASONS[season_label]
+    frame = _training_frame(cfg.cutoff_date)
+    assert frame.date.max().date() < cfg.cutoff_date
+    assert frame[frame.is_european].date.max().date() < cfg.cutoff_date
+
+
+def test_forward_chaining_folds_train_only_on_earlier_seasons():
+    """A fold's training windows must all close before its test cutoff."""
+    import pandas as pd
+
+    from ucl.backtest import _evaluation_frames, season_end
+    from ucl.config import BACKTEST_SEASONS, SEASONS
+
+    for index in range(1, len(BACKTEST_SEASONS)):
+        test = BACKTEST_SEASONS[index]
+        for train in BACKTEST_SEASONS[:index]:
+            assert SEASONS[train].cutoff_date < SEASONS[test].cutoff_date
+            # The training season's scored window closes before the test cutoff.
+            assert season_end(train) < pd.Timestamp(SEASONS[test].cutoff_date)
+            domestic, european = _evaluation_frames(train)
+            for frame in (domestic, european):
+                assert frame.date.max() < pd.Timestamp(SEASONS[test].cutoff_date)
+
+
+def test_cutoffs_increase_with_the_season_order():
+    from ucl.config import BACKTEST_SEASONS, SEASONS
+
+    cutoffs = [SEASONS[s].cutoff_date for s in BACKTEST_SEASONS]
+    assert cutoffs == sorted(cutoffs)
+
+
+def test_group_stage_seasons_are_flagged_and_have_no_fixtures():
+    """The simulator must not be pointed at a 32-team season."""
+    from ucl.config import SEASONS
+
+    for season_label in EARLY_SEASONS:
+        cfg = SEASONS[season_label]
+        assert cfg.tournament_format == "group_stage"
+        assert not cfg.fixtures_path.exists()
+    for season_label in ("2024-25", "2025-26", "2026-27"):
+        cfg = SEASONS[season_label]
+        assert cfg.tournament_format == "league_phase"
+        assert cfg.fixtures_path.exists()
