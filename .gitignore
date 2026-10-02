@@ -14,6 +14,7 @@ outputs/*
 !data/raw/name_decisions.csv
 !data/raw/fixtures_*.csv
 !data/raw/pots_*.csv
+!data/raw/outright_odds_*.csv
 # Descend into the download directories (git skips an excluded directory
 # entirely) so their manifests can be re-included, but keep the payload out.
 !data/raw/*/
