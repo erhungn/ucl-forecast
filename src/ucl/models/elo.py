@@ -265,11 +265,17 @@ def replay(matches: pd.DataFrame, offsets: dict[str, float]) -> EloResult:
             assoc = row.home_assoc
             previous = season_of.get(assoc)
             if previous is not None and row.season != previous:
-                for club in clubs_by_assoc.get(assoc, set()):
-                    target = regression_target(club)
-                    ratings[club] = target + config.SEASON_CARRYOVER * (
-                        ratings[club] - target
-                    )
+                # The target is computed once, from the ratings as they stand
+                # before any club is regressed. Recomputing it inside the loop
+                # would make each club's result depend on the order of the
+                # others - and set iteration order is not stable between runs.
+                members = sorted(clubs_by_assoc.get(assoc, set()))
+                if members:
+                    target = regression_target(members[0])
+                    for club in members:
+                        ratings[club] = target + config.SEASON_CARRYOVER * (
+                            ratings[club] - target
+                        )
             season_of[assoc] = row.season
 
         for club, assoc in ((row.home_id, row.home_assoc), (row.away_id, row.away_assoc)):
