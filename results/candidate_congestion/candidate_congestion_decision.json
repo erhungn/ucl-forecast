@@ -1,0 +1,29 @@
+{
+  "candidate": "congestion",
+  "primary": "pooled",
+  "cluster": {
+    "difference": 4.563303641156482e-05,
+    "low": -1.3911390599455737e-05,
+    "high": 0.00010327045785035326,
+    "excludes_zero": false,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "per_match": {
+    "difference": 4.563303641156482e-05,
+    "low": -1.2301720800746108e-05,
+    "high": 0.0001016482499950056,
+    "excludes_zero": false,
+    "clusters": null,
+    "n": 19188
+  },
+  "all_matches": {
+    "difference": 4.563303641156482e-05,
+    "low": -1.3911390599455737e-05,
+    "high": 0.00010327045785035326,
+    "excludes_zero": false,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": false
+}

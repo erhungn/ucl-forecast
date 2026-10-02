@@ -531,3 +531,173 @@ def pooled_objective_dc(
         losses.append(_losses_from_rows(frame))
         weights.append(weight)
     return weighted_mean(np.concatenate(losses), np.concatenate(weights))
+
+
+# --- candidate covariates --------------------------------------------------
+
+REST_CAP_DAYS = 14.0
+SHORT_REST_DAYS = 4.0
+
+
+def add_rest_days(frame: pd.DataFrame) -> pd.DataFrame:
+    """Days since each club's previous match, as per-side covariates.
+
+    Causal by construction: a match's rest depends only on earlier matches, and
+    because fixtures are scheduled it is known before kick-off, so this is the
+    one covariate available to the forecast as well as the backtest.
+
+    Measurement error worth remembering: rest is computed from the competitions
+    in the cache - 18 domestic leagues plus Europe - so a club playing a
+    domestic cup tie we do not hold looks rested when it is not. That pushes the
+    coefficient toward zero.
+    """
+    ordered = frame.sort_values("date").reset_index(drop=True)
+    last: dict[str, pd.Timestamp] = {}
+    rest_home = np.full(len(ordered), np.nan)
+    rest_away = np.full(len(ordered), np.nan)
+    for position, row in enumerate(ordered.itertuples()):
+        for club, store in ((row.home_id, "home"), (row.away_id, "away")):
+            previous = last.get(club)
+            if previous is not None:
+                days = (row.date - previous).days
+                if store == "home":
+                    rest_home[position] = days
+                else:
+                    rest_away[position] = days
+            last[club] = row.date
+    for name, values in (("home", rest_home), ("away", rest_away)):
+        capped = np.clip(values, 0.0, REST_CAP_DAYS) / 7.0
+        ordered[f"rest_{name}"] = np.where(np.isnan(values), REST_CAP_DAYS / 7.0, capped)
+        ordered[f"short_rest_{name}"] = np.where(
+            np.isnan(values), 0.0, (values < SHORT_REST_DAYS).astype(float))
+    return ordered
+
+
+@lru_cache(maxsize=32)
+def _fitted_market(cutoff: date, half_life_days: float):
+    """Elo ratings plus market-implied ratings and the two-covariate model."""
+    from ucl.data import football_data
+    from ucl.models.covariates import fit_covariate_model
+    from ucl.models.market import fit_market_ratings
+
+    training = _training_frame(cutoff)
+    offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
+    ratings = replay(training, offsets, DEFAULT_PARAMS)
+    market = fit_market_ratings(
+        football_data.load_results(cutoff), cutoff, half_life_days=half_life_days)
+    frame = ratings.pre_match.copy()
+    frame["d_market"] = market.difference(frame.home_id.to_numpy(), frame.away_id.to_numpy())
+    model = fit_covariate_model(frame, symmetric=("d_market",))
+    return ratings, market, model
+
+
+@lru_cache(maxsize=8)
+def _fitted_congestion(cutoff: date):
+    """Elo ratings plus the rest-day model."""
+    from ucl.models.covariates import fit_covariate_model
+
+    training = _training_frame(cutoff)
+    offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
+    ratings = replay(training, offsets, DEFAULT_PARAMS)
+    frame = add_rest_days(ratings.pre_match)
+    model = fit_covariate_model(frame, per_side=("rest", "short_rest"))
+    return ratings, model
+
+
+def score_season_covariate(
+    season_label: str, candidate: str, *, half_life_days: float = 365.0,
+    modes: tuple[str, ...] = ("frozen",),
+) -> pd.DataFrame:
+    """Score a season under a candidate covariate model, frozen ratings."""
+    cfg = SEASONS[season_label]
+    domestic, euro = _evaluation_frames(season_label)
+
+    if candidate == "market":
+        ratings, market, model = _fitted_market(cfg.cutoff_date, half_life_days)
+    elif candidate == "congestion":
+        ratings, model = _fitted_congestion(cfg.cutoff_date)
+        history = _training_frame(cfg.cutoff_date)[["date", "home_id", "away_id"]]
+    else:
+        raise ValueError(f"unknown candidate {candidate!r}")
+
+    pieces = []
+    for mode in modes:
+        for frame, competition in ((domestic, "domestic"), (euro, "european")):
+            frame = frame.sort_values("date")
+            known = {c for c in set(frame.home_id) | set(frame.away_id) if c in ratings.ratings}
+            usable = frame[frame.home_id.isin(known) & frame.away_id.isin(known)].copy()
+            elo_home = usable.home_id.map(ratings.ratings).to_numpy(dtype=float)
+            elo_away = usable.away_id.map(ratings.ratings).to_numpy(dtype=float)
+
+            if candidate == "market":
+                difference = market.difference(
+                    usable.home_id.to_numpy(), usable.away_id.to_numpy())
+                rate_home, rate_away = model.rates(
+                    elo_home, elo_away, symmetric={"d_market": difference})
+            else:
+                combined = pd.concat(
+                    [history, usable[["date", "home_id", "away_id"]]], ignore_index=True)
+                with_rest = add_rest_days(combined).tail(len(usable))
+                rate_home, rate_away = model.rates(
+                    elo_home, elo_away,
+                    per_side_home={"rest": with_rest.rest_home.to_numpy(),
+                                   "short_rest": with_rest.short_rest_home.to_numpy()},
+                    per_side_away={"rest": with_rest.rest_away.to_numpy(),
+                                   "short_rest": with_rest.short_rest_away.to_numpy()})
+
+            goals = np.arange(MAX_GOALS + 1)
+            home_pmf = poisson.pmf(goals[None, :], np.asarray(rate_home)[:, None])
+            away_pmf = poisson.pmf(goals[None, :], np.asarray(rate_away)[:, None])
+            joint = home_pmf[:, :, None] * away_pmf[:, None, :]
+            upper = np.triu(np.ones((MAX_GOALS + 1, MAX_GOALS + 1)), 1)
+            draw = np.eye(MAX_GOALS + 1)
+            probabilities = np.stack(
+                [(joint * upper.T).sum(axis=(1, 2)), (joint * draw).sum(axis=(1, 2)),
+                 (joint * upper).sum(axis=(1, 2))], axis=1)
+            probabilities = probabilities / probabilities.sum(axis=1, keepdims=True)
+            pieces.append(pd.DataFrame({
+                "date": usable.date.to_numpy(), "competition": competition, "mode": mode,
+                "home": usable.home_id.to_numpy(), "away": usable.away_id.to_numpy(),
+                "p_home": probabilities[:, 0], "p_draw": probabilities[:, 1],
+                "p_away": probabilities[:, 2], "outcome": _outcomes(usable),
+            }))
+    return pd.concat(pieces, ignore_index=True)
+
+
+def paired_losses_covariate(
+    season_label: str, candidate: str, *, half_life_days: float = 365.0,
+    mode: str = "frozen", european_weight: float = 3.0,
+) -> pd.DataFrame:
+    """A candidate against the accepted baseline on the same matches, paired."""
+    rows = score_season_covariate(
+        season_label, candidate, half_life_days=half_life_days, modes=(mode,))
+    rows = rows[rows["mode"] == mode].reset_index(drop=True)
+    base = _match_losses(score_season(season_label, DEFAULT_PARAMS, modes=(mode,)), mode)
+    if len(rows) != len(base) or not (rows.home.to_numpy() == base.home.to_numpy()).all():
+        raise ValueError(f"{season_label}: {candidate} and the baseline do not align")
+    losses = _losses_from_rows(rows)
+    return pd.DataFrame({
+        "season": season_label, "competition": rows.competition, "home": rows.home,
+        "cluster": season_label + "/" + rows.home.astype(str),
+        "loss_tuned": losses, "loss_default": base.loss.to_numpy(),
+        "difference": losses - base.loss.to_numpy(),
+        "weight": np.where(rows.competition != "domestic", european_weight, 1.0),
+    })
+
+
+def pooled_objective_covariate(
+    seasons: tuple[str, ...], candidate: str, *, half_life_days: float = 365.0,
+    european_weight: float = 3.0, european_only: bool = False,
+) -> float:
+    losses, weights = [], []
+    for season_label in seasons:
+        frame = score_season_covariate(
+            season_label, candidate, half_life_days=half_life_days)
+        if european_only:
+            frame = frame[frame.competition != "domestic"]
+            weight = np.ones(len(frame))
+        else:
+            weight = np.where(frame.competition != "domestic", european_weight, 1.0)
+        losses.append(_losses_from_rows(frame))
+        weights.append(weight)
+    return weighted_mean(np.concatenate(losses), np.concatenate(weights))

@@ -1,0 +1,29 @@
+{
+  "candidate": "market",
+  "primary": "european",
+  "cluster": {
+    "difference": 0.002538748929870454,
+    "low": 0.0007480560028119628,
+    "high": 0.004348598034879758,
+    "excludes_zero": true,
+    "clusters": 405,
+    "n": 1832
+  },
+  "per_match": {
+    "difference": 0.002538748929870454,
+    "low": 0.0008519812131056017,
+    "high": 0.004143728391607657,
+    "excludes_zero": true,
+    "clusters": null,
+    "n": 1832
+  },
+  "all_matches": {
+    "difference": 7.380460679973957e-05,
+    "low": -0.0005694445213124918,
+    "high": 0.0007059870573724933,
+    "excludes_zero": false,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": false
+}
