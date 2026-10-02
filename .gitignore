@@ -11,6 +11,7 @@ outputs/*
 # small, verified by hand, and needed to reproduce a run on another machine.
 !data/raw/teams_*.csv
 !data/raw/team_names.csv
+!data/raw/name_decisions.csv
 !data/raw/fixtures_*.csv
 !data/raw/pots_*.csv
 # Descend into the download directories (git skips an excluded directory

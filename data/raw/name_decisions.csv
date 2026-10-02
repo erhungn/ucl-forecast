@@ -1,0 +1,70 @@
+kind,canonical,country,source,source_name,note
+user-reviewed,Ad. Demirspor,TUR,openfootball,Adana Demirspor,
+user-reviewed,Aris,GRE,openfootball,Aris Saloniki,
+user-reviewed,Aris,GRE,openfootball,Aris Thessalonikis,
+user-reviewed,Leverkusen,GER,openfootball,Bayer 04 Leverkusen,
+user-reviewed,Leverkusen,GER,openfootball,Bayer Leverkusen,
+user-reviewed,Djurgarden,SWE,openfootball,Djurgardens IF,
+user-reviewed,Djurgarden,SWE,openfootball,Djurgårdens IF,
+user-reviewed,Dundee United,SCO,openfootball,Dundee Utd,corrected from Dundee; the two meet 11 times so they are different clubs
+user-reviewed,Ein Frankfurt,GER,openfootball,Eintracht Frankfurt,
+user-reviewed,Salzburg,AUT,openfootball,FC Red Bull Salzburg,
+user-reviewed,Salzburg,AUT,openfootball,RB Salzburg,
+user-reviewed,Salzburg,AUT,openfootball,Red Bull Salzburg,
+user-reviewed,Jagiellonia,POL,openfootball,Jagiellonia Białystok,
+user-reviewed,Rakow,POL,openfootball,Raków Częstochowa,
+user-reviewed,SK Rapid,AUT,openfootball,Rapid Vienna,
+user-reviewed,SK Rapid,AUT,openfootball,Rapid Wien,
+user-reviewed,Vallecano,ESP,openfootball,Rayo Vallecano,
+user-reviewed,Sociedad,ESP,openfootball,Real Sociedad,
+user-reviewed,St. Gilloise,BEL,openfootball,Royale Union Saint-Gilloise,
+user-reviewed,St. Gilloise,BEL,openfootball,Union Saint-Gilloise,
+user-reviewed,St. Gilloise,BEL,openfootball,Union St. Gilloise,"corrected: St. Gilloise only, not St Truiden"
+user-reviewed,Sp Braga,POR,openfootball,SC Braga,
+user-reviewed,Sp Braga,POR,openfootball,Sporting Braga,
+user-reviewed,Charleroi,BEL,openfootball,Sporting Charleroi,
+user-reviewed,U. Cluj,ROU,openfootball,Universitatea Cluj,
+user-reviewed,Sepsi Sf. Gheorghe,ROU,openfootball,Sepsi OSK Sfantu Gheorghe,fd spelling abbreviates Sfantu to Sf.
+user-reviewed,Corvinul,ROU,openfootball,FC Corvinul Hunedoara,
+user-reviewed,Newcastle,ENG,openfootball,Newcastle United FC,corrected from Sheffield United
+user-reviewed,Legia,POL,openfootball,Legia Warszawa,corrected: Legia only
+user-reviewed,Wisla,POL,openfootball,Wisła Kraków,corrected: Wisla only
+user-reviewed,AIK,SWE,openfootball,AIK Solna,
+user-reviewed,AIK,SWE,openfootball,AIK Stockholm,
+user-reviewed,Ath Bilbao,ESP,openfootball,Athletic Club,
+user-reviewed,Austria Vienna,AUT,openfootball,Austria Wien,fd spelling found in AUT_all.csv
+user-reviewed,FC Copenhagen,DEN,openfootball,FC København,
+user-reviewed,Hearts,SCO,openfootball,Heart Of Midlothian,
+user-reviewed,Hearts,SCO,openfootball,Heart of Midlothian,
+user-reviewed,Buyuksehyr,TUR,openfootball,Istanbul Basaksehir,
+user-reviewed,Buyuksehyr,TUR,openfootball,İstanbul Başakşehir,
+user-reviewed,Lazio,ITA,openfootball,Lazio Roma,
+user-reviewed,Olympiakos,GRE,openfootball,Olympiakos Piraeus,
+user-reviewed,Lyon,FRA,openfootball,Olympique Lyonnais,
+user-reviewed,Marseille,FRA,openfootball,Olympique de Marseille,
+user-reviewed,PAOK,GRE,openfootball,PAOK Saloniki,
+user-reviewed,Benfica,POR,openfootball,Sport Lisboa e Benfica,
+user-reviewed,Brest,FRA,openfootball,Stade Brestois 29,
+user-reviewed,Tottenham,ENG,openfootball,Tottenham Hotspur,
+user-reviewed,Tottenham,ENG,openfootball,Tottenham Hotspur FC,
+user-reviewed,Guimaraes,POR,openfootball,Vitória Guimarães,
+user-reviewed,Univ. Craiova,ROU,openfootball,CS Universitatea Craiova,CS Universitatea Craiova
+user-reviewed,Univ. Craiova,ROU,openfootball,Universitatea Craiova,CS Universitatea Craiova
+fd-variant,Univ. Craiova,ROU,football_data,U Craiova,renamed mid-season 2020-21; 22 matches to 2021-02-06 then 18 from 2021-02-14; never meet
+fd-variant,Farul Constanta,ROU,football_data,Viitorul Constanta,2021 merger; seasons disjoint and they never meet
+fd-variant,Oster,SWE,football_data,Osters,same club; seasons disjoint and they never meet
+fd-variant,Ruch Chorzow,POL,football_data,Ruch,same club; seasons disjoint and they never meet
+distinct-club,U Craiova 1948,ROU,football_data,U Craiova 1948,FC U Craiova 1948 is a different club; meets Univ. Craiova 6 times
+user-reviewed,Atletico Madrid,ESP,wikipedia,Atlético Madrid,
+user-reviewed,Bayern Munich,GER,wikipedia,Bayern Munich,
+user-reviewed,Inter,ITA,wikipedia,Inter Milan,
+user-reviewed,PSV Eindhoven,NED,wikipedia,PSV Eindhoven,
+user-reviewed,Paris Saint-Germain,FRA,wikipedia,Paris Saint-Germain,
+user-reviewed,RB Leipzig,GER,wikipedia,RB Leipzig,
+user-reviewed,Shakhtar Donetsk,UKR,wikipedia,Shakhtar Donetsk,
+user-reviewed,Slavia Praha,CZE,wikipedia,Slavia Prague,
+distinct-pair,,POL,football_data,GKS Belchatow | GKS Katowice,different clubs; share only the GKS token
+distinct-pair,,ROU,football_data,Daco-Getica Bucuresti | Dinamo Bucuresti,different clubs; share only the city
+distinct-pair,,ROU,football_data,Daco-Getica Bucuresti | FC Rapid Bucuresti,different clubs; share only the city
+distinct-pair,,SWE,football_data,Osters | Ostersunds,different clubs
+distinct-pair,,ROU,football_data,U Craiova | U Craiova 1948,different clubs; see the distinct-club row
