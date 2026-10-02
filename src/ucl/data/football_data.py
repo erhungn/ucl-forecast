@@ -33,7 +33,10 @@ CACHE_DIR = DATA_RAW / "football_data"
 #: Seasons 2016-17 to 2020-21, fetched separately and kept in their own
 #: directory with their own manifest, so the original cache is never rewritten.
 HISTORY_CACHE_DIR = DATA_RAW / "football_data_history"
-CACHE_DIRS = (CACHE_DIR, HISTORY_CACHE_DIR)
+#: Optional, for an in-season refresh fetched by hand. Absent is fine: a run
+#: without it simply uses whatever is already cached, and says so.
+CURRENT_CACHE_DIR = DATA_RAW / "football_data_current"
+CACHE_DIRS = (CACHE_DIR, HISTORY_CACHE_DIR, CURRENT_CACHE_DIR)
 
 # football-data division code -> (country code, league name)
 MAIN_LEAGUES: dict[str, tuple[str, str]] = {

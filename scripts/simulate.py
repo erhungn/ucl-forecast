@@ -13,11 +13,12 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
+from scipy.stats import poisson
 
 from ucl import config
 from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
-from ucl.data import names, odds, odds
+from ucl.data import league_results, names, odds, odds
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 from ucl.sim.bracket import draw_bracket
@@ -30,7 +31,7 @@ STAGES = ["top8", "play_off", "eliminated", "round_of_16", "quarter_finals",
 
 def load_fixtures(season_label: str) -> pd.DataFrame:
     """Fixtures with club ids, so they join to the Elo ratings."""
-    frame = pd.read_csv(fx.fixtures_path(season_label))
+    frame = pd.read_csv(fx.fixtures_path(season_label), parse_dates=["date"])
     lookup = names.alias_to_canonical("wikipedia")
     frame["home_id"] = frame.home.map(lookup).fillna(frame.home)
     frame["away_id"] = frame.away.map(lookup).fillna(frame.away)
@@ -43,6 +44,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-n", "--iterations", type=int, default=config.N_SIMULATIONS)
     parser.add_argument("--seed", type=int, default=config.RANDOM_SEED)
     parser.add_argument("--out", default=None)
+    parser.add_argument("--through-matchday", type=int, default=0,
+                        help="fix the first k matchdays at their actual scores")
+    parser.add_argument("--as-of", default=None,
+                        help="information-set date (default: the day before the next matchday)")
+    parser.add_argument("--refresh", action="store_true",
+                        help="re-fetch the league-phase page before reading results")
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
     if cfg.tournament_format != "league_phase":
@@ -53,7 +60,47 @@ def main(argv: list[str] | None = None) -> int:
 
     started = time.perf_counter()
     fixtures = load_fixtures(cfg.label)
-    ratings = elo_as_of(cfg.cutoff_date)
+    matchday = args.through_matchday
+
+    # Everything decided before the next matchday is in the information set.
+    if args.as_of:
+        as_of = pd.Timestamp(args.as_of).date()
+    elif matchday <= 0:
+        as_of = cfg.cutoff_date
+    else:
+        later = fixtures[fixtures.matchday == matchday + 1]
+        first = later.date.min() if len(later) else fixtures.date.max()
+        as_of = (pd.Timestamp(first) - pd.Timedelta("1D")).date()
+
+    played = pd.DataFrame(columns=league_results.COLUMNS)
+    if matchday > 0:
+        played = league_results.load_played(cfg.label, refresh=args.refresh)
+        complete = league_results.completed_matchdays(played, fixtures)
+        for k in range(1, matchday + 1):
+            if k not in complete:
+                raise SystemExit(
+                    f"matchday {k} is not complete ({int((played.matchday == k).sum())} of "
+                    f"{int((fixtures.matchday == k).sum())} results); refusing to guess"
+                )
+        played = played[played.matchday <= matchday]
+    remaining = fixtures[fixtures.matchday > matchday]
+
+    print(f"\n=== information set (as of {as_of}) ===")
+    info = league_results.information(cfg.label, as_of=as_of)
+    print(info.to_string(index=False))
+    if matchday > 0:
+        print(f"  league phase: matchdays 1-{matchday} fixed at their actual scores "
+              f"({len(played)} matches), {len(remaining)} fixtures simulated")
+    domestic_last = info[info.source.str.startswith("domestic")].used_to.dropna()
+    if len(domestic_last):
+        gap = (as_of - max(domestic_last)).days
+        # A day or two is just the fixture calendar; a week or more is a real hole.
+        if gap >= 7:
+            print(f"  NOTE: domestic results end {max(domestic_last)}, {gap} days before "
+                  f"the as-of date; that form is missing from the ratings. A refresh into "
+                  f"data/raw/football_data_current/ would close it.")
+
+    ratings = elo_as_of(as_of)
     model = fit_poisson(ratings.pre_match)
     teams = sorted(set(fixtures.home_id) | set(fixtures.away_id))
     missing = [t for t in teams if t not in ratings.ratings]
@@ -62,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     base = {team: ratings.ratings[team] for team in teams}
     setup = time.perf_counter() - started
 
-    print(f"{cfg.label}: {len(fixtures)} fixtures, {len(teams)} teams, "
+    print(f"{cfg.label}: {len(remaining)} fixtures to simulate, {len(teams)} teams, "
           f"{args.iterations} iterations, seed {args.seed}")
     print(f"model a={model.a:.5f} h={model.h:.5f} b={model.b:.5f}")
 
@@ -73,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
 
     simulation_started = time.perf_counter()
     for _ in range(args.iterations):
-        table, live = simulate_league_phase(fixtures, base, model, rng)
+        table, live = simulate_league_phase(remaining, base, model, rng, played=played)
         unresolved_ties += int(table.unresolved.sum())
 
         by_position = dict(zip(table.position, table.team))
@@ -144,7 +191,8 @@ def main(argv: list[str] | None = None) -> int:
           f"({unresolved_ties / n:.4f} per iteration)")
 
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-    out = OUTPUTS_DIR / (args.out or f"forecast_{cfg.label}.csv")
+    suffix = f"_md{matchday}" if matchday > 0 else ""
+    out = OUTPUTS_DIR / (args.out or f"forecast_{cfg.label}{suffix}.csv")
     frame.to_csv(out, index=False, float_format="%.6f")
     if market is not None:
         priced = frame.p_market.notna()
@@ -161,6 +209,48 @@ def main(argv: list[str] | None = None) -> int:
             side = "model HIGH" if row.model_minus_market > 0 else "model LOW "
             print(f"    {row.team:22s} model {row.p_champion:.3f}  market {row.p_market:.3f}  "
                   f"{side} by {abs(row.model_minus_market):.3f}")
+
+    # Movement since the previous matchday.
+    previous_name = (f"forecast_{cfg.label}_md{matchday - 1}.csv" if matchday > 1
+                     else f"forecast_{cfg.label}.csv")
+    previous_path = OUTPUTS_DIR / previous_name
+    if matchday > 0 and previous_path.exists():
+        previous = pd.read_csv(previous_path)[["team", "p_champion", "p_top8", "p_eliminated"]]
+        moved = frame.merge(previous, on="team", suffixes=("", "_prev"))
+        for column in ("p_champion", "p_top8", "p_eliminated"):
+            moved[f"d_{column}"] = moved[column] - moved[f"{column}_prev"]
+        print(f"\n=== change since matchday {matchday - 1} ({previous_name}) ===")
+        ranked = moved.reindex(moved.d_p_top8.abs().sort_values(ascending=False).index)
+        print(f"  {'team':22s} {'P(top8)':>18s} {'P(champion)':>18s} {'P(out)':>18s}")
+        for row in ranked.head(10).itertuples():
+            print(f"  {row.team:22s} {row.p_top8_prev:.3f}->{row.p_top8:.3f} "
+                  f"({row.d_p_top8:+.3f}) {row.p_champion_prev:.3f}->{row.p_champion:.3f} "
+                  f"({row.d_p_champion:+.3f}) {row.p_eliminated_prev:.3f}->"
+                  f"{row.p_eliminated:.3f} ({row.d_p_eliminated:+.3f})")
+        frame = moved.drop(columns=[c for c in moved.columns if c.endswith("_prev")])
+        frame.to_csv(out, index=False, float_format="%.6f")
+
+    # The next matchday, from the frozen model at the current ratings.
+    next_matchday = fixtures[fixtures.matchday == matchday + 1]
+    if len(next_matchday):
+        from ucl.backtest import match_probabilities
+
+        elo_home = next_matchday.home_id.map(base).to_numpy(dtype=float)
+        elo_away = next_matchday.away_id.map(base).to_numpy(dtype=float)
+        probabilities = match_probabilities(elo_home, elo_away, model)
+        rate_home, rate_away = model.rates(elo_home, elo_away)
+        print(f"\n=== matchday {matchday + 1}: {len(next_matchday)} fixtures ===")
+        print(f"  {'home':22s} {'away':22s} {'home':>6s} {'draw':>6s} {'away':>6s}"
+              f"  {'likely':>8s} {'P':>6s}")
+        for i, row in enumerate(next_matchday.itertuples()):
+            goals = np.arange(0, 11)
+            joint = (poisson.pmf(goals[:, None], rate_home[i])
+                     * poisson.pmf(goals[None, :], rate_away[i]))
+            h, a = np.unravel_index(joint.argmax(), joint.shape)
+            print(f"  {row.home_id:22s} {row.away_id:22s} {probabilities[i, 0]:6.3f} "
+                  f"{probabilities[i, 1]:6.3f} {probabilities[i, 2]:6.3f}  "
+                  f"{h}-{a:<6} {joint.max():6.3f}")
+        print("  (the modal scoreline carries only ~8-12% probability; it is not a prediction)")
 
     print(f"\nsetup {setup:.1f}s, simulation {elapsed:.1f}s "
           f"({elapsed / n * 1000:.2f} ms/iteration), written to {out.name}")

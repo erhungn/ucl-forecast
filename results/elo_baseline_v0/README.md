@@ -5,6 +5,12 @@ The frozen reference the Dixon-Coles work (milestone 4) is measured against.
 - Commit: `c1f1c48956a2eee9f87e931ae5a15ca9fb97b3c8`
 - Tag: `elo-baseline-v0`
 - Archived: 2026-10-02
+- **Correction**: `forecast_2026-27.csv` as first archived was stale - it had
+  been generated at `2a34e18`, before the history extension (`0f463fd`) and the
+  name decisions (`71c0037`), both of which change the ratings. It was
+  regenerated from the committed code during milestone 6; P(champion) moved by
+  up to 0.0145 (PSG -0.015, Dortmund +0.013). Every other file in this folder
+  was generated after those commits and was already correct.
 
 ## Frozen parameters
 

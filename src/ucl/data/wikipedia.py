@@ -86,6 +86,13 @@ def _pages() -> list[Page]:
         pages.append(Page("2025-26", competition, "knockout",
                           f"2025–26 UEFA {name} knockout phase"))
         pages.append(Page("2025-26", competition, "final", f"2026 UEFA {name} final"))
+    # The 2026-27 league phase itself, as a results source: it is the only way
+    # an in-season update sees matches that have already been played. Before the
+    # 2026-09-07 cutoff it contributes nothing, so the pre-tournament forecast is
+    # untouched.
+    pages.append(Page("2026-27", "UCL", "league_phase",
+                      "2026–27 UEFA Champions League league phase"))
+
     # Gap 3: the Europa League before 2020-21, which openfootball does not
     # publish. These seasons used the group-stage format, so the pages are
     # "group stage" rather than "league phase".
@@ -127,7 +134,8 @@ _REDIRECT = re.compile(r"^\s*#REDIRECT\s*\[\[([^\]]+)\]\]", re.IGNORECASE)
 
 
 def fetch_page(
-    page: Page, *, cache_dir: Path | None = None, timeout: float = 25.0
+    page: Page, *, cache_dir: Path | None = None, timeout: float = 25.0,
+    refresh: bool = False,
 ) -> tuple[Path | None, str]:
     """Cache one article's wikitext, following a single redirect.
 
@@ -137,7 +145,7 @@ def fetch_page(
     cache_dir = Path(cache_dir or CACHE_DIR)
     cache_dir.mkdir(parents=True, exist_ok=True)
     target = cache_dir / page.file_name
-    if target.exists():
+    if target.exists() and not refresh:
         return target, ""
     try:
         text = _raw(page.title, timeout)
@@ -161,12 +169,13 @@ def fetch_page(
 
 
 def fetch_all(
-    pages: list[Page] | None = None, *, cache_dir: Path | None = None, timeout: float = 25.0
+    pages: list[Page] | None = None, *, cache_dir: Path | None = None, timeout: float = 25.0,
+    refresh: bool = False,
 ) -> list[str]:
     """Fetch every page; returns the failures so a missing one is visible."""
     failed = []
     for page in pages or PAGES:
-        _, reason = fetch_page(page, cache_dir=cache_dir, timeout=timeout)
+        _, reason = fetch_page(page, cache_dir=cache_dir, timeout=timeout, refresh=refresh)
         if reason:
             failed.append(f"{page.title}: {reason}")
     return failed

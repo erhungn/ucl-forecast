@@ -56,15 +56,22 @@ def simulate_league_phase(
     model: PoissonModel,
     rng: np.random.Generator,
     *,
+    played: pd.DataFrame | None = None,
     coefficients: dict[str, float] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, float]]:
-    """Play all 144 fixtures in matchday order and rank the resulting table.
+    """Simulate the given fixtures and rank the table they produce.
 
-    Returns the ranked table and the ratings as they stand afterwards, which the
-    knockout phase then continues from.
+    ``played`` holds matches already decided, at their actual scores: they enter
+    the table unchanged and are never re-simulated. The ratings passed in are
+    expected to already reflect them, so nothing here updates for them again.
     """
     live = dict(ratings)
     rows = []
+    if played is not None and len(played):
+        rows.extend(
+            {"home": r.home_id, "away": r.away_id, "hg": int(r.hg), "ag": int(r.ag)}
+            for r in played.itertuples()
+        )
     for row in fixtures.itertuples():
         hg, ag = simulate_match(row.home_id, row.away_id, live, model, rng)
         rows.append({"home": row.home_id, "away": row.away_id, "hg": hg, "ag": ag})

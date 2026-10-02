@@ -154,6 +154,13 @@
     "bytes": 40755
   },
   {
+    "file": "2026-27_UEFA_Champions_League_league_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Champions_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T15:54:10.759363+00:00",
+    "sha256": "01f6fea71ade46eeaa7c8f8e38d0ec36c34a7c289e3cb3315d05558d7cd2b4d0",
+    "bytes": 150219
+  },
+  {
     "file": "2026-27_UEFA_Champions_League_qualifying.wikitext",
     "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Champions_League_qualifying&action=raw",
     "downloaded_at_utc": "2026-10-02T12:37:00.027544+00:00",
