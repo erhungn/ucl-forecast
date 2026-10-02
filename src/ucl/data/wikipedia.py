@@ -86,6 +86,19 @@ def _pages() -> list[Page]:
         pages.append(Page("2025-26", competition, "knockout",
                           f"2025–26 UEFA {name} knockout phase"))
         pages.append(Page("2025-26", competition, "final", f"2026 UEFA {name} final"))
+    # Gap 3: the Europa League before 2020-21, which openfootball does not
+    # publish. These seasons used the group-stage format, so the pages are
+    # "group stage" rather than "league phase".
+    for dash, final_year in (("2016–17", 2017), ("2017–18", 2018),
+                             ("2018–19", 2019), ("2019–20", 2020)):
+        season = dash.replace("–", "-")
+        pages.append(Page(season, "UEL", "league_phase",
+                          f"{dash} UEFA Europa League group stage"))
+        pages.append(Page(season, "UEL", "knockout",
+                          f"{dash} UEFA Europa League knockout phase"))
+        pages.append(Page(season, "UEL", "final",
+                          f"{final_year} UEFA Europa League final"))
+
     # Gap 2: 2026-27 qualifying and play-offs, played before the cutoff.
     for competition, name in (("UCL", "Champions League"), ("UEL", "Europa League")):
         pages.append(Page("2026-27", competition, "qualifying",

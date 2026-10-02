@@ -578,3 +578,49 @@ OFI Crete,GRE,wikipedia,OFI,user-reviewed
 OFI Crete,GRE,football_data,OFI Crete,user-reviewed
 St Truiden,BEL,wikipedia,Sint-Truiden,user-reviewed
 St Truiden,BEL,football_data,St Truiden,user-reviewed
+FC Koln,GER,wikipedia,1. FC Köln,exact-normalised:koln
+Bordeaux,FRA,football_data,Bordeaux,exact-normalised:bordeaux
+Bordeaux,FRA,wikipedia,Bordeaux,exact-normalised:bordeaux
+Chelsea,ENG,wikipedia,Chelsea,exact-normalised:chelsea
+Everton,ENG,football_data,Everton,exact-normalised:everton
+Everton,ENG,wikipedia,Everton,exact-normalised:everton
+Hertha,GER,football_data,Hertha,exact-normalised:hertha
+Hertha,GER,wikipedia,Hertha BSC,exact-normalised:hertha
+Konyaspor,TUR,wikipedia,Konyaspor,exact-normalised:konyaspor
+Lazio,ITA,wikipedia,Lazio,exact-normalised:lazio
+Marseille,FRA,wikipedia,Marseille,exact-normalised:marseille
+Milan,ITA,wikipedia,Milan,exact-normalised:milan
+Osmanlispor,TUR,football_data,Osmanlispor,exact-normalised:osmanlispor
+Osmanlispor,TUR,wikipedia,Osmanlıspor,exact-normalised:osmanlispor
+Rennes,FRA,wikipedia,Rennes,exact-normalised:rennes
+Rosenborg,NOR,wikipedia,Rosenborg,exact-normalised:rosenborg
+Sarpsborg 08,NOR,football_data,Sarpsborg 08,exact-normalised:sarpsborg
+Sarpsborg 08,NOR,wikipedia,Sarpsborg 08,exact-normalised:sarpsborg
+Sassuolo,ITA,football_data,Sassuolo,exact-normalised:sassuolo
+Sassuolo,ITA,wikipedia,Sassuolo,exact-normalised:sassuolo
+Schalke 04,GER,football_data,Schalke 04,exact-normalised:schalke
+Schalke 04,GER,wikipedia,Schalke 04,exact-normalised:schalke
+Sevilla,ESP,wikipedia,Sevilla,exact-normalised:sevilla
+Southampton,ENG,football_data,Southampton,exact-normalised:southampton
+Southampton,ENG,wikipedia,Southampton,exact-normalised:southampton
+Hoffenheim,GER,wikipedia,TSG Hoffenheim,exact-normalised:hoffenheim
+Valencia,ESP,football_data,Valencia,exact-normalised:valencia
+Valencia,ESP,wikipedia,Valencia,exact-normalised:valencia
+Wolfsburg,GER,wikipedia,VfL Wolfsburg,exact-normalised:wolfsburg
+Vitesse,NED,wikipedia,Vitesse,exact-normalised:vitesse
+Wolfsberger AC,AUT,wikipedia,Wolfsberger AC,exact-normalised:wolfsberger
+Zurich,SUI,wikipedia,Zürich,exact-normalised:zurich
+Ostersunds,SWE,football_data,Ostersunds,exact-normalised:ostersunds
+Ostersunds,SWE,wikipedia,Östersunds FK,exact-normalised:ostersunds
+Ath Bilbao,ESP,wikipedia,Athletic Bilbao,schedule-bridged
+Ein Frankfurt,GER,wikipedia,Eintracht Frankfurt,schedule-bridged
+Sociedad,ESP,wikipedia,Real Sociedad,schedule-bridged
+Tottenham,ENG,wikipedia,Tottenham Hotspur,schedule-bridged
+Guimaraes,POR,wikipedia,Vitória de Guimarães,schedule-bridged
+Leverkusen,GER,wikipedia,Bayer Leverkusen,alias-identical:bayer leverkusen
+Monaco,FRA,openfootball,AS Monaco,exact-normalised:monaco
+Schalke 04,GER,openfootball,FC Schalke 04,exact-normalised:schalke
+Granada,ESP,football_data,Granada,exact-normalised:granada
+Granada,ESP,openfootball,Granada CF,exact-normalised:granada
+Sevilla,ESP,openfootball,Sevilla FC,exact-normalised:sevilla
+Valencia,ESP,openfootball,Valencia CF,exact-normalised:valencia

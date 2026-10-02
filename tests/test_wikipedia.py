@@ -86,8 +86,14 @@ def test_validation_pages_are_excluded_from_the_data_by_default():
 
     cutoff = season("2026-27").cutoff_date
     gaps = wikipedia.load_results(cutoff)
-    # 2024-25 exists only to validate the parser; loading it would double-count.
-    assert set(gaps.season) == {"2025-26", "2026-27"}
+    # 2024-25 exists only to validate the parser; loading it would double-count
+    # what openfootball already provides.
+    assert "2024-25" not in set(gaps.season)
+    assert {"2025-26", "2026-27"} <= set(gaps.season)
+    # The pre-2021 Europa League seasons are gap data too: openfootball has no
+    # el.txt before 2020-21.
+    assert {"2016-17", "2017-18", "2018-19", "2019-20"} <= set(gaps.season)
+    assert set(gaps[gaps.season < "2020-21"].competition) == {"UEL"}
     assert {p.role for p in wikipedia.PAGES} == {"gap", "validation"}
 
 

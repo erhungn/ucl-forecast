@@ -58,6 +58,12 @@ class Source:
 
 def _sources() -> list[Source]:
     out: list[Source] = []
+    # History back to 2016-17, to give the backtest cutoffs a comparable amount
+    # of burn-in. The Champions League is covered for every season; the Europa
+    # League only from 2020-21, so the earlier ones come from Wikipedia.
+    for season in ("2016-17", "2017-18", "2018-19", "2019-20", "2020-21"):
+        out.append(Source(season, "UCL", "champions-league", f"{season}/cl.txt"))
+    out.append(Source("2020-21", "UEL", "champions-league", "2020-21/el.txt"))
     # world.more bundles qualifying with the main draw for the older seasons.
     for season in ("2021-22", "2022-23", "2023-24"):
         for comp, stem in (("UCL", "uefa.cl"), ("UEL", "uefa.el"), ("UECL", "uefa.conf")):
@@ -176,7 +182,22 @@ def parse_file(path: Path, *, season: str, competition: str) -> pd.DataFrame:
     current: date | None = None
     rows: list[dict[str, object]] = []
 
-    for line in path.read_text(encoding="utf-8").splitlines():
+    # The header declares the season's real date window, e.g.
+    # "# Date Tue Sep 17 2019 - Sun Aug 23 2020". Group-stage-era files list
+    # matches group by group rather than chronologically, so dates jump
+    # backwards at every group boundary; without the window, a running
+    # roll-over pushes later groups years into the future.
+    text = path.read_text(encoding="utf-8")
+    window = re.search(
+        r"#\s*Date\s+\w{3}\s+(\w{3})\s+(\d{1,2})\s+(\d{4})\s*-\s*\w{3}\s+(\w{3})\s+(\d{1,2})\s+(\d{4})",
+        text,
+    )
+    window_start = window_end = None
+    if window:
+        window_start = date(int(window.group(3)), _MONTHS[window.group(1)], int(window.group(2)))
+        window_end = date(int(window.group(6)), _MONTHS[window.group(4)], int(window.group(5)))
+
+    for line in text.splitlines():
         if not line.strip():
             continue
         if line.startswith("="):
@@ -201,11 +222,26 @@ def parse_file(path: Path, *, season: str, competition: str) -> pd.DataFrame:
             month = _MONTHS[month_name]
             if year is None:
                 raise ValueError(f"{path.name}: date before any year was seen: {line!r}")
-            candidate = date(year, month, int(day))
-            # Only the first date of a new year carries it; roll over otherwise.
-            if current is not None and candidate < current:
-                year += 1
+            if explicit_year:
                 candidate = date(year, month, int(day))
+            elif window_start is not None:
+                # Pick the year that puts this date inside the season window;
+                # if both do, take the one that does not go backwards.
+                options = [
+                    d for y in (window_start.year, window_end.year)
+                    for d in [date(y, month, int(day))]
+                    if window_start <= d <= window_end
+                ]
+                if not options:
+                    options = [date(window_start.year, month, int(day))]
+                forward = [d for d in options if current is None or d >= current]
+                candidate = min(forward) if forward else min(options)
+                year = candidate.year
+            else:
+                candidate = date(year, month, int(day))
+                if current is not None and candidate < current:
+                    year += 1
+                    candidate = date(year, month, int(day))
             current = candidate
             continue
 

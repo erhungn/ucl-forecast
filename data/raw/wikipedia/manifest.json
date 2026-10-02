@@ -1,5 +1,89 @@
 [
   {
+    "file": "2016-17_UEFA_Europa_League_group_stage.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2016%E2%80%9317_UEFA_Europa_League_group_stage&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:50.499711+00:00",
+    "sha256": "62c7bf7c3c780a02d8d5c030ca3757cc8d419c27216b7dc5c09e319d89f32f26",
+    "bytes": 150882
+  },
+  {
+    "file": "2016-17_UEFA_Europa_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2016%E2%80%9317_UEFA_Europa_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:51.013916+00:00",
+    "sha256": "eedd646a40bcb242c29d388b83db9a4b85bc135b985bbe51db7f2357b61f9f3a",
+    "bytes": 69651
+  },
+  {
+    "file": "2017-18_UEFA_Europa_League_group_stage.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2017%E2%80%9318_UEFA_Europa_League_group_stage&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:52.145590+00:00",
+    "sha256": "00de70d1459788fdb952c9860adcaacedc190488fb6c3b15e13712a6fc4c4994",
+    "bytes": 151341
+  },
+  {
+    "file": "2017-18_UEFA_Europa_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2017%E2%80%9318_UEFA_Europa_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:52.708710+00:00",
+    "sha256": "dcf8663e4ea48630ce6c64e598058f921f2f9cb767abfd95ca09ae080448a5b8",
+    "bytes": 69301
+  },
+  {
+    "file": "2017_UEFA_Europa_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2017_UEFA_Europa_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:51.563575+00:00",
+    "sha256": "6dbab92461aa6740ca50fa7de0833ca883c9de77b6be7efc12f8e7609796bfee",
+    "bytes": 31952
+  },
+  {
+    "file": "2018-19_UEFA_Europa_League_group_stage.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2018%E2%80%9319_UEFA_Europa_League_group_stage&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:53.879619+00:00",
+    "sha256": "06c3311a401db3f8c517eab0296c32adde4525c077e2d1250dc5464896b52dbf",
+    "bytes": 152004
+  },
+  {
+    "file": "2018-19_UEFA_Europa_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2018%E2%80%9319_UEFA_Europa_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:54.496491+00:00",
+    "sha256": "94d57cfa9422364e38ddd64aac404dbcb544c3211d436d625f909d161b789742",
+    "bytes": 73297
+  },
+  {
+    "file": "2018_UEFA_Europa_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2018_UEFA_Europa_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:53.146420+00:00",
+    "sha256": "d6edbe7ca714a4dca23358da607c2606a4598f7db2fca9cd6f9089e903dfcaa5",
+    "bytes": 29153
+  },
+  {
+    "file": "2019-20_UEFA_Europa_League_group_stage.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2019%E2%80%9320_UEFA_Europa_League_group_stage&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:56.045629+00:00",
+    "sha256": "7a38cc64fbf913587dde188fce0490b75b4b9eee11103409d519c52462bd0d10",
+    "bytes": 152077
+  },
+  {
+    "file": "2019-20_UEFA_Europa_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2019%E2%80%9320_UEFA_Europa_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:56.537964+00:00",
+    "sha256": "7586b18d907248d784752f9d8a8bb3b16a3e442e061dfe1fb998373d4a2b044c",
+    "bytes": 72268
+  },
+  {
+    "file": "2019_UEFA_Europa_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2019_UEFA_Europa_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:55.197178+00:00",
+    "sha256": "bdc63edd828ee2b76507abb399b3d7d1962c4d672fd5dad4e506d5c941b40233",
+    "bytes": 59670
+  },
+  {
+    "file": "2020_UEFA_Europa_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2020_UEFA_Europa_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T14:51:57.068177+00:00",
+    "sha256": "3839f3a9a083f215a724d07fb9ac0092c1835c68d16696541f9d4da854268791",
+    "bytes": 26806
+  },
+  {
     "file": "2024-25_UEFA_Conference_League_knockout_phase.wikitext",
     "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Conference_League_knockout_phase&action=raw",
     "downloaded_at_utc": "2026-10-02T12:36:22.356699+00:00",

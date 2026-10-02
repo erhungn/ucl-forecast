@@ -1,134 +1,176 @@
 [
   {
+    "file": "2016-17_cl.txt",
+    "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2016-17/cl.txt",
+    "downloaded_at_utc": "2026-10-02T14:51:41.082311+00:00",
+    "sha256": "fe604207c9e945d2a76ed9d660b5499c4680d8b474aeeb166d585f819c029a31",
+    "bytes": 10446
+  },
+  {
+    "file": "2017-18_cl.txt",
+    "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2017-18/cl.txt",
+    "downloaded_at_utc": "2026-10-02T14:51:41.263372+00:00",
+    "sha256": "5f022938be481f3f9fa88fa7580033aab631a9dd321170d2e7b7ee558c92e468",
+    "bytes": 10389
+  },
+  {
+    "file": "2018-19_cl.txt",
+    "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2018-19/cl.txt",
+    "downloaded_at_utc": "2026-10-02T14:51:41.458184+00:00",
+    "sha256": "7ae98396b779c3e97d049e77bbd0af6dabedcecdd73fa17d27a212aadd18c727",
+    "bytes": 10379
+  },
+  {
+    "file": "2019-20_cl.txt",
+    "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2019-20/cl.txt",
+    "downloaded_at_utc": "2026-10-02T14:51:41.642179+00:00",
+    "sha256": "e0f6d8990b3110108193eecdcd698dfa48b6f324ffa7532cdc11aea19f7ee419",
+    "bytes": 9967
+  },
+  {
+    "file": "2020-21_cl.txt",
+    "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2020-21/cl.txt",
+    "downloaded_at_utc": "2026-10-02T14:51:41.838115+00:00",
+    "sha256": "9d94e40aa2fe2e98cbe5eedcffb7b9223daaaf3acf682411f4965f92a65d666e",
+    "bytes": 10495
+  },
+  {
+    "file": "2020-21_el.txt",
+    "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2020-21/el.txt",
+    "downloaded_at_utc": "2026-10-02T14:51:42.036738+00:00",
+    "sha256": "d494cc0c88c951d92b3839f2e425752a382f2779de251a0df115a1f19b308f21",
+    "bytes": 16559
+  },
+  {
     "file": "2021-22_uefa.cl.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2021-22/uefa.cl.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:34.179281+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:42.436935+00:00",
     "sha256": "168c7115b155bb197b95884ce57b2f5bbe3fd22b3d3866bb11b78d194164e50a",
     "bytes": 23594
   },
   {
     "file": "2021-22_uefa.conf.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2021-22/uefa.conf.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:34.945250+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:43.338347+00:00",
     "sha256": "3eabba7030f10dc55a8d1d4be5a88b6e23810fa2cacb04e0f0947b3a6a520396",
     "bytes": 43456
   },
   {
     "file": "2021-22_uefa.el.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2021-22/uefa.el.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:34.549911+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:42.875231+00:00",
     "sha256": "79666f656f87255b46bd1666e1a89f90f446657ca26fd79d744cbf60548fdea4",
     "bytes": 20171
   },
   {
     "file": "2022-23_uefa.cl.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2022-23/uefa.cl.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:35.317617+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:43.746595+00:00",
     "sha256": "91f00fd58776cd851d70236d31c18ca9488827d76d194b5c6317230b4b61858c",
     "bytes": 24292
   },
   {
     "file": "2022-23_uefa.conf.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2022-23/uefa.conf.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:36.130846+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:44.590591+00:00",
     "sha256": "39d0bd02ed40160c72c68928c47e53504246e051d1cdfe35dbea22e3253492c9",
     "bytes": 43555
   },
   {
     "file": "2022-23_uefa.el.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2022-23/uefa.el.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:35.675485+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:44.143856+00:00",
     "sha256": "21ff22ee737f241bfbe3f5bb27f68f689961ff8c525e4629ee4cae17a0a9e1fc",
     "bytes": 18993
   },
   {
     "file": "2023-24_uefa.cl.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2023-24/uefa.cl.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:36.500446+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:45.036556+00:00",
     "sha256": "65eb671e0cb9c03be0ab0e1d5b776bff5522fcc6435e146238ae7c551bea597b",
     "bytes": 24159
   },
   {
     "file": "2023-24_uefa.conf.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2023-24/uefa.conf.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:37.288875+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:45.950042+00:00",
     "sha256": "333ddc878c3c6ce0cdb9edc3301dc1eac982819177826dac66b92058059c7dc2",
     "bytes": 44076
   },
   {
     "file": "2023-24_uefa.el.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/world.more/master/2023-24/uefa.el.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:36.878616+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:45.433296+00:00",
     "sha256": "01bec918cfbd7adcac635ca0881874b9d45c1c6e45b374089290209ebf9ceb6d",
     "bytes": 17974
   },
   {
     "file": "2024-25_cl.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2024-25/cl.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:37.646311+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:46.308497+00:00",
     "sha256": "c2692b22af02c5df4587b69c5f430aebf7d936845b5337aee462ce8e649eb1b5",
     "bytes": 15374
   },
   {
     "file": "2024-25_clq.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2024-25/clq.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:38.021471+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:46.661787+00:00",
     "sha256": "a39cc3ed20233ce2fcc490d4feda4a67dacf0d8080c83f4078ab34eca4632c25",
     "bytes": 7157
   },
   {
     "file": "2024-25_conf.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2024-25/conf.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:39.201516+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:47.705628+00:00",
     "sha256": "b2534794b2e8f70ed8734c2fd7baf9dc0f500c0ab9dd4fc575d82815340574d7",
     "bytes": 11947
   },
   {
     "file": "2024-25_confq.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2024-25/confq.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:39.580793+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:48.077125+00:00",
     "sha256": "1e248f3fbd2c9c8860a795373eba7b9f1f943a9dc672a4d4a3c3ad5452723fea",
     "bytes": 19830
   },
   {
     "file": "2024-25_el.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2024-25/el.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:38.377602+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:47.015836+00:00",
     "sha256": "4f004729005e45fb26e5a4adff614d5c6081564e504137705cceaa15a9213bd9",
     "bytes": 14594
   },
   {
     "file": "2024-25_elq.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2024-25/elq.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:38.770060+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:47.368841+00:00",
     "sha256": "6bd4db7e8993c35c4e57d9474bf3e1062d46a51a27c089c901e68bb0581a78ff",
     "bytes": 6384
   },
   {
     "file": "2025-26_cl.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2025-26/cl.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:39.940491+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:48.438107+00:00",
     "sha256": "2b1877308587ff1004c21b8e961b9050b8754f968244e0635eb005040fd9d5cb",
     "bytes": 15265
   },
   {
     "file": "2025-26_clq.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2025-26/clq.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:40.289473+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:48.820110+00:00",
     "sha256": "2212922ca831a0ebb4bb8be07575392f53f1294acc47ffab15c7a1ad121f7d37",
     "bytes": 7287
   },
   {
     "file": "2025-26_confq.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2025-26/confq.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:40.964936+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:49.575283+00:00",
     "sha256": "417d8fd7f0b79771f4293476a3815a0db6cfd3391e457b46e0fa2ddea81965c4",
     "bytes": 19716
   },
   {
     "file": "2025-26_elq.txt",
     "source_url": "https://raw.githubusercontent.com/openfootball/champions-league/master/2025-26/elq.txt",
-    "downloaded_at_utc": "2026-10-02T11:26:40.618847+00:00",
+    "downloaded_at_utc": "2026-10-02T14:51:49.191410+00:00",
     "sha256": "91f6d5440da9d100322be0de8ad95df8d873040abba4af8986147d9da55e5e32",
     "bytes": 6474
   }
