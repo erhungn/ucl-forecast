@@ -15,22 +15,30 @@ from ucl.data import fixtures as fx
 from ucl.data import names
 
 
-def cross_check_uefa(frame) -> list[str]:
+def cross_check_uefa(frame) -> tuple[int, int, list[str]]:
     """Cross-check the fixture team set against the uefa.com-derived names.
 
     uefa.com publishes its fixtures through a JavaScript shell and its match API
     returns 404, so the pairings cannot be cross-checked there. The club list
     can: those names were captured from uefa.com into the mapping table.
+
+    Returns (matched by normalisation, reconciled via a reviewed alias, missing).
     """
-    uefa = names.canonical_aliases("uefa")
     uefa_keys = {
         names.normalize_club_name(alias): canonical
-        for canonical, aliases in uefa.items()
+        for canonical, aliases in names.canonical_aliases("uefa").items()
         for alias in aliases
     }
-    teams = sorted(set(frame.home) | set(frame.away))
-    missing = [t for t in teams if names.normalize_club_name(t) not in uefa_keys]
-    return missing
+    reviewed = names.alias_to_canonical("wikipedia")
+    direct, via_alias, missing = 0, 0, []
+    for team in sorted(set(frame.home) | set(frame.away)):
+        if names.normalize_club_name(team) in uefa_keys:
+            direct += 1
+        elif team in reviewed:
+            via_alias += 1
+        else:
+            missing.append(team)
+    return direct, via_alias, missing
 
 
 def build(season_label: str, *, timeout: float = 25.0):
@@ -89,12 +97,12 @@ def main(argv: list[str] | None = None) -> int:
         problems = bridge_problems + fx.validate(frame, pots, season_label=label)
 
         if label == "2026-27":
-            unmatched = cross_check_uefa(frame)
-            matched = 36 - len(unmatched)
-            print(f"  uefa.com cross-check: {matched}/36 fixture teams match the "
-                  f"uefa.com club list (pairings not cross-checkable: JS shell, API 404)")
+            direct, via_alias, unmatched = cross_check_uefa(frame)
+            print(f"  uefa.com cross-check: {direct + via_alias}/36 fixture teams reconciled "
+                  f"with the uefa.com club list ({direct} by normalisation, {via_alias} by a "
+                  f"reviewed alias); pairings not cross-checkable: JS shell, API 404")
             if unmatched:
-                print(f"    unmatched names: {', '.join(unmatched)}")
+                print(f"    UNRECONCILED: {', '.join(unmatched)}")
         checks = [
             ("144 matches", len(frame) == 144),
             ("36 teams", len(set(frame.home) | set(frame.away)) == 36),

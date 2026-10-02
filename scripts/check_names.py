@@ -92,24 +92,52 @@ def main(argv: list[str] | None = None) -> int:
         mapping[mapping.source == "football_data"].groupby("canonical").source_name.apply(list)
     )
     for canonical, spellings in per_canonical.items():
-        extra = [s for s in spellings[1:] if s not in variant_rows]
-        if extra:
+        # One spelling is the primary; every further one must be declared.
+        unmarked = [s for s in spellings if s not in variant_rows]
+        if len(unmarked) > 1:
             check_b += 1
             failures.append(
-                f"check B: {canonical!r} has several football-data names {spellings} "
-                "and they are not marked fd-variant"
+                f"check B: {canonical!r} has several football-data names {unmarked} "
+                "and none but one may be left unmarked; mark the others fd-variant"
             )
-    seen_keys: dict[tuple[str, str], str] = {}
+    distinct = set(
+        mapping.loc[mapping.provenance.fillna("").str.startswith("distinct-club"), "source_name"]
+    )
+    seen_keys: dict[tuple[str, str], tuple[str, str]] = {}
     for row in mapping[mapping.source == "football_data"].itertuples():
         key = (row.country, names.normalize_club_name(row.source_name))
-        other = seen_keys.setdefault(key, row.canonical)
-        if other != row.canonical:
-            check_b += 1
-            failures.append(
-                f"check B: ids {other!r} and {row.canonical!r} both normalise to {key[1]!r} "
-                f"in {key[0]} - one club split in two"
-            )
+        other, other_name = seen_keys.setdefault(key, (row.canonical, row.source_name))
+        if other == row.canonical:
+            continue
+        # Escape hatch: a declared distinct club whose key only collides because
+        # the normaliser strips founding years.
+        years_differ = names.normalize_club_name(
+            row.source_name, keep_years=True
+        ) != names.normalize_club_name(other_name, keep_years=True)
+        if (row.source_name in distinct or other_name in distinct) and years_differ:
+            print(f"  check B escape hatch: {row.source_name!r} and {other_name!r} "
+                  f"declared distinct clubs (keys collide only once years are stripped)")
+            continue
+        check_b += 1
+        failures.append(
+            f"check B: ids {other!r} and {row.canonical!r} both normalise to {key[1]!r} "
+            f"in {key[0]} - one club split in two"
+        )
     print(f"check B (one club, one id): {check_b} violation(s)")
+
+    # --- Check C: merged names must never meet. Hard failure. ---
+    # Any two names mapped to one id are claimed to be the same club, so if they
+    # appear on opposite sides of a match the merge is wrong.
+    check_c = 0
+    for source, frame in (("football_data", domestic), ("openfootball", european)):
+        for row in names.merge_conflicts(frame, source).itertuples():
+            check_c += 1
+            failures.append(
+                f"check C: {source} has {row.home!r} v {row.away!r} on "
+                f"{row.date.date()} but both map to {row.home_canonical!r}"
+            )
+    print(f"check C (merged names never meet): {check_c} violation(s) "
+          f"across {len(domestic) + len(european)} matches")
 
     # Every team with a football-data code must resolve on the football-data side.
     fd_aliases = names.canonical_aliases("football_data")

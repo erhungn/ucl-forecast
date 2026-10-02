@@ -24,17 +24,31 @@ import itertools
 
 import pandas as pd
 
-from ucl.config import OUTPUTS_DIR, season as season_config
+from ucl.config import DATA_RAW, OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
 from ucl.data import football_data, names, openfootball
 
 REVIEW_COLUMNS = ["section", "item", "country", "detail", "proposal"]
+DECISIONS_PATH = DATA_RAW / "name_decisions.csv"
 
 
 def fd_countries() -> set[str]:
     return {c for c, _ in football_data.MAIN_LEAGUES.values()} | set(
         football_data.EXTRA_LEAGUES.values()
     )
+
+
+def decided_pairs() -> set[frozenset[str]]:
+    """Pairs already reviewed as distinct, so the report stops proposing them."""
+    try:
+        decisions = pd.read_csv(DECISIONS_PATH, keep_default_na=False)
+    except FileNotFoundError:
+        return set()
+    rows = decisions[decisions.kind == "distinct-pair"]
+    return {
+        frozenset(part.strip() for part in row.source_name.split("|"))
+        for row in rows.itertuples()
+    }
 
 
 def intra_source_variants(domestic: pd.DataFrame) -> list[dict]:
@@ -46,6 +60,8 @@ def intra_source_variants(domestic: pd.DataFrame) -> list[dict]:
     normalised keys share a token or are close. Review only.
     """
     rows: list[dict] = []
+    decided = decided_pairs()
+    resolved = names.alias_to_canonical("football_data")
     for (country, league), group in domestic.groupby(["country", "league"]):
         seasons: dict[str, set[str]] = {}
         for row in group.itertuples():
@@ -55,6 +71,10 @@ def intra_source_variants(domestic: pd.DataFrame) -> list[dict]:
         for left, right in itertools.combinations(sorted(seasons), 2):
             if seasons[left] & seasons[right]:
                 continue  # played in the same season, so two different clubs
+            if frozenset((left, right)) in decided:
+                continue  # reviewed and recorded as different clubs
+            if left in resolved and resolved[left] == resolved.get(right):
+                continue  # already merged into one id
             left_key, right_key = keys[left], keys[right]
             shared = set(left_key.split()) & set(right_key.split())
             ratio = difflib.SequenceMatcher(None, left_key, right_key).ratio()
@@ -150,23 +170,15 @@ def main(argv: list[str] | None = None) -> int:
     rows.extend(intra_source_variants(domestic))
 
     # Fixture team names (Wikipedia spellings) that have no canonical yet.
-    uefa_keys = {
-        names.normalize_club_name(alias)
-        for aliases in names.canonical_aliases("uefa").values()
-        for alias in aliases
-    }
+    # A fixture spelling is settled once it is a mapped wikipedia alias.
+    wikipedia_aliases = set(names.alias_to_canonical("wikipedia"))
     try:
         fixtures = pd.read_csv(fx.fixtures_path("2026-27"))
     except FileNotFoundError:
         fixtures = None
     if fixtures is not None:
-        uefa_by_key = {
-            names.normalize_club_name(alias): canonical
-            for canonical, aliases in names.canonical_aliases("uefa").items()
-            for alias in aliases
-        }
         for team in sorted(set(fixtures.home) | set(fixtures.away)):
-            if names.normalize_club_name(team) in uefa_keys:
+            if team in wikipedia_aliases:
                 continue
             rows.append(
                 {

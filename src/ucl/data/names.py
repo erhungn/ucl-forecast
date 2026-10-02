@@ -27,6 +27,7 @@ __all__ = [
     "load_mapping", "load_teams", "alias_to_canonical", "canonical_aliases",
     "add_canonical", "unmapped_names", "normalize_club_name", "intersection_clubs",
     "unmapped_intersection", "TYPE_TOKENS", "ASSOCIATION_OVERRIDES", "association",
+    "merge_conflicts",
 ]
 
 #: Clubs whose UEFA association is not their own country, because they play in a
@@ -145,15 +146,21 @@ _LETTER_SUBS = str.maketrans({"ø": "o", "æ": "a", "å": "a", "ß": "s", "ł": 
                               "ð": "d", "þ": "t", "ı": "i"})
 
 
-def normalize_club_name(name: str) -> str:
-    """Strip accents, punctuation, club-type tokens and founding years."""
+def normalize_club_name(name: str, *, keep_years: bool = False) -> str:
+    """Strip accents, punctuation, club-type tokens and founding years.
+
+    ``keep_years`` keeps numeric tokens, which distinguishes clubs that differ
+    only by a year in their name — "U Craiova" and "U Craiova 1948" are two
+    different clubs that otherwise normalise identically.
+    """
     text = str(name).lower().translate(_LETTER_SUBS)
     text = unicodedata.normalize("NFKD", text)
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
     text = re.sub(r"[^a-z0-9]+", " ", text)
     tokens = [t for t in text.split() if t not in TYPE_TOKENS]
     # Founding years and the German "1. FC" style ordinal carry no identity.
-    tokens = [t for t in tokens if not re.fullmatch(r"(?:18|19|20)\d\d|\d{1,2}", t)]
+    if not keep_years:
+        tokens = [t for t in tokens if not re.fullmatch(r"(?:18|19|20)\d\d|\d{1,2}", t)]
     # Never return an empty key: "AIK" is all club-type tokens but still a club.
     return " ".join(tokens) or re.sub(r"[^a-z0-9]+", " ", text).strip()
 
@@ -186,3 +193,21 @@ def unmapped_intersection(
         for name, cc in intersection_clubs(european, fd_countries).items()
         if name not in lookup
     }
+
+
+def merge_conflicts(
+    frame: pd.DataFrame,
+    source: str,
+    *,
+    columns: tuple[str, str] = ("home", "away"),
+    path: Path | None = None,
+) -> pd.DataFrame:
+    """Matches whose two sides resolve to the same id — so the merge is wrong.
+
+    Two names mapped to one club claim to be the same team. If they ever meet,
+    they cannot be: this is the decisive test for a proposed merge, stronger
+    than non-overlapping seasons.
+    """
+    resolved = add_canonical(frame, source, columns=columns, path=path)
+    home, away = (f"{column}_canonical" for column in columns)
+    return resolved[resolved[home].notna() & (resolved[home] == resolved[away])]

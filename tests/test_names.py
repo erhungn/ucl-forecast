@@ -88,3 +88,52 @@ def test_cross_border_clubs_are_inside_the_intersection():
     )
     inter = names.intersection_clubs(european, {"FRA", "SUI", "ENG"})
     assert "AS Monaco FC" in inter and "FC Vaduz" in inter
+
+
+def test_normalisation_can_keep_years_to_separate_clubs():
+    # "U Craiova" and "U Craiova 1948" are different clubs that collide once
+    # founding years are stripped.
+    assert names.normalize_club_name("U Craiova 1948") == names.normalize_club_name("U Craiova")
+    assert names.normalize_club_name(
+        "U Craiova 1948", keep_years=True
+    ) != names.normalize_club_name("U Craiova", keep_years=True)
+
+
+def test_merge_conflicts_flags_two_merged_names_that_meet(tmp_path):
+    path = tmp_path / "team_names.csv"
+    pd.DataFrame(
+        {
+            "canonical": ["Dundee", "Dundee"],
+            "country": ["SCO", "SCO"],
+            "source": ["football_data", "football_data"],
+            "source_name": ["Dundee", "Dundee United"],
+            "provenance": ["user-reviewed", "fd-variant (user-reviewed)"],
+        }
+    ).to_csv(path, index=False)
+    frame = pd.DataFrame(
+        {
+            "home": ["Dundee United", "Dundee"],
+            "away": ["Dundee", "Hearts"],
+            "date": pd.to_datetime(["2021-09-19", "2021-09-26"]),
+        }
+    )
+    conflicts = names.merge_conflicts(frame, "football_data", path=path)
+    assert len(conflicts) == 1
+    assert conflicts.iloc[0].home == "Dundee United"
+
+
+def test_real_mapping_has_no_merge_conflicts():
+    from ucl.config import season
+    from ucl.data.football_data import load_results
+
+    domestic = load_results(season("2026-27").cutoff_date)
+    assert names.merge_conflicts(domestic, "football_data").empty
+
+
+def test_reviewed_merges_are_declared_fd_variants():
+    mapping = names.load_mapping()
+    fd = mapping[mapping.source == "football_data"]
+    variants = set(fd.loc[fd.provenance.str.startswith("fd-variant"), "source_name"])
+    for canonical, spellings in fd.groupby("canonical").source_name.apply(list).items():
+        unmarked = [s for s in spellings if s not in variants]
+        assert len(unmarked) <= 1, f"{canonical} has several unmarked spellings: {unmarked}"
