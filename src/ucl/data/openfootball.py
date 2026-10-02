@@ -272,8 +272,16 @@ def load_results(
     if verify:
         verify_cache(cache_dir, files=[s.file_name for s in present])
 
+    def phase_of(source: Source) -> str:
+        """Qualifying, main draw, or a world.more file that holds both."""
+        stem = Path(source.path).stem
+        if stem.startswith("uefa."):
+            return "mixed"
+        return "qualifying" if stem.endswith("q") else "main"
+
     frames = [
         parse_file(cache_dir / s.file_name, season=s.season, competition=s.competition)
+        .assign(phase=phase_of(s))
         for s in present
     ]
     combined = pd.concat(frames, ignore_index=True)

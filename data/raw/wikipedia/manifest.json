@@ -1,5 +1,117 @@
 [
   {
+    "file": "2024-25_UEFA_Conference_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Conference_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:22.356699+00:00",
+    "sha256": "1f0a669b11deabc413a2794521b60e4fd851229b942c7ef7c0502aa77b131fc1",
+    "bytes": 65991
+  },
+  {
+    "file": "2024-25_UEFA_Conference_League_league_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Conference_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:21.772215+00:00",
+    "sha256": "607cd8396312f7c5ed27fe085abace726d46115722669c97ed20f5262628f273",
+    "bytes": 183184
+  },
+  {
+    "file": "2024-25_UEFA_Europa_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Europa_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:20.657735+00:00",
+    "sha256": "99d2a0153a1f1f0b8b780b68f0746aec00609024d05ff4479b101b75c4b73c53",
+    "bytes": 63890
+  },
+  {
+    "file": "2024-25_UEFA_Europa_League_league_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Europa_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:20.176018+00:00",
+    "sha256": "7edc9f129f05ba14d41f8c49217af8d100f4beb67b07f3862c4e9558d82d0629",
+    "bytes": 208511
+  },
+  {
+    "file": "2025-26_UEFA_Conference_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_UEFA_Conference_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:24.753375+00:00",
+    "sha256": "76c96fdb166e5e2bb8accb2587432a458e811da6d357491eb7430e0b289652a1",
+    "bytes": 70035
+  },
+  {
+    "file": "2025-26_UEFA_Conference_League_league_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_UEFA_Conference_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:24.271057+00:00",
+    "sha256": "5c4727d15f33d7725a1c178335ecc2fddbfc8070dbd4fbd106ec53a6fb6de1e2",
+    "bytes": 171713
+  },
+  {
+    "file": "2025-26_UEFA_Europa_League_knockout_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_UEFA_Europa_League_knockout_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:23.622665+00:00",
+    "sha256": "4a0ddafd8027596d3fa9e20814af90094957d22b14f7874c9a84b7e75604022c",
+    "bytes": 68123
+  },
+  {
+    "file": "2025-26_UEFA_Europa_League_league_phase.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_UEFA_Europa_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:36:23.010751+00:00",
+    "sha256": "859372c02ba05e12c26e657678cb288da096ea285ef92403d69c1b182e8d133c",
+    "bytes": 195042
+  },
+  {
+    "file": "2025_UEFA_Conference_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025_UEFA_Conference_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:40:51.441000+00:00",
+    "sha256": "dec058e81164e22dc20ba0bc6893640feb963fe309823fad7c22a1ba9ba89d1f",
+    "bytes": 29707
+  },
+  {
+    "file": "2025_UEFA_Europa_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025_UEFA_Europa_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:40:50.925163+00:00",
+    "sha256": "e69042b7108c911cb1eb1f3a272bf58c770b7c443f21e386ab2c9f96e6019628",
+    "bytes": 40755
+  },
+  {
+    "file": "2026-27_UEFA_Champions_League_qualifying.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Champions_League_qualifying&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:37:00.027544+00:00",
+    "sha256": "aaaeeb92db17e15c10ddc53a7b85aaabfa08549db8fafb15ebcdf9b2747b8864",
+    "bytes": 121751
+  },
+  {
+    "file": "2026-27_UEFA_Conference_League_qualifying_(first_and_second_round_matches).wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Conference_League_qualifying_%28first_and_second_round_matches%29&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:38:55.455298+00:00",
+    "sha256": "3b19f045ea932d6e3b003c008f07e02f2923a1039121c31b87b92173dadf1e02",
+    "bytes": 154198
+  },
+  {
+    "file": "2026-27_UEFA_Conference_League_qualifying_(third_and_play-off_round_matches).wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Conference_League_qualifying_%28third_and_play-off_round_matches%29&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:38:56.252511+00:00",
+    "sha256": "4e1754a9c92281ac87adc84c24554a0f2e468133519816346ce7d92dde53d550",
+    "bytes": 106368
+  },
+  {
+    "file": "2026-27_UEFA_Europa_League_qualifying.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Europa_League_qualifying&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:37:00.566905+00:00",
+    "sha256": "a0b50f1d2c39a37289a9ac5263ddd5db2bfd50487c9f6e0dd4c85471c61e17cb",
+    "bytes": 105509
+  },
+  {
+    "file": "2026_UEFA_Conference_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026_UEFA_Conference_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:40:52.409768+00:00",
+    "sha256": "bb9e6e4611e6f9512844d85fa921c0b8e155f21080f6d20a6565afcd24e99279",
+    "bytes": 28627
+  },
+  {
+    "file": "2026_UEFA_Europa_League_final.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026_UEFA_Europa_League_final&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:40:51.963835+00:00",
+    "sha256": "b3c64b8f31a4008c66207ea81dfae92a4978b9be6e11b0bcd4dc287b5ba8bb52",
+    "bytes": 28218
+  },
+  {
     "file": "league_phase_2024-25.wikitext",
     "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Champions_League_league_phase&action=raw",
     "downloaded_at_utc": "2026-10-02T12:08:30.791199+00:00",

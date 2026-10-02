@@ -12,7 +12,7 @@ import argparse
 import sys
 
 from ucl.config import OUTPUTS_DIR, season as season_config
-from ucl.data import football_data, names, openfootball
+from ucl.data import football_data, names, openfootball, wikipedia
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -56,6 +56,11 @@ def main(argv: list[str] | None = None) -> int:
           f"club names mapped")
     for name, country in sorted(unmapped_inter.items()):
         failures.append(f"intersection club unmapped: {name} ({country})")
+
+    try:
+        gap = wikipedia.load_results(cfg.cutoff_date)
+    except FileNotFoundError:
+        gap = None
 
     # --- Check A: reverse direction, with the fd spelling-variant escape hatch ---
     # A mapped club may have domestic data under a second football-data spelling.
@@ -129,7 +134,12 @@ def main(argv: list[str] | None = None) -> int:
     # Any two names mapped to one id are claimed to be the same club, so if they
     # appear on opposite sides of a match the merge is wrong.
     check_c = 0
-    for source, frame in (("football_data", domestic), ("openfootball", european)):
+    gap_for_c = gap if gap is not None and len(gap) else None
+    sources = [("football_data", domestic), ("openfootball", european)]
+    if gap_for_c is not None:
+        sources.append(("wikipedia", gap_for_c))
+    checked_matches = sum(len(f) for _, f in sources)
+    for source, frame in sources:
         for row in names.merge_conflicts(frame, source).itertuples():
             check_c += 1
             failures.append(
@@ -137,7 +147,18 @@ def main(argv: list[str] | None = None) -> int:
                 f"{row.date.date()} but both map to {row.home_canonical!r}"
             )
     print(f"check C (merged names never meet): {check_c} violation(s) "
-          f"across {len(domestic) + len(european)} matches")
+          f"across {checked_matches} matches")
+
+    # The same gate for the Wikipedia gap data: a club there whose association
+    # has a cached league must be mapped, or it splits from its domestic self.
+    if gap is not None and len(gap):
+        wiki_mapped = set(names.alias_to_canonical("wikipedia"))
+        gap_inter = names.intersection_clubs(gap, fd_countries)
+        gap_unmapped = {n: c for n, c in gap_inter.items() if n not in wiki_mapped}
+        print(f"wikipedia gap gate: {len(gap_inter) - len(gap_unmapped)}/{len(gap_inter)} "
+              f"club names mapped")
+        for name, country in sorted(gap_unmapped.items()):
+            failures.append(f"wikipedia gap club unmapped: {name} ({country})")
 
     # Every team with a football-data code must resolve on the football-data side.
     fd_aliases = names.canonical_aliases("football_data")

@@ -9,6 +9,8 @@ substring matching, which confuses Roma with Lazio Roma and Sporting CP with
 Sporting Braga. Everything else goes to outputs/name_review.csv, in sections:
 
 * ``european-unmapped``        openfootball club with no football-data counterpart
+* ``wikipedia-euro-unmapped``  gap-data club in a covered association: needs an id
+* ``wikipedia-euro-own-id``    gap-data club from an uncached league: keeps its name
 * ``fd-intra-source-variant``  two football-data names that may be one club
 * ``wikipedia-fixture-name``   fixture team name with no canonical yet
 
@@ -26,7 +28,7 @@ import pandas as pd
 
 from ucl.config import DATA_RAW, OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
-from ucl.data import football_data, names, openfootball
+from ucl.data import football_data, names, openfootball, wikipedia
 
 REVIEW_COLUMNS = ["section", "item", "country", "detail", "proposal"]
 DECISIONS_PATH = DATA_RAW / "name_decisions.csv"
@@ -168,6 +170,40 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     rows.extend(intra_source_variants(domestic))
+
+    # Clubs introduced by the Wikipedia gap data (2025-26 UEL/UECL main phase and
+    # 2026-27 qualifying). Nothing here is auto-accepted, not even an exact
+    # normalised match: these names have never been reviewed.
+    try:
+        gap = wikipedia.load_results(cutoff)
+    except FileNotFoundError:
+        gap = None
+    if gap is not None and len(gap):
+        wiki_mapped = set(names.alias_to_canonical("wikipedia"))
+        gap_clubs: dict[str, str] = {}
+        for row in gap.itertuples():
+            gap_clubs.setdefault(row.home, row.home_country)
+            gap_clubs.setdefault(row.away, row.away_country)
+        for name, country in sorted(gap_clubs.items()):
+            assoc = names.association(country)
+            if name in wiki_mapped:
+                continue
+            must_map = assoc in covered
+            hit = fd_index.get((assoc, names.normalize_club_name(name)), set())
+            rows.append(
+                {
+                    "section": ("wikipedia-euro-unmapped" if must_map
+                                else "wikipedia-euro-own-id"),
+                    "item": name,
+                    "country": assoc,
+                    "detail": (
+                        f"normalised {names.normalize_club_name(name)!r}; "
+                        + ("in a covered association, so it must be mapped"
+                           if must_map else "league not cached, keeps its own name as id")
+                    ),
+                    "proposal": next(iter(hit)) if len(hit) == 1 else "",
+                }
+            )
 
     # Fixture team names (Wikipedia spellings) that have no canonical yet.
     # A fixture spelling is settled once it is a mapped wikipedia alias.
