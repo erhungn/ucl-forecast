@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ucl-forecast"
+version = "0.1.0"
+description = "Pre-tournament forecast of the 2026-27 UEFA Champions League from a frozen information set"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy==2.5.2",
+    "pandas==2.3.3",
+    "scipy==1.18.1",
+    "requests==2.34.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ucl"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

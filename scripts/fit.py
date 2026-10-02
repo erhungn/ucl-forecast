@@ -1,0 +1,4 @@
+"""Milestone 0 stub: fit is not implemented yet."""
+
+if __name__ == "__main__":
+    raise SystemExit("not implemented")

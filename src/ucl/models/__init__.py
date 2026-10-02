@@ -1,0 +1,1 @@
+"""Rating and goal models."""
