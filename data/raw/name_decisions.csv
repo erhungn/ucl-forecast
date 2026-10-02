@@ -78,3 +78,27 @@ user-reviewed,Nordsjaelland,DEN,wikipedia,Nordsjælland,attached to the existing
 user-reviewed,Nott'm Forest,ENG,wikipedia,Nottingham Forest,
 user-reviewed,OFI Crete,GRE,wikipedia,OFI,
 user-reviewed,St Truiden,BEL,wikipedia,Sint-Truiden,
+user-reviewed,Atletico Madrid,ESP,openfootball,Atlético Madrid,
+user-reviewed,Bayern Munich,GER,openfootball,Bayern München,
+user-reviewed,M'gladbach,GER,openfootball,Bor. Mönchengladbach,
+user-reviewed,Leicester,ENG,openfootball,Leicester City,
+user-reviewed,Marseille,FRA,openfootball,Olympique Marseille,
+user-reviewed,Paris Saint-Germain,FRA,openfootball,Paris Saint-Germain,
+user-reviewed,Antwerp,BEL,openfootball,Royal Antwerp FC,
+user-reviewed,Rennes,FRA,openfootball,Stade Rennais,
+user-reviewed,Standard,BEL,openfootball,Standard Liège,
+user-reviewed,Akhisar Belediyespor,TUR,wikipedia,Akhisarspor,
+user-reviewed,Astra,ROU,wikipedia,Astra Giurgiu,
+user-reviewed,M'gladbach,GER,wikipedia,Borussia Mönchengladbach,
+user-reviewed,Espanol,ESP,wikipedia,Espanyol,
+user-reviewed,Inter,ITA,wikipedia,Internazionale,
+user-reviewed,St Etienne,FRA,wikipedia,Saint-Étienne,
+user-reviewed,Standard,BEL,wikipedia,Standard Liège,
+user-reviewed,FCSB,ROU,wikipedia,Steaua București,renamed FCSB in 2017; CSA Steaua is a different club
+user-reviewed,Wolves,ENG,wikipedia,Wolverhampton Wanderers,
+user-reviewed,Waregem,BEL,wikipedia,Zulte Waregem,
+fd-variant,Beveren,BEL,football_data,Waasland-Beveren,same club renamed; Beveren is the current spelling
+distinct-pair,,TUR,football_data,Gaziantep | Gaziantepspor,Gaziantepspor folded; Gaziantep FK is a separate club
+distinct-pair,,POR,football_data,AVS | Aves,CD Aves dissolved
+distinct-pair,,POR,football_data,Farense | Feirense,different clubs
+distinct-pair,,GRE,football_data,Ionikos | Panionios,different clubs

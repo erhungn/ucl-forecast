@@ -624,3 +624,32 @@ Granada,ESP,football_data,Granada,exact-normalised:granada
 Granada,ESP,openfootball,Granada CF,exact-normalised:granada
 Sevilla,ESP,openfootball,Sevilla FC,exact-normalised:sevilla
 Valencia,ESP,openfootball,Valencia CF,exact-normalised:valencia
+Atletico Madrid,ESP,openfootball,Atlético Madrid,user-reviewed
+Bayern Munich,GER,openfootball,Bayern München,user-reviewed
+M'gladbach,GER,openfootball,Bor. Mönchengladbach,user-reviewed
+M'gladbach,GER,football_data,M'gladbach,user-reviewed
+Leicester,ENG,openfootball,Leicester City,user-reviewed
+Marseille,FRA,openfootball,Olympique Marseille,user-reviewed
+Paris Saint-Germain,FRA,openfootball,Paris Saint-Germain,user-reviewed
+Antwerp,BEL,openfootball,Royal Antwerp FC,user-reviewed
+Rennes,FRA,openfootball,Stade Rennais,user-reviewed
+Standard,BEL,openfootball,Standard Liège,user-reviewed
+Standard,BEL,football_data,Standard,user-reviewed
+Akhisar Belediyespor,TUR,wikipedia,Akhisarspor,user-reviewed
+Akhisar Belediyespor,TUR,football_data,Akhisar Belediyespor,user-reviewed
+Astra,ROU,wikipedia,Astra Giurgiu,user-reviewed
+Astra,ROU,football_data,Astra,user-reviewed
+M'gladbach,GER,wikipedia,Borussia Mönchengladbach,user-reviewed
+Espanol,ESP,wikipedia,Espanyol,user-reviewed
+Espanol,ESP,football_data,Espanol,user-reviewed
+Inter,ITA,wikipedia,Internazionale,user-reviewed
+St Etienne,FRA,wikipedia,Saint-Étienne,user-reviewed
+St Etienne,FRA,football_data,St Etienne,user-reviewed
+Standard,BEL,wikipedia,Standard Liège,user-reviewed
+FCSB,ROU,wikipedia,Steaua București,user-reviewed
+Wolves,ENG,wikipedia,Wolverhampton Wanderers,user-reviewed
+Wolves,ENG,football_data,Wolves,user-reviewed
+Waregem,BEL,wikipedia,Zulte Waregem,user-reviewed
+Waregem,BEL,football_data,Waregem,user-reviewed
+Beveren,BEL,football_data,Waasland-Beveren,fd-variant (user-reviewed)
+Beveren,BEL,football_data,Beveren,user-reviewed
