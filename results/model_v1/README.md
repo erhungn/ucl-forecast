@@ -4,7 +4,8 @@ The accepted forecasting model: **Elo with association offsets, plus a
 pre-season squad-value prior.** It supersedes `elo_baseline_v0`, which stays as
 the reference the covariate was measured against.
 
-- Tag: `model-v1`
+- Commit: `1d8d918f3af8583fcef32d171db97a0871a35b8c` - the code and outputs
+- Tag: `model-v1`, on the commit after it, which only adds these two lines
 - Archived: 2026-10-02
 - Simulations: 50,000 iterations, seed 20260907
 
