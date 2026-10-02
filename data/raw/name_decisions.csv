@@ -68,3 +68,13 @@ distinct-pair,,ROU,football_data,Daco-Getica Bucuresti | Dinamo Bucuresti,differ
 distinct-pair,,ROU,football_data,Daco-Getica Bucuresti | FC Rapid Bucuresti,different clubs; share only the city
 distinct-pair,,SWE,football_data,Osters | Ostersunds,different clubs
 distinct-pair,,ROU,football_data,U Craiova | U Craiova 1948,different clubs; see the distinct-club row
+user-reviewed,Aarhus,DEN,wikipedia,AGF,attached to the existing Aarhus id
+user-reviewed,Brighton,ENG,wikipedia,Brighton & Hove Albion,attached to the existing Brighton id
+user-reviewed,Celta,ESP,wikipedia,Celta Vigo,
+user-reviewed,Goteborg,SWE,wikipedia,IFK Göteborg,
+user-reviewed,Mjallby,SWE,wikipedia,Mjällby AIF,
+user-reviewed,Nijmegen,NED,wikipedia,NEC,
+user-reviewed,Nordsjaelland,DEN,wikipedia,Nordsjælland,attached to the existing Nordsjaelland id; Vestsjaelland is a different club in the same file
+user-reviewed,Nott'm Forest,ENG,wikipedia,Nottingham Forest,
+user-reviewed,OFI Crete,GRE,wikipedia,OFI,
+user-reviewed,St Truiden,BEL,wikipedia,Sint-Truiden,

@@ -137,3 +137,40 @@ def test_reviewed_merges_are_declared_fd_variants():
     for canonical, spellings in fd.groupby("canonical").source_name.apply(list).items():
         unmarked = [s for s in spellings if s not in variants]
         assert len(unmarked) <= 1, f"{canonical} has several unmarked spellings: {unmarked}"
+
+
+def test_candidate_pool_includes_names_that_already_have_an_id():
+    # "Brighton" is already an id; excluding mapped names once hid it as the
+    # candidate for the Wikipedia spelling "Brighton & Hove Albion".
+    pool = ["Brighton", "Burnley", "Everton", "Coventry"]
+    mapped = {"Brighton": "Brighton"}
+    out = names.closest_names(
+        names.normalize_club_name("Brighton & Hove Albion"), pool, mapped=mapped
+    )
+    assert out[0] == "Brighton (= Brighton)"
+    assert len(out) == 3
+
+
+def test_candidates_are_ranked_by_similarity():
+    pool = ["Nordsjaelland", "Vestsjaelland", "Horsens"]
+    out = names.closest_names(names.normalize_club_name("Nordsjælland"), pool, limit=2)
+    assert out == ["Nordsjaelland", "Vestsjaelland"]
+
+
+def test_every_reviewed_wikipedia_target_is_a_real_cache_name():
+    from ucl.config import season
+    from ucl.data.football_data import load_results
+
+    domestic = load_results(season("2026-27").cutoff_date)
+    present = set(domestic.home) | set(domestic.away)
+    mapping = names.load_mapping()
+    wiki = mapping[(mapping.source == "wikipedia") & (mapping.provenance == "user-reviewed")]
+    fd_names = set(mapping[mapping.source == "football_data"].source_name)
+    for row in wiki.itertuples():
+        # Each reviewed wikipedia alias resolves to an id that is itself backed
+        # by a football-data name, except the league-phase teams whose leagues
+        # are not cached at all.
+        backing = mapping[(mapping.canonical == row.canonical)
+                          & (mapping.source == "football_data")]
+        if len(backing):
+            assert set(backing.source_name) <= present | fd_names

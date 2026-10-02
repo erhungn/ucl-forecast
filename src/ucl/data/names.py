@@ -14,6 +14,7 @@ the ``champions-league`` files — so one column per source cannot hold them.
 
 from __future__ import annotations
 
+import difflib
 import re
 import unicodedata
 from pathlib import Path
@@ -27,7 +28,7 @@ __all__ = [
     "load_mapping", "load_teams", "alias_to_canonical", "canonical_aliases",
     "add_canonical", "unmapped_names", "normalize_club_name", "intersection_clubs",
     "unmapped_intersection", "TYPE_TOKENS", "ASSOCIATION_OVERRIDES", "association",
-    "merge_conflicts",
+    "merge_conflicts", "closest_names",
 ]
 
 #: Clubs whose UEFA association is not their own country, because they play in a
@@ -211,3 +212,26 @@ def merge_conflicts(
     resolved = add_canonical(frame, source, columns=columns, path=path)
     home, away = (f"{column}_canonical" for column in columns)
     return resolved[resolved[home].notna() & (resolved[home] == resolved[away])]
+
+
+def closest_names(
+    key: str,
+    pool: list[str],
+    *,
+    mapped: dict[str, str] | None = None,
+    limit: int = 3,
+) -> list[str]:
+    """The ``limit`` names in ``pool`` closest to normalised ``key``.
+
+    Candidates for human review only. The pool must include names that already
+    have an id, annotated with it: excluding them once hid the right answer for
+    "Brighton & Hove Albion", whose counterpart "Brighton" was already an id.
+    """
+    mapped = mapped or {}
+    ranked = sorted(
+        pool,
+        key=lambda name: -difflib.SequenceMatcher(
+            None, key, normalize_club_name(name)
+        ).ratio(),
+    )[:limit]
+    return [f"{name} (= {mapped[name]})" if name in mapped else name for name in ranked]

@@ -561,3 +561,20 @@ Vallecano,ESP,wikipedia,Rayo Vallecano,alias-identical:rayo vallecano
 Salzburg,AUT,wikipedia,Red Bull Salzburg,alias-identical:red bull salzburg
 U. Cluj,ROU,wikipedia,Universitatea Cluj,alias-identical:universitatea cluj
 Univ. Craiova,ROU,wikipedia,Universitatea Craiova,alias-identical:universitatea craiova
+Aarhus,DEN,wikipedia,AGF,user-reviewed
+Brighton,ENG,wikipedia,Brighton & Hove Albion,user-reviewed
+Celta,ESP,wikipedia,Celta Vigo,user-reviewed
+Celta,ESP,football_data,Celta,user-reviewed
+Goteborg,SWE,wikipedia,IFK Göteborg,user-reviewed
+Goteborg,SWE,football_data,Goteborg,user-reviewed
+Mjallby,SWE,wikipedia,Mjällby AIF,user-reviewed
+Mjallby,SWE,football_data,Mjallby,user-reviewed
+Nijmegen,NED,wikipedia,NEC,user-reviewed
+Nijmegen,NED,football_data,Nijmegen,user-reviewed
+Nordsjaelland,DEN,wikipedia,Nordsjælland,user-reviewed
+Nott'm Forest,ENG,wikipedia,Nottingham Forest,user-reviewed
+Nott'm Forest,ENG,football_data,Nott'm Forest,user-reviewed
+OFI Crete,GRE,wikipedia,OFI,user-reviewed
+OFI Crete,GRE,football_data,OFI Crete,user-reviewed
+St Truiden,BEL,wikipedia,Sint-Truiden,user-reviewed
+St Truiden,BEL,football_data,St Truiden,user-reviewed

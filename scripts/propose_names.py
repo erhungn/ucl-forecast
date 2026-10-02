@@ -146,33 +146,31 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- review list, in sections ---
     rows: list[dict] = []
-    fd_mapped = set(names.alias_to_canonical("football_data"))
-    claimed = {fd for _, _, fd, _ in matched}
-    unmapped_fd: dict[str, list[str]] = {}
+    # The candidate pool is every football-data name in the association, mapped
+    # or not: excluding mapped ones hid the right answer for names like
+    # "Brighton & Hove Albion", whose counterpart "Brighton" was already an id.
+    fd_to_canonical_now = names.alias_to_canonical("football_data")
+    fd_pool: dict[str, list[str]] = {}
     for country, home, away in zip(domestic.country, domestic.home, domestic.away):
         for team in (home, away):
-            if team not in fd_mapped and team not in claimed:
-                unmapped_fd.setdefault(country, [])
-                if team not in unmapped_fd[country]:
-                    unmapped_fd[country].append(team)
+            pool = fd_pool.setdefault(country, [])
+            if team not in pool:
+                pool.append(team)
+
+    def candidates_for(key: str, assoc: str, limit: int = 3) -> list[str]:
+        """The closest football-data names in that association, id noted."""
+        return names.closest_names(
+            key, fd_pool.get(assoc, []), mapped=fd_to_canonical_now, limit=limit
+        )
 
     for name, country, key in review:
-        candidates = sorted(unmapped_fd.get(country, []))
-        # Propose only where normalisation is one abbreviation apart; a shared
-        # token is a hint for the human, not an assertion of identity.
-        tokens = set(key.split())
-        close = [
-            c for c in candidates
-            if set(names.normalize_club_name(c).split()) & tokens
-            or difflib.SequenceMatcher(None, key, names.normalize_club_name(c)).ratio() >= 0.75
-        ]
         rows.append(
             {
                 "section": "european-unmapped",
                 "item": name,
                 "country": country,
-                "detail": f"normalised {key!r}; {len(candidates)} unmapped fd name(s) in {country}",
-                "proposal": " | ".join(close) if close else "",
+                "detail": f"normalised {key!r}; {len(fd_pool.get(country, []))} fd name(s) in {country}",
+                "proposal": " | ".join(candidates_for(key, country)),
             }
         )
 
@@ -238,12 +236,6 @@ def main(argv: list[str] | None = None) -> int:
             if len(approved) == 1:
                 wiki_alias_identical.append((name, assoc, next(iter(approved)), key))
                 continue
-            candidates = sorted(
-                unmapped_fd.get(assoc, []),
-                key=lambda c: -difflib.SequenceMatcher(
-                    None, key, names.normalize_club_name(c)
-                ).ratio(),
-            )[:3]
             rows.append(
                 {
                     "section": "wikipedia-euro-unmapped",
@@ -252,7 +244,7 @@ def main(argv: list[str] | None = None) -> int:
                         f"normalised {key!r}; not in the 2024-25 schedule bridge"
                         + (f"; bridges to {bridged!r} which has no id" if bridged else "")
                     ),
-                    "proposal": " | ".join(candidates),
+                    "proposal": " | ".join(candidates_for(key, assoc)),
                 }
             )
         print(f"\nwikipedia gap names: {len(wiki_exact)} exact-normalised, "
