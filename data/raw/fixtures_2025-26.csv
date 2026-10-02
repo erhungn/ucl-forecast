@@ -1,0 +1,145 @@
+season,matchday,date,home,away,home_country,away_country
+2025-26,1,2025-09-16,Athletic Club,Arsenal FC,ESP,ENG
+2025-26,1,2025-09-16,Juventus FC,Borussia Dortmund,ITA,GER
+2025-26,1,2025-09-16,PSV,Royale Union Saint-Gilloise,NED,BEL
+2025-26,1,2025-09-16,Real Madrid CF,Olympique de Marseille,ESP,FRA
+2025-26,1,2025-09-16,Sport Lisboa e Benfica,Qarabağ Ağdam FK,POR,AZE
+2025-26,1,2025-09-16,Tottenham Hotspur FC,Villarreal CF,ENG,ESP
+2025-26,1,2025-09-17,AFC Ajax,FC Internazionale Milano,NED,ITA
+2025-26,1,2025-09-17,FC Bayern München,Chelsea FC,GER,ENG
+2025-26,1,2025-09-17,Liverpool FC,Club Atlético de Madrid,ENG,ESP
+2025-26,1,2025-09-17,PAE Olympiakos SFP,Paphos FC,GRE,CYP
+2025-26,1,2025-09-17,Paris Saint-Germain FC,Atalanta BC,FRA,ITA
+2025-26,1,2025-09-17,SK Slavia Praha,FK Bodø/Glimt,CZE,NOR
+2025-26,1,2025-09-18,Club Brugge KV,AS Monaco FC,BEL,MCO
+2025-26,1,2025-09-18,Eintracht Frankfurt,Galatasaray SK,GER,TUR
+2025-26,1,2025-09-18,FC København,Bayer 04 Leverkusen,DEN,GER
+2025-26,1,2025-09-18,Manchester City FC,SSC Napoli,ENG,ITA
+2025-26,1,2025-09-18,Newcastle United FC,FC Barcelona,ENG,ESP
+2025-26,1,2025-09-18,Sporting Clube de Portugal,FK Kairat,POR,KAZ
+2025-26,2,2025-09-30,Atalanta BC,Club Brugge KV,ITA,BEL
+2025-26,2,2025-09-30,Chelsea FC,Sport Lisboa e Benfica,ENG,POR
+2025-26,2,2025-09-30,Club Atlético de Madrid,Eintracht Frankfurt,ESP,GER
+2025-26,2,2025-09-30,FC Internazionale Milano,SK Slavia Praha,ITA,CZE
+2025-26,2,2025-09-30,FK Bodø/Glimt,Tottenham Hotspur FC,NOR,ENG
+2025-26,2,2025-09-30,FK Kairat,Real Madrid CF,KAZ,ESP
+2025-26,2,2025-09-30,Galatasaray SK,Liverpool FC,TUR,ENG
+2025-26,2,2025-09-30,Olympique de Marseille,AFC Ajax,FRA,NED
+2025-26,2,2025-09-30,Paphos FC,FC Bayern München,CYP,GER
+2025-26,2,2025-10-01,AS Monaco FC,Manchester City FC,MCO,ENG
+2025-26,2,2025-10-01,Arsenal FC,PAE Olympiakos SFP,ENG,GRE
+2025-26,2,2025-10-01,Bayer 04 Leverkusen,PSV,GER,NED
+2025-26,2,2025-10-01,Borussia Dortmund,Athletic Club,GER,ESP
+2025-26,2,2025-10-01,FC Barcelona,Paris Saint-Germain FC,ESP,FRA
+2025-26,2,2025-10-01,Qarabağ Ağdam FK,FC København,AZE,DEN
+2025-26,2,2025-10-01,Royale Union Saint-Gilloise,Newcastle United FC,BEL,ENG
+2025-26,2,2025-10-01,SSC Napoli,Sporting Clube de Portugal,ITA,POR
+2025-26,2,2025-10-01,Villarreal CF,Juventus FC,ESP,ITA
+2025-26,3,2025-10-21,Arsenal FC,Club Atlético de Madrid,ENG,ESP
+2025-26,3,2025-10-21,Bayer 04 Leverkusen,Paris Saint-Germain FC,GER,FRA
+2025-26,3,2025-10-21,FC Barcelona,PAE Olympiakos SFP,ESP,GRE
+2025-26,3,2025-10-21,FC København,Borussia Dortmund,DEN,GER
+2025-26,3,2025-10-21,FK Kairat,Paphos FC,KAZ,CYP
+2025-26,3,2025-10-21,Newcastle United FC,Sport Lisboa e Benfica,ENG,POR
+2025-26,3,2025-10-21,PSV,SSC Napoli,NED,ITA
+2025-26,3,2025-10-21,Royale Union Saint-Gilloise,FC Internazionale Milano,BEL,ITA
+2025-26,3,2025-10-21,Villarreal CF,Manchester City FC,ESP,ENG
+2025-26,3,2025-10-22,AS Monaco FC,Tottenham Hotspur FC,MCO,ENG
+2025-26,3,2025-10-22,Atalanta BC,SK Slavia Praha,ITA,CZE
+2025-26,3,2025-10-22,Athletic Club,Qarabağ Ağdam FK,ESP,AZE
+2025-26,3,2025-10-22,Chelsea FC,AFC Ajax,ENG,NED
+2025-26,3,2025-10-22,Eintracht Frankfurt,Liverpool FC,GER,ENG
+2025-26,3,2025-10-22,FC Bayern München,Club Brugge KV,GER,BEL
+2025-26,3,2025-10-22,Galatasaray SK,FK Bodø/Glimt,TUR,NOR
+2025-26,3,2025-10-22,Real Madrid CF,Juventus FC,ESP,ITA
+2025-26,3,2025-10-22,Sporting Clube de Portugal,Olympique de Marseille,POR,FRA
+2025-26,4,2025-11-04,Club Atlético de Madrid,Royale Union Saint-Gilloise,ESP,BEL
+2025-26,4,2025-11-04,FK Bodø/Glimt,AS Monaco FC,NOR,MCO
+2025-26,4,2025-11-04,Juventus FC,Sporting Clube de Portugal,ITA,POR
+2025-26,4,2025-11-04,Liverpool FC,Real Madrid CF,ENG,ESP
+2025-26,4,2025-11-04,PAE Olympiakos SFP,PSV,GRE,NED
+2025-26,4,2025-11-04,Paris Saint-Germain FC,FC Bayern München,FRA,GER
+2025-26,4,2025-11-04,SK Slavia Praha,Arsenal FC,CZE,ENG
+2025-26,4,2025-11-04,SSC Napoli,Eintracht Frankfurt,ITA,GER
+2025-26,4,2025-11-04,Tottenham Hotspur FC,FC København,ENG,DEN
+2025-26,4,2025-11-05,AFC Ajax,Galatasaray SK,NED,TUR
+2025-26,4,2025-11-05,Club Brugge KV,FC Barcelona,BEL,ESP
+2025-26,4,2025-11-05,FC Internazionale Milano,FK Kairat,ITA,KAZ
+2025-26,4,2025-11-05,Manchester City FC,Borussia Dortmund,ENG,GER
+2025-26,4,2025-11-05,Newcastle United FC,Athletic Club,ENG,ESP
+2025-26,4,2025-11-05,Olympique de Marseille,Atalanta BC,FRA,ITA
+2025-26,4,2025-11-05,Paphos FC,Villarreal CF,CYP,ESP
+2025-26,4,2025-11-05,Qarabağ Ağdam FK,Chelsea FC,AZE,ENG
+2025-26,4,2025-11-05,Sport Lisboa e Benfica,Bayer 04 Leverkusen,POR,GER
+2025-26,5,2025-11-25,AFC Ajax,Sport Lisboa e Benfica,NED,POR
+2025-26,5,2025-11-25,Borussia Dortmund,Villarreal CF,GER,ESP
+2025-26,5,2025-11-25,Chelsea FC,FC Barcelona,ENG,ESP
+2025-26,5,2025-11-25,FK Bodø/Glimt,Juventus FC,NOR,ITA
+2025-26,5,2025-11-25,Galatasaray SK,Royale Union Saint-Gilloise,TUR,BEL
+2025-26,5,2025-11-25,Manchester City FC,Bayer 04 Leverkusen,ENG,GER
+2025-26,5,2025-11-25,Olympique de Marseille,Newcastle United FC,FRA,ENG
+2025-26,5,2025-11-25,SK Slavia Praha,Athletic Club,CZE,ESP
+2025-26,5,2025-11-25,SSC Napoli,Qarabağ Ağdam FK,ITA,AZE
+2025-26,5,2025-11-26,Arsenal FC,FC Bayern München,ENG,GER
+2025-26,5,2025-11-26,Club Atlético de Madrid,FC Internazionale Milano,ESP,ITA
+2025-26,5,2025-11-26,Eintracht Frankfurt,Atalanta BC,GER,ITA
+2025-26,5,2025-11-26,FC København,FK Kairat,DEN,KAZ
+2025-26,5,2025-11-26,Liverpool FC,PSV,ENG,NED
+2025-26,5,2025-11-26,PAE Olympiakos SFP,Real Madrid CF,GRE,ESP
+2025-26,5,2025-11-26,Paphos FC,AS Monaco FC,CYP,MCO
+2025-26,5,2025-11-26,Paris Saint-Germain FC,Tottenham Hotspur FC,FRA,ENG
+2025-26,5,2025-11-26,Sporting Clube de Portugal,Club Brugge KV,POR,BEL
+2025-26,6,2025-12-09,AS Monaco FC,Galatasaray SK,MCO,TUR
+2025-26,6,2025-12-09,Atalanta BC,Chelsea FC,ITA,ENG
+2025-26,6,2025-12-09,FC Barcelona,Eintracht Frankfurt,ESP,GER
+2025-26,6,2025-12-09,FC Bayern München,Sporting Clube de Portugal,GER,POR
+2025-26,6,2025-12-09,FC Internazionale Milano,Liverpool FC,ITA,ENG
+2025-26,6,2025-12-09,FK Kairat,PAE Olympiakos SFP,KAZ,GRE
+2025-26,6,2025-12-09,PSV,Club Atlético de Madrid,NED,ESP
+2025-26,6,2025-12-09,Royale Union Saint-Gilloise,Olympique de Marseille,BEL,FRA
+2025-26,6,2025-12-09,Tottenham Hotspur FC,SK Slavia Praha,ENG,CZE
+2025-26,6,2025-12-10,Athletic Club,Paris Saint-Germain FC,ESP,FRA
+2025-26,6,2025-12-10,Bayer 04 Leverkusen,Newcastle United FC,GER,ENG
+2025-26,6,2025-12-10,Borussia Dortmund,FK Bodø/Glimt,GER,NOR
+2025-26,6,2025-12-10,Club Brugge KV,Arsenal FC,BEL,ENG
+2025-26,6,2025-12-10,Juventus FC,Paphos FC,ITA,CYP
+2025-26,6,2025-12-10,Qarabağ Ağdam FK,AFC Ajax,AZE,NED
+2025-26,6,2025-12-10,Real Madrid CF,Manchester City FC,ESP,ENG
+2025-26,6,2025-12-10,Sport Lisboa e Benfica,SSC Napoli,POR,ITA
+2025-26,6,2025-12-10,Villarreal CF,FC København,ESP,DEN
+2025-26,7,2026-01-20,FC Internazionale Milano,Arsenal FC,ITA,ENG
+2025-26,7,2026-01-20,FC København,SSC Napoli,DEN,ITA
+2025-26,7,2026-01-20,FK Bodø/Glimt,Manchester City FC,NOR,ENG
+2025-26,7,2026-01-20,FK Kairat,Club Brugge KV,KAZ,BEL
+2025-26,7,2026-01-20,PAE Olympiakos SFP,Bayer 04 Leverkusen,GRE,GER
+2025-26,7,2026-01-20,Real Madrid CF,AS Monaco FC,ESP,MCO
+2025-26,7,2026-01-20,Sporting Clube de Portugal,Paris Saint-Germain FC,POR,FRA
+2025-26,7,2026-01-20,Tottenham Hotspur FC,Borussia Dortmund,ENG,GER
+2025-26,7,2026-01-20,Villarreal CF,AFC Ajax,ESP,NED
+2025-26,7,2026-01-21,Atalanta BC,Athletic Club,ITA,ESP
+2025-26,7,2026-01-21,Chelsea FC,Paphos FC,ENG,CYP
+2025-26,7,2026-01-21,FC Bayern München,Royale Union Saint-Gilloise,GER,BEL
+2025-26,7,2026-01-21,Galatasaray SK,Club Atlético de Madrid,TUR,ESP
+2025-26,7,2026-01-21,Juventus FC,Sport Lisboa e Benfica,ITA,POR
+2025-26,7,2026-01-21,Newcastle United FC,PSV,ENG,NED
+2025-26,7,2026-01-21,Olympique de Marseille,Liverpool FC,FRA,ENG
+2025-26,7,2026-01-21,Qarabağ Ağdam FK,Eintracht Frankfurt,AZE,GER
+2025-26,7,2026-01-21,SK Slavia Praha,FC Barcelona,CZE,ESP
+2025-26,8,2026-01-28,AFC Ajax,PAE Olympiakos SFP,NED,GRE
+2025-26,8,2026-01-28,AS Monaco FC,Juventus FC,MCO,ITA
+2025-26,8,2026-01-28,Arsenal FC,FK Kairat,ENG,KAZ
+2025-26,8,2026-01-28,Athletic Club,Sporting Clube de Portugal,ESP,POR
+2025-26,8,2026-01-28,Bayer 04 Leverkusen,Villarreal CF,GER,ESP
+2025-26,8,2026-01-28,Borussia Dortmund,FC Internazionale Milano,GER,ITA
+2025-26,8,2026-01-28,Club Atlético de Madrid,FK Bodø/Glimt,ESP,NOR
+2025-26,8,2026-01-28,Club Brugge KV,Olympique de Marseille,BEL,FRA
+2025-26,8,2026-01-28,Eintracht Frankfurt,Tottenham Hotspur FC,GER,ENG
+2025-26,8,2026-01-28,FC Barcelona,FC København,ESP,DEN
+2025-26,8,2026-01-28,Liverpool FC,Qarabağ Ağdam FK,ENG,AZE
+2025-26,8,2026-01-28,Manchester City FC,Galatasaray SK,ENG,TUR
+2025-26,8,2026-01-28,PSV,FC Bayern München,NED,GER
+2025-26,8,2026-01-28,Paphos FC,SK Slavia Praha,CYP,CZE
+2025-26,8,2026-01-28,Paris Saint-Germain FC,Newcastle United FC,FRA,ENG
+2025-26,8,2026-01-28,Royale Union Saint-Gilloise,Atalanta BC,BEL,ITA
+2025-26,8,2026-01-28,SSC Napoli,Chelsea FC,ITA,ENG
+2025-26,8,2026-01-28,Sport Lisboa e Benfica,Real Madrid CF,POR,ESP

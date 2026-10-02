@@ -129,3 +129,243 @@ Shakhtar Donetsk,UKR,uefa,Shakhtar,verified against uefa.com
 Sabah,AZE,openfootball,Sabah FK,verified against cache
 Sabah,AZE,openfootball,Sabah FA,verified against cache
 Sabah,AZE,uefa,Sabah,verified against uefa.com
+Heidenheim,GER,football_data,Heidenheim,approved-new-token
+Heidenheim,GER,openfootball,1. FC Heidenheim 1846,approved-new-token
+Mainz,GER,football_data,Mainz,approved-new-token
+Mainz,GER,openfootball,1. FSV Mainz 05,approved-new-token
+FC Koln,GER,football_data,FC Koln,approved-new-token
+FC Koln,GER,openfootball,1.FC Köln,approved-new-token
+Hoffenheim,GER,football_data,Hoffenheim,exact-normalised match
+Hoffenheim,GER,openfootball,1899 Hoffenheim,exact-normalised match
+Milan,ITA,football_data,Milan,exact-normalised match
+Milan,ITA,openfootball,AC Milan,exact-normalised match
+Fiorentina,ITA,football_data,Fiorentina,approved-new-token
+Fiorentina,ITA,openfootball,ACF Fiorentina,approved-new-token
+Ajax,NED,football_data,Ajax,exact-normalised match
+Ajax,NED,openfootball,AFC Ajax,exact-normalised match
+AZ Alkmaar,NED,football_data,AZ Alkmaar,exact-normalised match
+AZ Alkmaar,NED,openfootball,AZ Alkmaar,exact-normalised match
+Aarhus,DEN,football_data,Aarhus,exact-normalised match
+Aarhus,DEN,openfootball,Aarhus,exact-normalised match
+Aberdeen,SCO,football_data,Aberdeen,exact-normalised match
+Aberdeen,SCO,openfootball,Aberdeen,exact-normalised match
+Aberdeen,SCO,openfootball,Aberdeen FC,exact-normalised match
+Ajax,NED,openfootball,Ajax,exact-normalised match
+Anderlecht,BEL,football_data,Anderlecht,exact-normalised match
+Anderlecht,BEL,openfootball,Anderlecht,exact-normalised match
+Antwerp,BEL,football_data,Antwerp,exact-normalised match
+Antwerp,BEL,openfootball,Antwerp,exact-normalised match
+Arouca,POR,football_data,Arouca,exact-normalised match
+Arouca,POR,openfootball,Arouca,exact-normalised match
+Atalanta,ITA,football_data,Atalanta,approved-new-token
+Atalanta,ITA,openfootball,Atalanta,exact-normalised match
+Atalanta,ITA,openfootball,Atalanta BC,approved-new-token
+Austria Vienna,AUT,football_data,Austria Vienna,exact-normalised match
+Austria Vienna,AUT,openfootball,Austria Vienna,exact-normalised match
+Hacken,SWE,football_data,Hacken,exact-normalised match
+Hacken,SWE,openfootball,BK Hacken,exact-normalised match
+Hacken,SWE,openfootball,BK Häcken,exact-normalised match
+Young Boys,SUI,football_data,Young Boys,exact-normalised match
+Young Boys,SUI,openfootball,BSC Young Boys,exact-normalised match
+Benfica,POR,football_data,Benfica,exact-normalised match
+Benfica,POR,openfootball,Benfica,exact-normalised match
+Besiktas,TUR,football_data,Besiktas,exact-normalised match
+Besiktas,TUR,openfootball,Besiktas,exact-normalised match
+Besiktas,TUR,openfootball,Beşiktaş,exact-normalised match
+Bologna,ITA,football_data,Bologna,exact-normalised match
+Bologna,ITA,openfootball,Bologna FC 1909,exact-normalised match
+Brann,NOR,football_data,Brann,exact-normalised match
+Brann,NOR,openfootball,Brann,exact-normalised match
+Brighton,ENG,football_data,Brighton,exact-normalised match
+Brighton,ENG,openfootball,Brighton,exact-normalised match
+Brondby,DEN,football_data,Brondby,exact-normalised match
+Brondby,DEN,openfootball,Brondby,exact-normalised match
+Brondby,DEN,openfootball,Brøndby IF,exact-normalised match
+Santa Clara,POR,football_data,Santa Clara,exact-normalised match
+Santa Clara,POR,openfootball,CD Santa Clara,exact-normalised match
+CFR Cluj,ROU,football_data,CFR Cluj,exact-normalised match
+CFR Cluj,ROU,openfootball,CFR 1907 Cluj,exact-normalised match
+CFR Cluj,ROU,openfootball,CFR Cluj,exact-normalised match
+Celtic,SCO,football_data,Celtic,exact-normalised match
+Celtic,SCO,openfootball,Celtic,exact-normalised match
+Celtic,SCO,openfootball,Celtic FC,exact-normalised match
+Cercle Brugge,BEL,football_data,Cercle Brugge,exact-normalised match
+Cercle Brugge,BEL,openfootball,Cercle Brugge,exact-normalised match
+Chelsea,ENG,football_data,Chelsea,exact-normalised match
+Chelsea,ENG,openfootball,Chelsea,exact-normalised match
+Chelsea,ENG,openfootball,Chelsea FC,exact-normalised match
+Crystal Palace,ENG,football_data,Crystal Palace,exact-normalised match
+Crystal Palace,ENG,openfootball,Crystal Palace,exact-normalised match
+Dundee United,SCO,football_data,Dundee United,exact-normalised match
+Dundee United,SCO,openfootball,Dundee United,exact-normalised match
+Basel,SUI,football_data,Basel,exact-normalised match
+Basel,SUI,openfootball,FC Basel 1893,exact-normalised match
+FC Copenhagen,DEN,football_data,FC Copenhagen,exact-normalised match
+FC Copenhagen,DEN,openfootball,FC Copenhagen,exact-normalised match
+Lausanne,SUI,football_data,Lausanne,exact-normalised match
+Lausanne,SUI,openfootball,FC Lausanne-Sport,exact-normalised match
+Lugano,SUI,football_data,Lugano,exact-normalised match
+Lugano,SUI,openfootball,FC Lugano,exact-normalised match
+Luzern,SUI,football_data,Luzern,exact-normalised match
+Luzern,SUI,openfootball,FC Luzern,exact-normalised match
+Midtjylland,DEN,football_data,Midtjylland,exact-normalised match
+Midtjylland,DEN,openfootball,FC Midtjylland,exact-normalised match
+Nordsjaelland,DEN,football_data,Nordsjaelland,exact-normalised match
+Nordsjaelland,DEN,openfootball,FC Nordsjaelland,exact-normalised match
+St. Gallen,SUI,football_data,St. Gallen,exact-normalised match
+St. Gallen,SUI,openfootball,FC St. Gallen,exact-normalised match
+Twente,NED,football_data,Twente,exact-normalised match
+Twente,NED,openfootball,FC Twente,exact-normalised match
+Utrecht,NED,football_data,Utrecht,exact-normalised match
+Utrecht,NED,openfootball,FC Utrecht,exact-normalised match
+Zurich,SUI,football_data,Zurich,exact-normalised match
+Zurich,SUI,openfootball,FC Zurich,exact-normalised match
+Zurich,SUI,openfootball,FC Zürich,exact-normalised match
+FCSB,ROU,football_data,FCSB,exact-normalised match
+FCSB,ROU,openfootball,FCSB,exact-normalised match
+Farul Constanta,ROU,football_data,Farul Constanta,exact-normalised match
+Farul Constanta,ROU,openfootball,Farul Constanta,exact-normalised match
+Fiorentina,ITA,openfootball,Fiorentina,exact-normalised match
+Fredrikstad,NOR,football_data,Fredrikstad,exact-normalised match
+Fredrikstad,NOR,openfootball,Fredrikstad FK,exact-normalised match
+Gil Vicente,POR,football_data,Gil Vicente,exact-normalised match
+Gil Vicente,POR,openfootball,GIL Vicente,exact-normalised match
+Genk,BEL,football_data,Genk,exact-normalised match
+Genk,BEL,openfootball,Genk,exact-normalised match
+Gent,BEL,football_data,Gent,exact-normalised match
+Gent,BEL,openfootball,Gent,exact-normalised match
+Girona,ESP,football_data,Girona,exact-normalised match
+Girona,ESP,openfootball,Girona FC,exact-normalised match
+Go Ahead Eagles,NED,football_data,Go Ahead Eagles,exact-normalised match
+Go Ahead Eagles,NED,openfootball,Go Ahead Eagles,exact-normalised match
+Guimaraes,POR,football_data,Guimaraes,exact-normalised match
+Guimaraes,POR,openfootball,Guimaraes,exact-normalised match
+Hammarby,SWE,football_data,Hammarby,approved-new-token
+Hammarby,SWE,openfootball,Hammarby FF,approved-new-token
+Hammarby,SWE,openfootball,Hammarby IF,exact-normalised match
+Hibernian,SCO,football_data,Hibernian,exact-normalised match
+Hibernian,SCO,openfootball,Hibernian,exact-normalised match
+Hibernian,SCO,openfootball,Hibernian FC,exact-normalised match
+Elfsborg,SWE,football_data,Elfsborg,exact-normalised match
+Elfsborg,SWE,openfootball,IF Elfsborg,exact-normalised match
+Juventus,ITA,football_data,Juventus,exact-normalised match
+Juventus,ITA,openfootball,Juventus,exact-normalised match
+Juventus,ITA,openfootball,Juventus FC,exact-normalised match
+Gent,BEL,openfootball,KAA Gent,exact-normalised match
+Genk,BEL,openfootball,KRC Genk,exact-normalised match
+Kalmar,SWE,football_data,Kalmar,approved-new-token
+Kalmar,SWE,openfootball,Kalmar FF,approved-new-token
+Kilmarnock,SCO,football_data,Kilmarnock,exact-normalised match
+Kilmarnock,SCO,openfootball,Kilmarnock FC,exact-normalised match
+Konyaspor,TUR,football_data,Konyaspor,exact-normalised match
+Konyaspor,TUR,openfootball,Konyaspor,exact-normalised match
+Lazio,ITA,football_data,Lazio,exact-normalised match
+Lazio,ITA,openfootball,Lazio,exact-normalised match
+Lech Poznan,POL,football_data,Lech Poznan,exact-normalised match
+Lech Poznan,POL,openfootball,Lech Poznan,exact-normalised match
+Lech Poznan,POL,openfootball,Lech Poznań,exact-normalised match
+Lechia Gdansk,POL,football_data,Lechia Gdansk,exact-normalised match
+Lechia Gdansk,POL,openfootball,Lechia Gdansk,exact-normalised match
+Leicester,ENG,football_data,Leicester,exact-normalised match
+Leicester,ENG,openfootball,Leicester,exact-normalised match
+Lillestrom,NOR,football_data,Lillestrom,exact-normalised match
+Lillestrom,NOR,openfootball,Lillestrom,exact-normalised match
+Lyon,FRA,football_data,Lyon,exact-normalised match
+Lyon,FRA,openfootball,Lyon,exact-normalised match
+Malmo FF,SWE,football_data,Malmo FF,exact-normalised match
+Malmo FF,SWE,openfootball,Malmo FF,exact-normalised match
+Malmo FF,SWE,openfootball,Malmö FF,exact-normalised match
+Marseille,FRA,football_data,Marseille,exact-normalised match
+Marseille,FRA,openfootball,Marseille,exact-normalised match
+Midtjylland,DEN,openfootball,Midtjylland,exact-normalised match
+Molde,NOR,football_data,Molde,exact-normalised match
+Molde,NOR,openfootball,Molde,exact-normalised match
+Molde,NOR,openfootball,Molde FK,exact-normalised match
+Monaco,FRA,football_data,Monaco,exact-normalised match
+Monaco,FRA,openfootball,Monaco,exact-normalised match
+Motherwell,SCO,football_data,Motherwell,exact-normalised match
+Motherwell,SCO,openfootball,Motherwell,exact-normalised match
+Nantes,FRA,football_data,Nantes,exact-normalised match
+Nantes,FRA,openfootball,Nantes,exact-normalised match
+Newcastle,ENG,football_data,Newcastle,exact-normalised match
+Newcastle,ENG,openfootball,Newcastle,exact-normalised match
+Nice,FRA,football_data,Nice,exact-normalised match
+Nice,FRA,openfootball,Nice,exact-normalised match
+Nice,FRA,openfootball,OGC Nice,exact-normalised match
+Osasuna,ESP,football_data,Osasuna,exact-normalised match
+Osasuna,ESP,openfootball,Osasuna,exact-normalised match
+Olympiakos,GRE,football_data,Olympiakos,exact-normalised match
+Olympiakos,GRE,openfootball,PAE Olympiakos SFP,exact-normalised match
+PAOK,GRE,football_data,PAOK,exact-normalised match
+PAOK,GRE,openfootball,PAOK,exact-normalised match
+Pacos Ferreira,POR,football_data,Pacos Ferreira,exact-normalised match
+Pacos Ferreira,POR,openfootball,Pacos Ferreira,exact-normalised match
+Panathinaikos,GRE,football_data,Panathinaikos,exact-normalised match
+Panathinaikos,GRE,openfootball,Panathinaikos,exact-normalised match
+Pogon Szczecin,POL,football_data,Pogon Szczecin,exact-normalised match
+Pogon Szczecin,POL,openfootball,Pogon Szczecin,exact-normalised match
+Strasbourg,FRA,football_data,Strasbourg,exact-normalised match
+Strasbourg,FRA,openfootball,RC Strasbourg,exact-normalised match
+Anderlecht,BEL,openfootball,RSC Anderlecht,exact-normalised match
+Randers FC,DEN,football_data,Randers FC,exact-normalised match
+Randers FC,DEN,openfootball,Randers FC,exact-normalised match
+Rangers,SCO,football_data,Rangers,exact-normalised match
+Rangers,SCO,openfootball,Rangers,exact-normalised match
+Rangers,SCO,openfootball,Rangers FC,exact-normalised match
+Rennes,FRA,football_data,Rennes,exact-normalised match
+Rennes,FRA,openfootball,Rennes,exact-normalised match
+Rosenborg,NOR,football_data,Rosenborg,exact-normalised match
+Rosenborg,NOR,openfootball,Rosenborg,exact-normalised match
+Rosenborg,NOR,openfootball,Rosenborg BK,exact-normalised match
+Freiburg,GER,football_data,Freiburg,exact-normalised match
+Freiburg,GER,openfootball,SC Freiburg,exact-normalised match
+Brann,NOR,openfootball,SK Brann,exact-normalised match
+Sturm Graz,AUT,football_data,Sturm Graz,exact-normalised match
+Sturm Graz,AUT,openfootball,SK Sturm Graz,exact-normalised match
+Benfica,POR,openfootball,SL Benfica,exact-normalised match
+St Johnstone,SCO,football_data,St Johnstone,exact-normalised match
+St Johnstone,SCO,openfootball,ST Johnstone,exact-normalised match
+Samsunspor,TUR,football_data,Samsunspor,exact-normalised match
+Samsunspor,TUR,openfootball,Samsunspor,exact-normalised match
+Santa Clara,POR,openfootball,Santa Clara,exact-normalised match
+Servette,SUI,football_data,Servette,exact-normalised match
+Servette,SUI,openfootball,Servette FC,exact-normalised match
+Sevilla,ESP,football_data,Sevilla,exact-normalised match
+Sevilla,ESP,openfootball,Sevilla,exact-normalised match
+Silkeborg,DEN,football_data,Silkeborg,exact-normalised match
+Silkeborg,DEN,openfootball,Silkeborg,exact-normalised match
+Silkeborg,DEN,openfootball,Silkeborg IF,exact-normalised match
+Sivasspor,TUR,football_data,Sivasspor,exact-normalised match
+Sivasspor,TUR,openfootball,Sivasspor,exact-normalised match
+Slask Wroclaw,POL,football_data,Slask Wroclaw,exact-normalised match
+Slask Wroclaw,POL,openfootball,Slask Wroclaw,exact-normalised match
+St Mirren,SCO,football_data,St Mirren,exact-normalised match
+St Mirren,SCO,openfootball,St. Mirren FC,exact-normalised match
+Sturm Graz,AUT,openfootball,Sturm Graz,exact-normalised match
+Tottenham,ENG,football_data,Tottenham,exact-normalised match
+Tottenham,ENG,openfootball,Tottenham,exact-normalised match
+Toulouse,FRA,football_data,Toulouse,exact-normalised match
+Toulouse,FRA,openfootball,Toulouse,exact-normalised match
+Trabzonspor,TUR,football_data,Trabzonspor,exact-normalised match
+Trabzonspor,TUR,openfootball,Trabzonspor,exact-normalised match
+Tromso,NOR,football_data,Tromso,exact-normalised match
+Tromso,NOR,openfootball,Tromsø IL,exact-normalised match
+Twente,NED,openfootball,Twente,exact-normalised match
+Union Berlin,GER,football_data,Union Berlin,exact-normalised match
+Union Berlin,GER,openfootball,Union Berlin,exact-normalised match
+Valerenga,NOR,football_data,Valerenga,exact-normalised match
+Valerenga,NOR,openfootball,Valerenga,exact-normalised match
+Wolfsburg,GER,football_data,Wolfsburg,exact-normalised match
+Wolfsburg,GER,openfootball,VfL Wolfsburg,exact-normalised match
+Viborg,DEN,football_data,Viborg,exact-normalised match
+Viborg,DEN,openfootball,Viborg,exact-normalised match
+Vitesse,NED,football_data,Vitesse,exact-normalised match
+Vitesse,NED,openfootball,Vitesse,exact-normalised match
+West Ham,ENG,football_data,West Ham,exact-normalised match
+West Ham,ENG,openfootball,West Ham,exact-normalised match
+Wolfsberger AC,AUT,football_data,Wolfsberger AC,exact-normalised match
+Wolfsberger AC,AUT,openfootball,Wolfsberger AC,exact-normalised match
+Slask Wroclaw,POL,openfootball,Śląsk Wrocław,exact-normalised match
+Monaco,FRA,openfootball,AS Monaco FC,exact-normalised:monaco
+Vaduz,SUI,football_data,Vaduz,exact-normalised:vaduz
+Vaduz,SUI,openfootball,FC Vaduz,exact-normalised:vaduz

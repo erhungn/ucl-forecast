@@ -45,6 +45,72 @@ def main(argv: list[str] | None = None) -> int:
         if len(unmapped):
             print("  top unmapped: " + ", ".join(f"{n} ({k})" for n, k in unmapped.head(5).items()))
 
+    # The intersection gate: a European club whose domestic league is cached must
+    # be mapped, or it would be fitted as two separate teams.
+    fd_countries = {c for c, _ in football_data.MAIN_LEAGUES.values()} | set(
+        football_data.EXTRA_LEAGUES.values()
+    )
+    unmapped_inter = names.unmapped_intersection(european, fd_countries)
+    total_inter = len(names.intersection_clubs(european, fd_countries))
+    print(f"\nintersection gate: {total_inter - len(unmapped_inter)}/{total_inter} "
+          f"club names mapped")
+    for name, country in sorted(unmapped_inter.items()):
+        failures.append(f"intersection club unmapped: {name} ({country})")
+
+    # --- Check A: reverse direction, with the fd spelling-variant escape hatch ---
+    # A mapped club may have domestic data under a second football-data spelling.
+    # If that second name is not mapped too, the club's own domestic matches are
+    # silently ignored. Declaring the row's provenance as "fd-variant" is the
+    # escape hatch for a deliberate second spelling.
+    fd_alias = names.alias_to_canonical("football_data")
+    variant_rows = set(
+        mapping.loc[mapping.provenance.fillna("").str.startswith("fd-variant"), "source_name"]
+    )
+    fd_keys: dict[tuple[str, str], set[str]] = {}
+    for country, home, away in zip(domestic.country, domestic.home, domestic.away):
+        for team in (home, away):
+            fd_keys.setdefault((country, names.normalize_club_name(team)), set()).add(team)
+
+    check_a = 0
+    for (country, key), spellings in sorted(fd_keys.items()):
+        mapped = {s for s in spellings if s in fd_alias}
+        if not mapped:
+            continue
+        for spelling in sorted(spellings - mapped):
+            if spelling in variant_rows:
+                continue
+            check_a += 1
+            failures.append(
+                f"check A: {spelling!r} ({country}) normalises to {key!r} like mapped "
+                f"{sorted(mapped)[0]!r} but is unmapped; add it or mark it fd-variant"
+            )
+    print(f"\ncheck A (fd spellings of mapped clubs): {check_a} unmapped spelling(s)")
+
+    # --- Check B: one club, one id. Hard failure. ---
+    check_b = 0
+    per_canonical = (
+        mapping[mapping.source == "football_data"].groupby("canonical").source_name.apply(list)
+    )
+    for canonical, spellings in per_canonical.items():
+        extra = [s for s in spellings[1:] if s not in variant_rows]
+        if extra:
+            check_b += 1
+            failures.append(
+                f"check B: {canonical!r} has several football-data names {spellings} "
+                "and they are not marked fd-variant"
+            )
+    seen_keys: dict[tuple[str, str], str] = {}
+    for row in mapping[mapping.source == "football_data"].itertuples():
+        key = (row.country, names.normalize_club_name(row.source_name))
+        other = seen_keys.setdefault(key, row.canonical)
+        if other != row.canonical:
+            check_b += 1
+            failures.append(
+                f"check B: ids {other!r} and {row.canonical!r} both normalise to {key[1]!r} "
+                f"in {key[0]} - one club split in two"
+            )
+    print(f"check B (one club, one id): {check_b} violation(s)")
+
     # Every team with a football-data code must resolve on the football-data side.
     fd_aliases = names.canonical_aliases("football_data")
     for row in teams.itertuples():
@@ -57,8 +123,12 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     if failures:
-        for line in failures:
+        for line in failures[:60]:
             print(f"FAIL {line}", file=sys.stderr)
+        if len(failures) > 60:
+            print(f"FAIL ... and {len(failures) - 60} more", file=sys.stderr)
+        print(f"\n{len(failures)} failure(s); unresolved names are listed in "
+              f"outputs/name_review.csv", file=sys.stderr)
         return 1
     print("mapping OK: no dead or ambiguous aliases")
     return 0

@@ -1,0 +1,145 @@
+season,matchday,date,home,away,home_country,away_country
+2024-25,1,2024-09-17,AC Milan,Liverpool FC,ITA,ENG
+2024-25,1,2024-09-17,BSC Young Boys,Aston Villa FC,SUI,ENG
+2024-25,1,2024-09-17,FC Bayern München,GNK Dinamo Zagreb,GER,CRO
+2024-25,1,2024-09-17,Juventus FC,PSV,ITA,NED
+2024-25,1,2024-09-17,Real Madrid CF,VfB Stuttgart,ESP,GER
+2024-25,1,2024-09-17,Sporting Clube de Portugal,Lille OSC,POR,FRA
+2024-25,1,2024-09-18,AC Sparta Praha,FC Red Bull Salzburg,CZE,AUT
+2024-25,1,2024-09-18,Bologna FC 1909,FK Shakhtar Donetsk,ITA,UKR
+2024-25,1,2024-09-18,Celtic FC,ŠK Slovan Bratislava,SCO,SVK
+2024-25,1,2024-09-18,Club Brugge KV,Borussia Dortmund,BEL,GER
+2024-25,1,2024-09-18,Manchester City FC,FC Internazionale Milano,ENG,ITA
+2024-25,1,2024-09-18,Paris Saint-Germain FC,Girona FC,FRA,ESP
+2024-25,1,2024-09-19,AS Monaco FC,FC Barcelona,MCO,ESP
+2024-25,1,2024-09-19,Atalanta BC,Arsenal FC,ITA,ENG
+2024-25,1,2024-09-19,Club Atlético de Madrid,RB Leipzig,ESP,GER
+2024-25,1,2024-09-19,FK Crvena Zvezda,Sport Lisboa e Benfica,SRB,POR
+2024-25,1,2024-09-19,Feyenoord Rotterdam,Bayer 04 Leverkusen,NED,GER
+2024-25,1,2024-09-19,Stade Brestois 29,SK Sturm Graz,FRA,AUT
+2024-25,2,2024-10-01,Arsenal FC,Paris Saint-Germain FC,ENG,FRA
+2024-25,2,2024-10-01,Bayer 04 Leverkusen,AC Milan,GER,ITA
+2024-25,2,2024-10-01,Borussia Dortmund,Celtic FC,GER,SCO
+2024-25,2,2024-10-01,FC Barcelona,BSC Young Boys,ESP,SUI
+2024-25,2,2024-10-01,FC Internazionale Milano,FK Crvena Zvezda,ITA,SRB
+2024-25,2,2024-10-01,FC Red Bull Salzburg,Stade Brestois 29,AUT,FRA
+2024-25,2,2024-10-01,PSV,Sporting Clube de Portugal,NED,POR
+2024-25,2,2024-10-01,VfB Stuttgart,AC Sparta Praha,GER,CZE
+2024-25,2,2024-10-01,ŠK Slovan Bratislava,Manchester City FC,SVK,ENG
+2024-25,2,2024-10-02,Aston Villa FC,FC Bayern München,ENG,GER
+2024-25,2,2024-10-02,FK Shakhtar Donetsk,Atalanta BC,UKR,ITA
+2024-25,2,2024-10-02,GNK Dinamo Zagreb,AS Monaco FC,CRO,MCO
+2024-25,2,2024-10-02,Girona FC,Feyenoord Rotterdam,ESP,NED
+2024-25,2,2024-10-02,Lille OSC,Real Madrid CF,FRA,ESP
+2024-25,2,2024-10-02,Liverpool FC,Bologna FC 1909,ENG,ITA
+2024-25,2,2024-10-02,RB Leipzig,Juventus FC,GER,ITA
+2024-25,2,2024-10-02,SK Sturm Graz,Club Brugge KV,AUT,BEL
+2024-25,2,2024-10-02,Sport Lisboa e Benfica,Club Atlético de Madrid,POR,ESP
+2024-25,3,2024-10-22,AC Milan,Club Brugge KV,ITA,BEL
+2024-25,3,2024-10-22,AS Monaco FC,FK Crvena Zvezda,MCO,SRB
+2024-25,3,2024-10-22,Arsenal FC,FK Shakhtar Donetsk,ENG,UKR
+2024-25,3,2024-10-22,Aston Villa FC,Bologna FC 1909,ENG,ITA
+2024-25,3,2024-10-22,Girona FC,ŠK Slovan Bratislava,ESP,SVK
+2024-25,3,2024-10-22,Juventus FC,VfB Stuttgart,ITA,GER
+2024-25,3,2024-10-22,Paris Saint-Germain FC,PSV,FRA,NED
+2024-25,3,2024-10-22,Real Madrid CF,Borussia Dortmund,ESP,GER
+2024-25,3,2024-10-22,SK Sturm Graz,Sporting Clube de Portugal,AUT,POR
+2024-25,3,2024-10-23,Atalanta BC,Celtic FC,ITA,SCO
+2024-25,3,2024-10-23,BSC Young Boys,FC Internazionale Milano,SUI,ITA
+2024-25,3,2024-10-23,Club Atlético de Madrid,Lille OSC,ESP,FRA
+2024-25,3,2024-10-23,FC Barcelona,FC Bayern München,ESP,GER
+2024-25,3,2024-10-23,FC Red Bull Salzburg,GNK Dinamo Zagreb,AUT,CRO
+2024-25,3,2024-10-23,Manchester City FC,AC Sparta Praha,ENG,CZE
+2024-25,3,2024-10-23,RB Leipzig,Liverpool FC,GER,ENG
+2024-25,3,2024-10-23,Sport Lisboa e Benfica,Feyenoord Rotterdam,POR,NED
+2024-25,3,2024-10-23,Stade Brestois 29,Bayer 04 Leverkusen,FRA,GER
+2024-25,4,2024-11-05,Bologna FC 1909,AS Monaco FC,ITA,MCO
+2024-25,4,2024-11-05,Borussia Dortmund,SK Sturm Graz,GER,AUT
+2024-25,4,2024-11-05,Celtic FC,RB Leipzig,SCO,GER
+2024-25,4,2024-11-05,Lille OSC,Juventus FC,FRA,ITA
+2024-25,4,2024-11-05,Liverpool FC,Bayer 04 Leverkusen,ENG,GER
+2024-25,4,2024-11-05,PSV,Girona FC,NED,ESP
+2024-25,4,2024-11-05,Real Madrid CF,AC Milan,ESP,ITA
+2024-25,4,2024-11-05,Sporting Clube de Portugal,Manchester City FC,POR,ENG
+2024-25,4,2024-11-05,ŠK Slovan Bratislava,GNK Dinamo Zagreb,SVK,CRO
+2024-25,4,2024-11-06,AC Sparta Praha,Stade Brestois 29,CZE,FRA
+2024-25,4,2024-11-06,Club Brugge KV,Aston Villa FC,BEL,ENG
+2024-25,4,2024-11-06,FC Bayern München,Sport Lisboa e Benfica,GER,POR
+2024-25,4,2024-11-06,FC Internazionale Milano,Arsenal FC,ITA,ENG
+2024-25,4,2024-11-06,FK Crvena Zvezda,FC Barcelona,SRB,ESP
+2024-25,4,2024-11-06,FK Shakhtar Donetsk,BSC Young Boys,UKR,SUI
+2024-25,4,2024-11-06,Feyenoord Rotterdam,FC Red Bull Salzburg,NED,AUT
+2024-25,4,2024-11-06,Paris Saint-Germain FC,Club Atlético de Madrid,FRA,ESP
+2024-25,4,2024-11-06,VfB Stuttgart,Atalanta BC,GER,ITA
+2024-25,5,2024-11-26,AC Sparta Praha,Club Atlético de Madrid,CZE,ESP
+2024-25,5,2024-11-26,BSC Young Boys,Atalanta BC,SUI,ITA
+2024-25,5,2024-11-26,Bayer 04 Leverkusen,FC Red Bull Salzburg,GER,AUT
+2024-25,5,2024-11-26,FC Barcelona,Stade Brestois 29,ESP,FRA
+2024-25,5,2024-11-26,FC Bayern München,Paris Saint-Germain FC,GER,FRA
+2024-25,5,2024-11-26,FC Internazionale Milano,RB Leipzig,ITA,GER
+2024-25,5,2024-11-26,Manchester City FC,Feyenoord Rotterdam,ENG,NED
+2024-25,5,2024-11-26,Sporting Clube de Portugal,Arsenal FC,POR,ENG
+2024-25,5,2024-11-26,ŠK Slovan Bratislava,AC Milan,SVK,ITA
+2024-25,5,2024-11-27,AS Monaco FC,Sport Lisboa e Benfica,MCO,POR
+2024-25,5,2024-11-27,Aston Villa FC,Juventus FC,ENG,ITA
+2024-25,5,2024-11-27,Bologna FC 1909,Lille OSC,ITA,FRA
+2024-25,5,2024-11-27,Celtic FC,Club Brugge KV,SCO,BEL
+2024-25,5,2024-11-27,FK Crvena Zvezda,VfB Stuttgart,SRB,GER
+2024-25,5,2024-11-27,GNK Dinamo Zagreb,Borussia Dortmund,CRO,GER
+2024-25,5,2024-11-27,Liverpool FC,Real Madrid CF,ENG,ESP
+2024-25,5,2024-11-27,PSV,FK Shakhtar Donetsk,NED,UKR
+2024-25,5,2024-11-27,SK Sturm Graz,Girona FC,AUT,ESP
+2024-25,6,2024-12-10,Atalanta BC,Real Madrid CF,ITA,ESP
+2024-25,6,2024-12-10,Bayer 04 Leverkusen,FC Internazionale Milano,GER,ITA
+2024-25,6,2024-12-10,Club Brugge KV,Sporting Clube de Portugal,BEL,POR
+2024-25,6,2024-12-10,FC Red Bull Salzburg,Paris Saint-Germain FC,AUT,FRA
+2024-25,6,2024-12-10,FK Shakhtar Donetsk,FC Bayern München,UKR,GER
+2024-25,6,2024-12-10,GNK Dinamo Zagreb,Celtic FC,CRO,SCO
+2024-25,6,2024-12-10,Girona FC,Liverpool FC,ESP,ENG
+2024-25,6,2024-12-10,RB Leipzig,Aston Villa FC,GER,ENG
+2024-25,6,2024-12-10,Stade Brestois 29,PSV,FRA,NED
+2024-25,6,2024-12-11,AC Milan,FK Crvena Zvezda,ITA,SRB
+2024-25,6,2024-12-11,Arsenal FC,AS Monaco FC,ENG,MCO
+2024-25,6,2024-12-11,Borussia Dortmund,FC Barcelona,GER,ESP
+2024-25,6,2024-12-11,Club Atlético de Madrid,ŠK Slovan Bratislava,ESP,SVK
+2024-25,6,2024-12-11,Feyenoord Rotterdam,AC Sparta Praha,NED,CZE
+2024-25,6,2024-12-11,Juventus FC,Manchester City FC,ITA,ENG
+2024-25,6,2024-12-11,Lille OSC,SK Sturm Graz,FRA,AUT
+2024-25,6,2024-12-11,Sport Lisboa e Benfica,Bologna FC 1909,POR,ITA
+2024-25,6,2024-12-11,VfB Stuttgart,BSC Young Boys,GER,SUI
+2024-25,7,2025-01-21,AS Monaco FC,Aston Villa FC,MCO,ENG
+2024-25,7,2025-01-21,Atalanta BC,SK Sturm Graz,ITA,AUT
+2024-25,7,2025-01-21,Bologna FC 1909,Borussia Dortmund,ITA,GER
+2024-25,7,2025-01-21,Club Atlético de Madrid,Bayer 04 Leverkusen,ESP,GER
+2024-25,7,2025-01-21,Club Brugge KV,Juventus FC,BEL,ITA
+2024-25,7,2025-01-21,FK Crvena Zvezda,PSV,SRB,NED
+2024-25,7,2025-01-21,Liverpool FC,Lille OSC,ENG,FRA
+2024-25,7,2025-01-21,Sport Lisboa e Benfica,FC Barcelona,POR,ESP
+2024-25,7,2025-01-21,ŠK Slovan Bratislava,VfB Stuttgart,SVK,GER
+2024-25,7,2025-01-22,AC Milan,Girona FC,ITA,ESP
+2024-25,7,2025-01-22,AC Sparta Praha,FC Internazionale Milano,CZE,ITA
+2024-25,7,2025-01-22,Arsenal FC,GNK Dinamo Zagreb,ENG,CRO
+2024-25,7,2025-01-22,Celtic FC,BSC Young Boys,SCO,SUI
+2024-25,7,2025-01-22,FK Shakhtar Donetsk,Stade Brestois 29,UKR,FRA
+2024-25,7,2025-01-22,Feyenoord Rotterdam,FC Bayern München,NED,GER
+2024-25,7,2025-01-22,Paris Saint-Germain FC,Manchester City FC,FRA,ENG
+2024-25,7,2025-01-22,RB Leipzig,Sporting Clube de Portugal,GER,POR
+2024-25,7,2025-01-22,Real Madrid CF,FC Red Bull Salzburg,ESP,AUT
+2024-25,8,2025-01-29,Aston Villa FC,Celtic FC,ENG,SCO
+2024-25,8,2025-01-29,BSC Young Boys,FK Crvena Zvezda,SUI,SRB
+2024-25,8,2025-01-29,Bayer 04 Leverkusen,AC Sparta Praha,GER,CZE
+2024-25,8,2025-01-29,Borussia Dortmund,FK Shakhtar Donetsk,GER,UKR
+2024-25,8,2025-01-29,FC Barcelona,Atalanta BC,ESP,ITA
+2024-25,8,2025-01-29,FC Bayern München,ŠK Slovan Bratislava,GER,SVK
+2024-25,8,2025-01-29,FC Internazionale Milano,AS Monaco FC,ITA,MCO
+2024-25,8,2025-01-29,FC Red Bull Salzburg,Club Atlético de Madrid,AUT,ESP
+2024-25,8,2025-01-29,GNK Dinamo Zagreb,AC Milan,CRO,ITA
+2024-25,8,2025-01-29,Girona FC,Arsenal FC,ESP,ENG
+2024-25,8,2025-01-29,Juventus FC,Sport Lisboa e Benfica,ITA,POR
+2024-25,8,2025-01-29,Lille OSC,Feyenoord Rotterdam,FRA,NED
+2024-25,8,2025-01-29,Manchester City FC,Club Brugge KV,ENG,BEL
+2024-25,8,2025-01-29,PSV,Liverpool FC,NED,ENG
+2024-25,8,2025-01-29,SK Sturm Graz,RB Leipzig,AUT,GER
+2024-25,8,2025-01-29,Sporting Clube de Portugal,Bologna FC 1909,POR,ITA
+2024-25,8,2025-01-29,Stade Brestois 29,Real Madrid CF,FRA,ESP
+2024-25,8,2025-01-29,VfB Stuttgart,Paris Saint-Germain FC,GER,FRA

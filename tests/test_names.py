@@ -31,7 +31,8 @@ def test_all_thirty_six_teams_are_mapped():
     teams = names.load_teams()
     assert len(teams) == 36
     mapping = names.load_mapping()
-    assert set(teams.team) == set(mapping.canonical)
+    # The mapping also covers clubs outside the 36, so the 36 are a subset.
+    assert set(teams.team) <= set(mapping.canonical)
 
 
 def test_both_openfootball_spellings_resolve_to_one_team():
@@ -53,4 +54,37 @@ def test_teams_with_a_football_data_code_resolve_in_the_cache():
     teams = names.load_teams()
     aliases = names.canonical_aliases("football_data")
     coded = teams[teams.football_data_code != ""]
-    assert set(coded.team) == set(aliases)
+    assert set(coded.team) <= set(aliases)
+
+
+def test_normalisation_strips_club_type_tokens_and_years():
+    assert names.normalize_club_name("1. FSV Mainz 05") == "mainz"
+    assert names.normalize_club_name("1.FC Köln") == "koln"
+    assert names.normalize_club_name("ACF Fiorentina") == "fiorentina"
+    assert names.normalize_club_name("FK Bodø/Glimt") == "bodo glimt"
+
+
+def test_normalisation_never_returns_an_empty_key():
+    # "AIK" is nothing but club-type tokens, yet it is a club.
+    assert names.normalize_club_name("AIK") == "aik"
+
+
+def test_association_override_for_cross_border_clubs():
+    assert names.association("MCO") == "FRA"   # AS Monaco plays in Ligue 1
+    assert names.association("LIE") == "SUI"   # FC Vaduz plays in Switzerland
+    assert names.association("ENG") == "ENG"
+
+
+def test_cross_border_clubs_are_inside_the_intersection():
+    import pandas as pd
+
+    european = pd.DataFrame(
+        {
+            "home": ["AS Monaco FC", "FC Vaduz"],
+            "away": ["Arsenal FC", "Arsenal FC"],
+            "home_country": ["MCO", "LIE"],
+            "away_country": ["ENG", "ENG"],
+        }
+    )
+    inter = names.intersection_clubs(european, {"FRA", "SUI", "ENG"})
+    assert "AS Monaco FC" in inter and "FC Vaduz" in inter

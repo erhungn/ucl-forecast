@@ -1,0 +1,145 @@
+season,matchday,date,home,away,home_country,away_country
+2026-27,1,2026-09-08,AEK Athens,LASK,GRE,AUT
+2026-27,1,2026-09-08,Borussia Dortmund,Villarreal,GER,ESP
+2026-27,1,2026-09-08,Club Brugge,Aston Villa,BEL,ENG
+2026-27,1,2026-09-08,Lille,Real Betis,FRA,ESP
+2026-27,1,2026-09-08,Porto,Manchester City,POR,ENG
+2026-27,1,2026-09-08,Real Madrid,Inter Milan,ESP,ITA
+2026-27,1,2026-09-09,Barcelona,Feyenoord,ESP,NED
+2026-27,1,2026-09-09,Liverpool,Atlético Madrid,ENG,ESP
+2026-27,1,2026-09-09,Napoli,Arsenal,ITA,ENG
+2026-27,1,2026-09-09,Paris Saint-Germain,Slovan Bratislava,FRA,SVK
+2026-27,1,2026-09-09,Sporting CP,Galatasaray,POR,TUR
+2026-27,1,2026-09-09,VfB Stuttgart,Viking,GER,NOR
+2026-27,1,2026-09-10,Bayern Munich,Bodø/Glimt,GER,NOR
+2026-27,1,2026-09-10,Como,RB Leipzig,ITA,GER
+2026-27,1,2026-09-10,Fenerbahçe,Roma,TUR,ITA
+2026-27,1,2026-09-10,Manchester United,Sabah,ENG,AZE
+2026-27,1,2026-09-10,PSV Eindhoven,Shakhtar Donetsk,NED,UKR
+2026-27,1,2026-09-10,Slavia Prague,Lens,CZE,FRA
+2026-27,2,2026-10-13,Arsenal,Lille,ENG,FRA
+2026-27,2,2026-10-13,Atlético Madrid,Manchester United,ESP,ENG
+2026-27,2,2026-10-13,Galatasaray,Barcelona,TUR,ESP
+2026-27,2,2026-10-13,Inter Milan,Club Brugge,ITA,BEL
+2026-27,2,2026-10-13,Lens,Sporting CP,FRA,POR
+2026-27,2,2026-10-13,RB Leipzig,PSV Eindhoven,GER,NED
+2026-27,2,2026-10-13,Sabah,Slavia Prague,AZE,CZE
+2026-27,2,2026-10-13,Viking,Bayern Munich,NOR,GER
+2026-27,2,2026-10-13,Villarreal,Napoli,ESP,ITA
+2026-27,2,2026-10-14,Aston Villa,Fenerbahçe,ENG,TUR
+2026-27,2,2026-10-14,Bodø/Glimt,Borussia Dortmund,NOR,GER
+2026-27,2,2026-10-14,Feyenoord,Como,NED,ITA
+2026-27,2,2026-10-14,LASK,Liverpool,AUT,ENG
+2026-27,2,2026-10-14,Manchester City,Paris Saint-Germain,ENG,FRA
+2026-27,2,2026-10-14,Real Betis,Porto,ESP,POR
+2026-27,2,2026-10-14,Roma,Real Madrid,ITA,ESP
+2026-27,2,2026-10-14,Shakhtar Donetsk,AEK Athens,UKR,GRE
+2026-27,2,2026-10-14,Slovan Bratislava,VfB Stuttgart,SVK,GER
+2026-27,3,2026-10-20,Fenerbahçe,Slavia Prague,TUR,CZE
+2026-27,3,2026-10-20,Liverpool,Villarreal,ENG,ESP
+2026-27,3,2026-10-20,Manchester City,AEK Athens,ENG,GRE
+2026-27,3,2026-10-20,Napoli,Bodø/Glimt,ITA,NOR
+2026-27,3,2026-10-20,Paris Saint-Germain,Barcelona,FRA,ESP
+2026-27,3,2026-10-20,Porto,PSV Eindhoven,POR,NED
+2026-27,3,2026-10-20,Roma,Slovan Bratislava,ITA,SVK
+2026-27,3,2026-10-20,Sabah,Borussia Dortmund,AZE,GER
+2026-27,3,2026-10-20,VfB Stuttgart,Atlético Madrid,GER,ESP
+2026-27,3,2026-10-21,Aston Villa,Viking,ENG,NOR
+2026-27,3,2026-10-21,Bayern Munich,Arsenal,GER,ENG
+2026-27,3,2026-10-21,Club Brugge,Lens,BEL,FRA
+2026-27,3,2026-10-21,Como,Manchester United,ITA,ENG
+2026-27,3,2026-10-21,Inter Milan,Shakhtar Donetsk,ITA,UKR
+2026-27,3,2026-10-21,Lille,Galatasaray,FRA,TUR
+2026-27,3,2026-10-21,Real Betis,Feyenoord,ESP,NED
+2026-27,3,2026-10-21,Real Madrid,RB Leipzig,ESP,GER
+2026-27,3,2026-10-21,Sporting CP,LASK,POR,AUT
+2026-27,4,2026-11-03,Atlético Madrid,Bayern Munich,ESP,GER
+2026-27,4,2026-11-03,Barcelona,Aston Villa,ESP,ENG
+2026-27,4,2026-11-03,Bodø/Glimt,Lille,NOR,FRA
+2026-27,4,2026-11-03,Feyenoord,Inter Milan,NED,ITA
+2026-27,4,2026-11-03,Galatasaray,VfB Stuttgart,TUR,GER
+2026-27,4,2026-11-03,LASK,Slovan Bratislava,AUT,SVK
+2026-27,4,2026-11-03,Manchester United,Roma,ENG,ITA
+2026-27,4,2026-11-03,Shakhtar Donetsk,Sporting CP,UKR,POR
+2026-27,4,2026-11-03,Villarreal,Paris Saint-Germain,ESP,FRA
+2026-27,4,2026-11-04,AEK Athens,Real Madrid,GRE,ESP
+2026-27,4,2026-11-04,Borussia Dortmund,Real Betis,GER,ESP
+2026-27,4,2026-11-04,Fenerbahçe,Liverpool,TUR,ENG
+2026-27,4,2026-11-04,Lens,Como,FRA,ITA
+2026-27,4,2026-11-04,PSV Eindhoven,Club Brugge,NED,BEL
+2026-27,4,2026-11-04,Porto,Napoli,POR,ITA
+2026-27,4,2026-11-04,RB Leipzig,Manchester City,GER,ENG
+2026-27,4,2026-11-04,Slavia Prague,Arsenal,CZE,ENG
+2026-27,4,2026-11-04,Viking,Sabah,NOR,AZE
+2026-27,5,2026-11-24,Arsenal,Borussia Dortmund,ENG,GER
+2026-27,5,2026-11-24,Bodø/Glimt,LASK,NOR,AUT
+2026-27,5,2026-11-24,Como,AEK Athens,ITA,GRE
+2026-27,5,2026-11-24,Feyenoord,Porto,NED,POR
+2026-27,5,2026-11-24,Galatasaray,Aston Villa,TUR,ENG
+2026-27,5,2026-11-24,Manchester City,Napoli,ENG,ITA
+2026-27,5,2026-11-24,RB Leipzig,Lens,GER,FRA
+2026-27,5,2026-11-24,Real Madrid,PSV Eindhoven,ESP,NED
+2026-27,5,2026-11-24,Slovan Bratislava,Real Betis,SVK,ESP
+2026-27,5,2026-11-25,Atlético Madrid,Viking,ESP,NOR
+2026-27,5,2026-11-25,Club Brugge,Liverpool,BEL,ENG
+2026-27,5,2026-11-25,Inter Milan,VfB Stuttgart,ITA,GER
+2026-27,5,2026-11-25,Lille,Bayern Munich,FRA,GER
+2026-27,5,2026-11-25,Paris Saint-Germain,Roma,FRA,ITA
+2026-27,5,2026-11-25,Sabah,Barcelona,AZE,ESP
+2026-27,5,2026-11-25,Shakhtar Donetsk,Fenerbahçe,UKR,TUR
+2026-27,5,2026-11-25,Slavia Prague,Villarreal,CZE,ESP
+2026-27,5,2026-11-25,Sporting CP,Manchester United,POR,ENG
+2026-27,6,2026-12-08,AEK Athens,Galatasaray,GRE,TUR
+2026-27,6,2026-12-08,Aston Villa,Paris Saint-Germain,ENG,FRA
+2026-27,6,2026-12-08,Barcelona,Manchester City,ESP,ENG
+2026-27,6,2026-12-08,Bayern Munich,Slavia Prague,GER,CZE
+2026-27,6,2026-12-08,Manchester United,RB Leipzig,ENG,GER
+2026-27,6,2026-12-08,Napoli,Club Brugge,ITA,BEL
+2026-27,6,2026-12-08,Roma,Sporting CP,ITA,POR
+2026-27,6,2026-12-08,Viking,Feyenoord,NOR,NED
+2026-27,6,2026-12-08,Villarreal,Sabah,ESP,AZE
+2026-27,6,2026-12-09,Arsenal,Real Madrid,ENG,ESP
+2026-27,6,2026-12-09,Borussia Dortmund,Inter Milan,GER,ITA
+2026-27,6,2026-12-09,LASK,Fenerbahçe,AUT,TUR
+2026-27,6,2026-12-09,Lens,Bodø/Glimt,FRA,NOR
+2026-27,6,2026-12-09,Liverpool,Porto,ENG,POR
+2026-27,6,2026-12-09,PSV Eindhoven,Atlético Madrid,NED,ESP
+2026-27,6,2026-12-09,Real Betis,Como,ESP,ITA
+2026-27,6,2026-12-09,Slovan Bratislava,Shakhtar Donetsk,SVK,UKR
+2026-27,6,2026-12-09,VfB Stuttgart,Lille,GER,FRA
+2026-27,7,2027-01-19,AEK Athens,Roma,GRE,ITA
+2026-27,7,2027-01-19,Aston Villa,Borussia Dortmund,ENG,GER
+2026-27,7,2027-01-19,Bodø/Glimt,Atlético Madrid,NOR,ESP
+2026-27,7,2027-01-19,Galatasaray,Feyenoord,TUR,NED
+2026-27,7,2027-01-19,Inter Milan,Liverpool,ITA,ENG
+2026-27,7,2027-01-19,Lille,Slovan Bratislava,FRA,SVK
+2026-27,7,2027-01-19,Porto,Slavia Prague,POR,CZE
+2026-27,7,2027-01-19,Real Madrid,LASK,ESP,AUT
+2026-27,7,2027-01-19,VfB Stuttgart,Club Brugge,GER,BEL
+2026-27,7,2027-01-20,Como,Paris Saint-Germain,ITA,FRA
+2026-27,7,2027-01-20,Fenerbahçe,Villarreal,TUR,ESP
+2026-27,7,2027-01-20,Lens,Manchester City,FRA,ENG
+2026-27,7,2027-01-20,Manchester United,Bayern Munich,ENG,GER
+2026-27,7,2027-01-20,RB Leipzig,Shakhtar Donetsk,GER,UKR
+2026-27,7,2027-01-20,Real Betis,Arsenal,ESP,ENG
+2026-27,7,2027-01-20,Sabah,Napoli,AZE,ITA
+2026-27,7,2027-01-20,Sporting CP,Barcelona,POR,ESP
+2026-27,7,2027-01-20,Viking,PSV Eindhoven,NOR,NED
+2026-27,8,2027-01-27,Arsenal,Sabah,ENG,AZE
+2026-27,8,2027-01-27,Atlético Madrid,Fenerbahçe,ESP,TUR
+2026-27,8,2027-01-27,Barcelona,Como,ESP,ITA
+2026-27,8,2027-01-27,Bayern Munich,Real Betis,GER,ESP
+2026-27,8,2027-01-27,Borussia Dortmund,AEK Athens,GER,GRE
+2026-27,8,2027-01-27,Club Brugge,Bodø/Glimt,BEL,NOR
+2026-27,8,2027-01-27,Feyenoord,RB Leipzig,NED,GER
+2026-27,8,2027-01-27,LASK,Porto,AUT,POR
+2026-27,8,2027-01-27,Liverpool,Lens,ENG,FRA
+2026-27,8,2027-01-27,Manchester City,Sporting CP,ENG,POR
+2026-27,8,2027-01-27,Napoli,Viking,ITA,NOR
+2026-27,8,2027-01-27,PSV Eindhoven,VfB Stuttgart,NED,GER
+2026-27,8,2027-01-27,Paris Saint-Germain,Galatasaray,FRA,TUR
+2026-27,8,2027-01-27,Roma,Lille,ITA,FRA
+2026-27,8,2027-01-27,Shakhtar Donetsk,Real Madrid,UKR,ESP
+2026-27,8,2027-01-27,Slavia Prague,Aston Villa,CZE,ENG
+2026-27,8,2027-01-27,Slovan Bratislava,Inter Milan,SVK,ITA
+2026-27,8,2027-01-27,Villarreal,Manchester United,ESP,ENG

@@ -1,0 +1,23 @@
+[
+  {
+    "file": "league_phase_2024-25.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_UEFA_Champions_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:08:30.791199+00:00",
+    "sha256": "6996820e1baf3d6387f7985c64be025156f45a6a090d36846e31c91941c4fb9a",
+    "bytes": 209773
+  },
+  {
+    "file": "league_phase_2025-26.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_UEFA_Champions_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:08:31.419472+00:00",
+    "sha256": "f3b9ca180f3b68d1e58d7889cd3f427d4453fa52eff03fd01591ce73b07a4201",
+    "bytes": 203415
+  },
+  {
+    "file": "league_phase_2026-27.wikitext",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=2026%E2%80%9327_UEFA_Champions_League_league_phase&action=raw",
+    "downloaded_at_utc": "2026-10-02T12:08:32.080741+00:00",
+    "sha256": "01f6fea71ade46eeaa7c8f8e38d0ec36c34a7c289e3cb3315d05558d7cd2b4d0",
+    "bytes": 150219
+  }
+]
