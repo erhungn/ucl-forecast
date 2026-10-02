@@ -1,5 +1,11 @@
 # Candidate 2: squad market value - REJECTED (null, and the closest call)
 
+> **Superseded.** The name mapping behind this run was defective - 110 of 796
+> Transfermarkt clubs matched, 10 of the 36 league-phase teams unvalued. The
+> binding coverage-fix re-run at ~50% European coverage **accepted** the
+> covariate: see `../candidate_squad_value_coverage_fix/`. This folder is kept
+> as the record of the run at 22-25% coverage.
+
 Transfermarkt (Kaggle `davidcariboo/player-scores`), read cache-only from
 `data/raw/transfermarkt/` with a manifest.
 

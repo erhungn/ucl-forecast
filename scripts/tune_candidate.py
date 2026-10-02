@@ -11,6 +11,12 @@ The primary test differs by candidate, and is pre-declared here:
   closing odds, so scoring it on domestic outcomes would be circular. That
   leaves a far smaller sample, and the bar is correspondingly harder.
 * ``congestion`` - the usual x3-weighted pooled log-loss.
+* ``squad_value`` - the usual x3-weighted pooled log-loss.
+
+``--label`` marks a re-run whose only change is an implementation fix, so the
+output says which run it is. For ``squad_value`` the covariate's coverage is
+printed per fold, because a null at partial coverage is a weaker statement than
+a null at full coverage and should read as such.
 """
 
 from __future__ import annotations
@@ -42,10 +48,33 @@ def folds():
             for i in range(1, len(BACKTEST_SEASONS))]
 
 
+def _coverage_by_season(candidate: str, seasons: list[str]) -> dict:
+    """Share of scored matches where the covariate is defined for both clubs."""
+    if candidate != "squad_value":
+        return {}
+    from ucl.backtest import _evaluation_frames
+    from ucl.data import transfermarkt
+
+    out = {}
+    for season in seasons:
+        values = transfermarkt.squad_values(transfermarkt.as_of_for_season(season))
+        domestic, euro = _evaluation_frames(season)
+        out[season] = {
+            "european": transfermarkt.coverage(
+                values, euro.home_id.to_numpy(), euro.away_id.to_numpy()),
+            "domestic": transfermarkt.coverage(
+                values, domestic.home_id.to_numpy(), domestic.away_id.to_numpy()),
+            "clubs_valued": len(values),
+        }
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("candidate", choices=sorted(PRIMARY))
     parser.add_argument("--draws", type=int, default=4000)
+    parser.add_argument("--label", default="",
+                        help="free-text run label, printed and archived")
     args = parser.parse_args(argv)
     candidate = args.candidate
     primary = PRIMARY[candidate]
@@ -54,7 +83,15 @@ def main(argv: list[str] | None = None) -> int:
     started = time.perf_counter()
     label = f"{candidate!r}" + (" [POST HOC - declared after candidate 1 failed]"
                                 if candidate in POST_HOC else "")
+    if args.label:
+        label += f" [{args.label}]"
     print(f"=== candidate {label}: forward chaining, primary test = {primary} ===")
+    coverage = _coverage_by_season(candidate, [test for test, _ in folds()])
+    if coverage:
+        print("  covariate coverage (both clubs known), by test season:")
+        for season, share in coverage.items():
+            print(f"    {season}: European {share['european']:.1%}, "
+                  f"domestic {share['domestic']:.1%}")
     rows, paired = [], []
     for test, train in folds():
         tick = time.perf_counter()
@@ -133,6 +170,7 @@ def main(argv: list[str] | None = None) -> int:
 
     with open(OUTPUTS_DIR / f"candidate_{candidate}_decision.json", "w", encoding="utf-8") as fh:
         json.dump({"candidate": candidate, "post_hoc": candidate in POST_HOC,
+                   "run_label": args.label, "coverage": coverage,
                    "primary": primary, "cluster": cluster,
                    "per_match": per_match, "all_matches": full, "accepted": accepted}, fh, indent=2)
         fh.write("\n")

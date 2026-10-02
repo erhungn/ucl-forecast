@@ -14,6 +14,11 @@ while the source is paused.
 Squad membership is reconstructed from appearances rather than read from
 ``players.csv``, whose ``current_club_id`` reflects today and would leak every
 transfer since.
+
+Club names are resolved through ``data/raw/transfermarkt_club_map.csv``, built
+by ``scripts/build_transfermarkt_map.py`` from deterministic routes and
+reviewed decisions. The loader only reads that file, so a club is valued if and
+only if the mapping says so.
 """
 
 from __future__ import annotations
@@ -26,11 +31,12 @@ import numpy as np
 import pandas as pd
 
 from ucl.config import DATA_RAW
-from ucl.data import names
 
-__all__ = ["CACHE_DIR", "as_of_for_season", "squad_values", "club_map"]
+__all__ = ["CACHE_DIR", "MAP_PATH", "as_of_for_season", "squad_values", "club_map"]
 
 CACHE_DIR = DATA_RAW / "transfermarkt"
+#: Club-name mapping, built by scripts/build_transfermarkt_map.py and tracked.
+MAP_PATH = DATA_RAW / "transfermarkt_club_map.csv"
 #: The dataset's own freeze date; every season is made equally stale.
 FREEZE_MONTH_DAY = (7, 6)
 #: A player counts as squad if he appeared for the club in this window.
@@ -44,16 +50,16 @@ def as_of_for_season(season_label: str) -> date:
 
 @lru_cache(maxsize=1)
 def club_map() -> dict[int, str]:
-    """Transfermarkt club_id -> our canonical club id, by exact normalisation."""
-    clubs = pd.read_csv(CACHE_DIR / "clubs.csv")
-    ours = sorted(set(names.load_mapping().canonical))
-    key = {names.normalize_club_name(c): c for c in ours}
-    mapped = {}
-    for row in clubs.itertuples():
-        canonical = key.get(names.normalize_club_name(row.name))
-        if canonical:
-            mapped[int(row.club_id)] = canonical
-    return mapped
+    """Transfermarkt club_id -> our club id, from the tracked mapping file."""
+    if not MAP_PATH.exists():
+        raise FileNotFoundError(
+            f"{MAP_PATH} is missing; build it with "
+            "scripts/build_transfermarkt_map.py --write")
+    frame = pd.read_csv(MAP_PATH)
+    duplicated = frame.tm_club_id[frame.tm_club_id.duplicated()]
+    if len(duplicated):
+        raise ValueError(f"transfermarkt map lists {sorted(duplicated)} twice")
+    return {int(r.tm_club_id): r.canonical for r in frame.itertuples()}
 
 
 @lru_cache(maxsize=1)
@@ -77,7 +83,7 @@ def squad_values(as_of: date) -> dict[str, float]:
     """
     valuations, appearances = _tables()
     limit = pd.Timestamp(as_of)
-    window = limit - pd.Timedelta(days=MEMBERSHIP_WINDOW_DAYS)
+    window = limit - pd.Timedelta(MEMBERSHIP_WINDOW_DAYS, "D")
 
     recent = appearances[(appearances.date < limit) & (appearances.date >= window)]
     # Most recent club per player inside the window.

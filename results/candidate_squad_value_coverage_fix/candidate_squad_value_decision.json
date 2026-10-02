@@ -1,0 +1,53 @@
+{
+  "candidate": "squad_value",
+  "post_hoc": false,
+  "run_label": "coverage-fix re-run",
+  "coverage": {
+    "2022-23": {
+      "european": 0.4853658536585366,
+      "domestic": 0.5778906069697669,
+      "clubs_valued": 222
+    },
+    "2023-24": {
+      "european": 0.5184275184275184,
+      "domestic": 0.5830485304169515,
+      "clubs_valued": 234
+    },
+    "2024-25": {
+      "european": 0.4990583804143126,
+      "domestic": 0.5577406814543792,
+      "clubs_valued": 225
+    },
+    "2025-26": {
+      "european": 0.5743879472693032,
+      "domestic": 0.573963133640553,
+      "clubs_valued": 230
+    }
+  },
+  "primary": "pooled",
+  "cluster": {
+    "difference": -0.0009917315340085965,
+    "low": -0.0018729889254113833,
+    "high": -7.98817981361403e-05,
+    "excludes_zero": true,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "per_match": {
+    "difference": -0.0009917315340085965,
+    "low": -0.0017635654659144203,
+    "high": -0.00025730949214924117,
+    "excludes_zero": true,
+    "clusters": null,
+    "n": 19188
+  },
+  "all_matches": {
+    "difference": -0.0009917315340085965,
+    "low": -0.0018729889254113833,
+    "high": -7.98817981361403e-05,
+    "excludes_zero": true,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": true
+}

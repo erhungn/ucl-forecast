@@ -29,3 +29,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# The Transfermarkt club-name mapping and the decisions behind it.
+!data/raw/transfermarkt_club_map.csv
+!data/raw/transfermarkt_decisions.csv

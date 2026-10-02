@@ -1,0 +1,440 @@
+tm_club_id,tm_name,canonical,route,agreeing_routes
+3,1.FC Köln,FC Koln,exact-normalised,AC
+4,1.FC Nuremberg,Nurnberg,schedule-bridged,C
+5,AC Milan,Milan,exact-normalised,AC
+6,Adanaspor,Adanaspor,schedule-bridged,C
+10,Arminia Bielefeld,Bielefeld,schedule-bridged,C
+11,Arsenal FC,Arsenal,exact-normalised,AC
+12,Associazione Sportiva Roma,Roma,schedule-bridged,C
+13,Atlético de Madrid,Atletico Madrid,exact-normalised,AC
+14,Austria Vienna,Austria Vienna,exact-normalised,AC
+15,Bayer 04 Leverkusen,Leverkusen,schedule-bridged,BC
+16,Borussia Dortmund,Borussia Dortmund,exact-normalised,AC
+18,Borussia Mönchengladbach,M'gladbach,schedule-bridged,BC
+19,Brescia Calcio,Brescia,schedule-bridged,C
+20,Bursaspor,Bursaspor,schedule-bridged,C
+24,Eintracht Frankfurt,Ein Frankfurt,schedule-bridged,BC
+26,FC Basel 1893,Basel,exact-normalised,AC
+27,Bayern Munich,Bayern Munich,exact-normalised,AC
+29,Everton FC,Everton,exact-normalised,AC
+31,Liverpool FC,Liverpool,exact-normalised,AC
+33,FC Schalke 04,Schalke 04,exact-normalised,AC
+35,FC St. Pauli,St Pauli,schedule-bridged,C
+36,Fenerbahce,Fenerbahce,exact-normalised,AC
+38,Fortuna Düsseldorf,Fortuna Dusseldorf,schedule-bridged,C
+39,1.FSV Mainz 05,Mainz,exact-normalised,AC
+40,FC Girondins Bordeaux,Bordeaux,schedule-bridged,C
+41,Hamburger SV,Hamburg,schedule-bridged,C
+43,Heart of Midlothian FC,Hearts,schedule-bridged,BC
+44,Hertha BSC,Hertha,exact-normalised,AC
+46,Inter Milan,Inter,schedule-bridged,BC
+47,Iraklis Thessaloniki,Iraklis,schedule-bridged,C
+58,RSC Anderlecht,Anderlecht,exact-normalised,AC
+60,SC Freiburg,Freiburg,exact-normalised,AC
+61,Servette FC,Servette,exact-normalised,AC
+62,SK Slavia Prague,Slavia Praha,alias-identical,B
+65,SpVgg Greuther Fürth,Greuther Furth,schedule-bridged,C
+76,Vålerengens Idrettsforening,Valerenga,schedule-bridged,C
+79,VfB Stuttgart,VfB Stuttgart,exact-normalised,AC
+80,VfL Bochum,Bochum,schedule-bridged,C
+82,VfL Wolfsburg,Wolfsburg,exact-normalised,AC
+86,SV Werder Bremen,Werder Bremen,schedule-bridged,C
+88,Widzew Lodz,Widzew Lodz,schedule-bridged,C
+89,1.FC Union Berlin,Union Berlin,exact-normalised,AC
+105,SV Darmstadt 98,Darmstadt,schedule-bridged,C
+114,Beşiktaş Jimnastik Kulübü,Besiktas,schedule-bridged,C
+120,Kocaelispor,Kocaelispor,schedule-bridged,C
+122,Sportklub Puntigamer Sturm Graz,Sturm Graz,schedule-bridged,C
+124,Rangers FC,Rangers,exact-normalised,AC
+126,Caykur Rizespor,Rizespor,schedule-bridged,C
+127,SC Paderborn 07,Paderborn,schedule-bridged,C
+128,AO Xanthi,Xanthi,schedule-bridged,C
+130,Parma Calcio 1913,Parma,schedule-bridged,C
+131,FC Barcelona,Barcelona,exact-normalised,AC
+132,NAC Breda,NAC Breda,schedule-bridged,C
+133,SC Cambuur Leeuwarden,Cambuur,schedule-bridged,C
+141,Galatasaray,Galatasaray,exact-normalised,AC
+148,Tottenham Hotspur,Tottenham,schedule-bridged,BC
+150,Real Betis Balompié,Real Betis,schedule-bridged,C
+152,Samsunspor,Samsunspor,exact-normalised,AC
+157,KAA Gent,Gent,exact-normalised,AC
+162,AS Monaco,Monaco,exact-normalised,AC
+167,FC Augsburg,Augsburg,schedule-bridged,C
+168,Zaglebie Lubin,Zaglebie,schedule-bridged,C
+169,Panionios Athens,Panionios,schedule-bridged,C
+170,Rapid Vienna,SK Rapid,schedule-bridged,BC
+172,Royal Charleroi Sporting Club,Charleroi,schedule-bridged,C
+173,Odense Boldklub,Odense,schedule-bridged,C
+180,Southampton FC,Southampton,exact-normalised,AC
+190,FC Copenhagen,FC Copenhagen,exact-normalised,AC
+192,Roda JC Kerkrade,Roda,schedule-bridged,C
+195,Rosenborg Ballklub,Rosenborg,schedule-bridged,C
+200,FC Utrecht,Utrecht,exact-normalised,AC
+202,FC Groningen,Groningen,schedule-bridged,C
+206,Bröndby IF,Brondby,exact-normalised,AC
+234,Feyenoord Rotterdam,Feyenoord,schedule-bridged,BC
+235,RKC Waalwijk,Waalwijk,schedule-bridged,C
+237,RCD Mallorca,Mallorca,schedule-bridged,C
+238,Lech Poznan,Lech Poznan,exact-normalised,AC
+239,Viking Fotballklubb,Viking,schedule-bridged,C
+242,FC Winterthur,Winterthur,schedule-bridged,C
+244,Olympique Marseille,Marseille,schedule-bridged,BC
+252,Genoa CFC,Genoa,schedule-bridged,C
+255,Legia Warszawa,Legia,schedule-bridged,BC
+257,FC St. Gallen 1879,St. Gallen,exact-normalised,AC
+260,FC Zürich,Zurich,exact-normalised,AC
+265,Panathinaikos Athlitikos Omilos,Panathinaikos,schedule-bridged,C
+269,Holstein Kiel,Holstein Kiel,schedule-bridged,C
+272,Allmänna Idrottsklubben,AIK,schedule-bridged,C
+273,Stade Rennais FC,Rennes,schedule-bridged,BC
+276,Hellas Verona,Verona,schedule-bridged,C
+281,Manchester City,Manchester City,exact-normalised,AC
+289,Sunderland AFC,Sunderland,schedule-bridged,C
+290,AJ Auxerre,Auxerre,schedule-bridged,C
+294,SL Benfica,Benfica,exact-normalised,AC
+301,FCSB,FCSB,exact-normalised,AC
+306,SC Heerenveen,Heerenveen,schedule-bridged,C
+312,FC Dinamo 1948,Din. Bucuresti,schedule-bridged,C
+316,Grazer AK 1902,Grazer AK,schedule-bridged,C
+317,FC Twente Enschede,Twente,schedule-bridged,C
+321,FC Sion,Sion,exact-normalised,AC
+322,Yverdon Sport FC,Yverdon,schedule-bridged,C
+324,Pogon Szczecin,Pogon Szczecin,exact-normalised,AC
+331,CA Osasuna,Osasuna,exact-normalised,AC
+336,Sporting CP,Sporting CP,exact-normalised,AC
+347,FC Metz,Metz,schedule-bridged,C
+350,Sheffield United,Sheffield United,schedule-bridged,C
+354,KV Mechelen,Mechelen,schedule-bridged,C
+366,Real Valladolid CF,Valladolid,schedule-bridged,C
+367,Rayo Vallecano,Vallecano,schedule-bridged,BC
+368,Sevilla FC,Sevilla,exact-normalised,AC
+369,Lyngby Boldklub,Lyngby,schedule-bridged,C
+370,Aberdeen FC,Aberdeen,exact-normalised,AC
+371,Celtic FC,Celtic,exact-normalised,AC
+379,West Ham United,West Ham,schedule-bridged,C
+380,US Salernitana 1919,Salernitana,schedule-bridged,C
+383,PSV Eindhoven,PSV Eindhoven,exact-normalised,AC
+385,Fortuna Sittardia Combinatie,For Sittard,schedule-bridged,C
+398,Società Sportiva Lazio S.p.A.,Lazio,schedule-bridged,C
+399,Leeds United,Leeds,schedule-bridged,C
+403,Willem II Tilburg,Willem II,schedule-bridged,C
+405,Aston Villa,Aston Villa,exact-normalised,AC
+409,Fußballclub Red Bull Salzburg,Salzburg,schedule-bridged,C
+410,Udinese Calcio,Udinese,schedule-bridged,C
+413,LASK,LASK,exact-normalised,AC
+415,FC Toulouse,Toulouse,exact-normalised,AC
+416,Torino FC,Torino,schedule-bridged,C
+417,OGC Nice,Nice,exact-normalised,AC
+418,Real Madrid,Real Madrid,exact-normalised,AC
+428,Górnik Zabrze,Gornik Zabrze,exact-normalised,AC
+430,ACF Fiorentina,Fiorentina,exact-normalised,AC
+434,FC Luzern,Luzern,exact-normalised,AC
+441,Apollon Smyrnis,Apollon,schedule-bridged,C
+443,Vejle Boldklub,Vejle,schedule-bridged,C
+449,Trabzonspor,Trabzonspor,exact-normalised,AC
+452,BSC Young Boys,Young Boys,exact-normalised,AC
+455,FC Rapid 1923,FC Rapid Bucuresti,schedule-bridged,C
+458,Palermo FC,Palermo,schedule-bridged,C
+465,St. Mirren FC,St Mirren,exact-normalised,AC
+467,NEC Nijmegen,Nijmegen,schedule-bridged,C
+468,Sparta Rotterdam,Sparta Rotterdam,schedule-bridged,C
+472,UD Las Palmas,Las Palmas,schedule-bridged,C
+475,Sint-Truidense VV,St Truiden,schedule-bridged,C
+496,Malmö Fotbollförening,Malmo FF,schedule-bridged,C
+498,KSC Lokeren (- 2020),Lokeren,schedule-bridged,C
+499,Vitesse Arnhem,Vitesse,schedule-bridged,C
+501,Fotballklubben Bodø/Glimt,Bodo/Glimt,schedule-bridged,C
+504,Grasshopper Club Zurich,Grasshoppers,schedule-bridged,C
+506,Juventus FC,Juventus,exact-normalised,AC
+511,Dundee FC,Dundee,schedule-bridged,C
+512,Stoke City,Stoke,schedule-bridged,C
+520,Cercle Brugge,Cercle Brugge,exact-normalised,AC
+524,Gaziantepspor (- 2020),Gaziantepspor,schedule-bridged,C
+527,Football Club Lausanne-Sport,Lausanne,exact-normalised,AC
+533,TSG 1899 Hoffenheim,Hoffenheim,exact-normalised,AC
+543,Wolverhampton Wanderers,Wolves,schedule-bridged,BC
+553,Ionikos Nikeas,Ionikos,schedule-bridged,C
+583,Paris Saint-Germain,Paris Saint-Germain,exact-normalised,AC
+589,Antalyaspor,Antalyaspor,schedule-bridged,C
+601,KV Kortrijk,Kortrijk,schedule-bridged,C
+603,Cardiff City,Cardiff,schedule-bridged,C
+605,Aris Thessalonikis,Aris,schedule-bridged,BC
+607,Venezia FC,Venezia,schedule-bridged,C
+610,Ajax Amsterdam,Ajax,schedule-bridged,C
+618,AS Saint-Étienne,St Etienne,schedule-bridged,BC
+621,Athletic Bilbao,Ath Bilbao,schedule-bridged,BC
+631,Chelsea FC,Chelsea,exact-normalised,AC
+641,Middlesbrough FC,Middlesbrough,schedule-bridged,C
+642,De Graafschap Doetinchem,Graafschap,schedule-bridged,C
+653,Omilos Filathlon Irakliou FC,OFI Crete,schedule-bridged,C
+660,FC Shakhtar Donetsk,Shakhtar Donetsk,exact-normalised,A
+667,RC Strasbourg Alsace,Strasbourg,schedule-bridged,C
+677,Ipswich Town,Ipswich,schedule-bridged,C
+678,Aarhus GF,Aarhus,schedule-bridged,C
+681,Real Sociedad,Sociedad,schedule-bridged,BC
+683,Olympiakos Syndesmos Filathlon Peiraios,Olympiakos,schedule-bridged,C
+687,Molde Fotballklubb,Molde,schedule-bridged,C
+703,Nottingham Forest,Nott'm Forest,schedule-bridged,BC
+714,RCD Espanyol Barcelona,Espanol,schedule-bridged,C
+720,FC Porto,Porto,exact-normalised,AC
+723,Almere City FC,Almere City,schedule-bridged,C
+724,FC Volendam,Volendam,schedule-bridged,C
+738,Le Havre AC,Le Havre,schedule-bridged,C
+749,FC Empoli,Empoli,schedule-bridged,C
+759,Slask Wroclaw,Slask Wroclaw,exact-normalised,AC
+762,Newcastle United,Newcastle,schedule-bridged,BC
+798,Excelsior Rotterdam,Excelsior,schedule-bridged,C
+800,Atalanta BC,Atalanta,exact-normalised,AC
+801,Idrottsföreningen Kamraterna Göteborg,Goteborg,schedule-bridged,C
+820,Gençlerbirliği Spor Kulübü,Genclerbirligi,schedule-bridged,C
+826,RC Lens,Lens,exact-normalised,AC
+833,Denizlispor,Denizlispor,schedule-bridged,C
+855,EA Guingamp,Guingamp,schedule-bridged,C
+862,Chievo Verona,Chievo,schedule-bridged,C
+865,FC Midtjylland,Midtjylland,exact-normalised,AC
+868,MKE Ankaragücü,Ankaragucu,schedule-bridged,C
+873,Crystal Palace,Crystal Palace,exact-normalised,AC
+897,Deportivo de La Coruña,La Coruna,schedule-bridged,C
+903,Hibernian FC,Hibernian,exact-normalised,AC
+924,Istanbulspor,Istanbulspor,schedule-bridged,C
+931,Fulham FC,Fulham,schedule-bridged,C
+938,FC Thun,Thun,exact-normalised,AC
+940,Celta de Vigo,Celta,schedule-bridged,BC
+952,UTA Arad,UTA Arad,schedule-bridged,C
+968,KVC Westerlo,Westerlo,schedule-bridged,C
+969,Montpellier HSC,Montpellier,schedule-bridged,C
+979,Moreirense FC,Moreirense,schedule-bridged,C
+982,CD Nacional,Nacional,schedule-bridged,C
+984,West Bromwich Albion,West Brom,schedule-bridged,C
+985,Manchester United,Manchester United,exact-normalised,AC
+987,Motherwell FC,Motherwell,exact-normalised,AC
+989,AFC Bournemouth,Bournemouth,schedule-bridged,C
+995,FC Nantes,Nantes,exact-normalised,AC
+1003,Leicester City,Leicester,schedule-bridged,BC
+1005,US Lecce,Lecce,schedule-bridged,C
+1010,Watford FC,Watford,schedule-bridged,C
+1011,Halmstads BK,Halmstad,schedule-bridged,C
+1025,Bologna Football Club 1909,Bologna,exact-normalised,AC
+1031,Luton Town,Luton,schedule-bridged,C
+1038,UC Sampdoria,Sampdoria,schedule-bridged,C
+1041,Olympique Lyon,Lyon,schedule-bridged,C
+1044,Djurgårdens Idrottsförening,Djurgarden,schedule-bridged,C
+1047,Como 1907,Como,exact-normalised,AC
+1049,Valencia CF,Valencia,exact-normalised,AC
+1050,Villarreal CF,Villarreal,exact-normalised,AC
+1053,Aalborg BK,Aalborg,schedule-bridged,C
+1057,Bryne FK,Bryne,schedule-bridged,C
+1059,Hammarby IF,Hammarby,exact-normalised,AC
+1063,Viborg FF,Viborg,exact-normalised,AC
+1075,SC Braga,Sp Braga,schedule-bridged,BC
+1082,LOSC Lille,Lille,exact-normalised,AC
+1084,Málaga CF,Malaga,schedule-bridged,C
+1085,Vitória Setúbal FC,Setubal,schedule-bridged,C
+1090,AZ Alkmaar,AZ Alkmaar,exact-normalised,AC
+1091,Panthessalonikios Athlitikos Omilos Konstantinoupoliton,PAOK,schedule-bridged,C
+1092,Idrottsföreningen  Brommapojkarna,Brommapojkarna,schedule-bridged,C
+1095,ESTAC Troyes,Troyes,schedule-bridged,C
+1096,Royal Antwerp FC,Antwerp,schedule-bridged,BC
+1100,Sportsklubben Brann,Brann,schedule-bridged,C
+1101,Idrottsföreningen Elfsborg,Elfsborg,schedule-bridged,C
+1108,Deportivo Alavés,Alaves,schedule-bridged,C
+1109,BK Häcken,Hacken,exact-normalised,AC
+1110,Huddersfield Town,Huddersfield,schedule-bridged,C
+1123,Norwich City,Norwich,schedule-bridged,C
+1132,Burnley FC,Burnley,schedule-bridged,C
+1147,AC Ajaccio,Ajaccio,schedule-bridged,C
+1148,Brentford FC,Brentford,schedule-bridged,C
+1158,FC Lorient,Lorient,schedule-bridged,C
+1159,AS Nancy-Lorraine,Nancy,schedule-bridged,C
+1160,Nîmes Olympique,Nimes,schedule-bridged,C
+1162,SM Caen,Caen,schedule-bridged,C
+1177,Silkeborg IF,Silkeborg,exact-normalised,AC
+1184,KRC Genk,Genk,exact-normalised,AC
+1236,Östers IF,Oster,schedule-bridged,BC
+1237,Brighton & Hove Albion,Brighton,schedule-bridged,BC
+1241,Livingston FC,Livingston,schedule-bridged,C
+1244,CD Leganés,Leganes,schedule-bridged,C
+1245,KAS Eupen,Eupen,schedule-bridged,C
+1268,ADO Den Haag,Den Haag,schedule-bridged,C
+1269,PEC Zwolle,Zwolle,schedule-bridged,C
+1283,FC Emmen,FC Emmen,schedule-bridged,C
+1293,Tromsø Idrettslag,Tromso,exact-normalised,AC
+1301,CS Marítimo,Maritimo,schedule-bridged,C
+1304,Heracles Almelo,Heracles,schedule-bridged,C
+1390,Cagliari Calcio,Cagliari,schedule-bridged,C
+1416,Amiens SC,Amiens,schedule-bridged,C
+1420,Angers SCO,Angers,schedule-bridged,C
+1421,Stade Reims,Reims,schedule-bridged,C
+1426,VVV-Venlo,VVV Venlo,schedule-bridged,C
+1434,SC Telstar,Telstar,schedule-bridged,C
+1435,Go Ahead Eagles,Go Ahead Eagles,exact-normalised,AC
+1465,GD Estoril Praia,Estoril,schedule-bridged,C
+1467,Göztepe,Goztep,schedule-bridged,C
+1506,Kardemir Karabükspor,Karabukspor,schedule-bridged,C
+1519,Dundee United FC,Dundee United,exact-normalised,AC
+1531,Elche CF,Elche,schedule-bridged,C
+1533,SD Eibar,Eibar,schedule-bridged,C
+1894,Hvidovre IF,Hvidovre IF,schedule-bridged,C
+2036,1. Fußballclub Heidenheim 1846,Heidenheim,schedule-bridged,C
+2079,Veria NPS,Veria,schedule-bridged,C
+2118,Wisla Plock,Wisla Plock,schedule-bridged,C
+2157,FC Blau-Weiss Linz,BW Linz,schedule-bridged,C
+2239,US Cremonese,Cremonese,schedule-bridged,C
+2282,Club Brugge KV,Club Brugge,exact-normalised,AC
+2288,Swansea City,Swansea,schedule-bridged,C
+2293,Konyaspor,Konyaspor,exact-normalised,AC
+2300,Jagiellonia Bialystok,Jagiellonia,schedule-bridged,BC
+2375,Altay SK,Altay,schedule-bridged,C
+2381,Sivasspor,Sivasspor,exact-normalised,AC
+2414,AC Horsens,Horsens,schedule-bridged,C
+2420,Vitória Guimarães SC,Guimaraes,schedule-bridged,BC
+2423,CD Santa Clara,Santa Clara,exact-normalised,AC
+2424,Gil Vicente FC,Gil Vicente,exact-normalised,AC
+2425,Rio Ave FC,Rio Ave,schedule-bridged,C
+2431,CF Estrela Amadora,Estrela,schedule-bridged,C
+2441,Athlitiki Enosi Konstantinoupoleos,AEK Athens,schedule-bridged,C
+2446,WSG Tirol,Tirol,schedule-bridged,C
+2448,Sporting Gijón,Sp Gijon,schedule-bridged,C
+2451,Inverness Caledonian Thistle FC,Inverness C,schedule-bridged,C
+2457,B SAD,Belenenses,schedule-bridged,C
+2497,Real Oviedo,Oviedo,schedule-bridged,C
+2503,Boavista FC,Boavista,schedule-bridged,C
+2521,FC Alverca,Alverca,schedule-bridged,C
+2553,Kilmarnock FC,Kilmarnock,exact-normalised,AC
+2578,St. Johnstone FC,St Johnstone,exact-normalised,AC
+2671,PAS Giannina,Giannina,schedule-bridged,C
+2672,APO Levadiakos Football Club,Levadeiakos,schedule-bridged,C
+2687,Cádiz CF,Cadiz,schedule-bridged,C
+2715,RFC Seraing,Seraing,schedule-bridged,C
+2719,Mjällby Almänna Idrottsförening,Mjallby,schedule-bridged,C
+2722,SPAL,Spal,schedule-bridged,C
+2727,Oud-Heverlee Leuven,Oud-Heverlee Leuven,schedule-bridged,C
+2759,Ross County FC,Ross County,schedule-bridged,C
+2760,Partick Thistle FC,Partick,schedule-bridged,C
+2761,FK Haugesund,Haugesund,schedule-bridged,C
+2778,FC Nordsjaelland,Nordsjaelland,exact-normalised,AC
+2790,FC Lugano,Lugano,exact-normalised,AC
+2817,Strømsgodset IF,Stromsgodset,schedule-bridged,C
+2832,Gaziantep FK,Gaziantep,schedule-bridged,C
+2844,IFK Norrköping,Norrkoping,schedule-bridged,C
+2861,KV Oostende,Oostende,schedule-bridged,C
+2919,AC Monza,Monza,schedule-bridged,C
+2921,Delfino Pescara 1936,Pescara,schedule-bridged,C
+2944,Ankaraspor,Osmanlispor,schedule-bridged,C
+2969,Dijon FCO,Dijon,schedule-bridged,C
+2995,FC Paços de Ferreira,Pacos Ferreira,exact-normalised,AC
+2999,Hamilton Academical FC,Hamilton,schedule-bridged,C
+3008,Hull City,Hull,schedule-bridged,C
+3057,Standard Liège,Standard,schedule-bridged,BC
+3060,APS Atromitos Athinon,Atromitos,schedule-bridged,C
+3205,Kayserispor,Kayserispor,schedule-bridged,C
+3209,Pendikspor,Pendikspor,schedule-bridged,C
+3268,Casa Pia AC,Casa Pia,schedule-bridged,C
+3302,UD Almería,Almeria,schedule-bridged,C
+3325,GD Chaves,Chaves,schedule-bridged,C
+3329,FC Famalicão,Famalicao,schedule-bridged,C
+3336,Desportivo Aves (- 2020),Aves,schedule-bridged,C
+3349,CD Feirense,Feirense,schedule-bridged,C
+3368,Levante UD,Levante,schedule-bridged,C
+3385,Panserraikos Serres,Panserraikos,schedule-bridged,C
+3426,Esbjerg fB,Esbjerg,schedule-bridged,C
+3508,Zulte Waregem,Waregem,schedule-bridged,BC
+3522,Spezia Calcio,Spezia,schedule-bridged,C
+3524,Clermont Foot 63,Clermont,schedule-bridged,C
+3527,Motor Lublin Spółka Akcyjna,Motor Lublin,schedule-bridged,C
+3551,Sportclub Rheindorf Altach,Altach,schedule-bridged,C
+3622,IFK Värnamo,Varnamo,schedule-bridged,C
+3641,Degerfors IF,Degerfors,schedule-bridged,C
+3709,Getafe CF,Getafe,exact-normalised,AC
+3837,Fredrikstad Fotballklubb,Fredrikstad,schedule-bridged,C
+3840,Adana Demirspor,Ad. Demirspor,schedule-bridged,BC
+3901,RAAL La Louvière,RAAL La Louviere,schedule-bridged,C
+3911,Stade Brestois 29,Brest,schedule-bridged,BC
+3948,Union Saint-Gilloise,St. Gilloise,schedule-bridged,BC
+3999,PAS Lamia 1964,Lamia,schedule-bridged,C
+4000,Lechia Gdansk,Lechia Gdansk,exact-normalised,AC
+4083,FC Crotone,Crotone,schedule-bridged,C
+4171,Benevento Calcio,Benevento,schedule-bridged,C
+4172,Pisa Sporting Club,Pisa,schedule-bridged,C
+4294,SC Farense,Farense,schedule-bridged,C
+4309,Hamarkameratene,HamKam,schedule-bridged,C
+4441,Wolfsberger AC,Wolfsberger AC,exact-normalised,AC
+4467,TSV Hartberg,Hartberg,schedule-bridged,C
+4603,Athlitiki Enosi Larisas,Larisa,schedule-bridged,C
+4795,FC Ingolstadt 04,Ingolstadt,schedule-bridged,C
+4959,SC Otelul Galati,Otelul,schedule-bridged,C
+5202,Västerås Sportklubb FK,Vasteras SK,schedule-bridged,C
+5219,AOK Kerkyra,Kerkyra,schedule-bridged,C
+5358,SD Huesca,Huesca,schedule-bridged,C
+5689,Cracovia,Cracovia,schedule-bridged,C
+5724,Randers FC,Randers FC,exact-normalised,AC
+5776,FC Fredericia,Fredericia,schedule-bridged,C
+5817,Sönderjyske Fodbold,Sonderjyske,schedule-bridged,C
+5818,Hobro IK,Hobro,schedule-bridged,C
+6107,Morski Związkowy Klub Sportowy Arka Gdynia Spółka Akcyjna,Arka Gdynia,schedule-bridged,C
+6110,Korona Kielce,Korona Kielce,schedule-bridged,C
+6112,Piast Gliwice,Piast Gliwice,schedule-bridged,C
+6195,SSC Napoli,Napoli,exact-normalised,AC
+6399,Sandefjord Fotball,Sandefjord,schedule-bridged,C
+6418,Panetolikos Agrinio,Panetolikos,schedule-bridged,C
+6429,FC Universitatea Cluj,U. Cluj,schedule-bridged,BC
+6456,GKS GieKSa Katowice Spółka Akcyjna,GKS Katowice,schedule-bridged,C
+6574,US Sassuolo,Sassuolo,schedule-bridged,C
+6646,Fatih Karagümrük,Karagumruk,schedule-bridged,C
+6676,A.G.S Asteras Tripolis,Asteras Tripolis,schedule-bridged,C
+6890,Basaksehir FK,Buyuksehyr,schedule-bridged,C
+6912,FC Vizela,Vizela,schedule-bridged,C
+7009,Göteborgs Atlet- och Idrottssällskap,GAIS,schedule-bridged,C
+7154,Radomiak Radom,Radomiak Radom,schedule-bridged,C
+7160,Eyüpspor,Eyupspor,schedule-bridged,C
+7179,CD Tondela,Tondela,schedule-bridged,C
+7378,Portimonense SC,Portimonense,schedule-bridged,C
+7769,CFR Cluj,CFR Cluj,exact-normalised,AC
+7775,Hatayspor,Hatayspor,schedule-bridged,C
+7945,IK Sirius,Sirius,schedule-bridged,C
+8024,FC Arouca,Arouca,exact-normalised,AC
+8818,FC Botosani,FC Botosani,schedule-bridged,C
+8970,Frosinone Calcio,Frosinone,schedule-bridged,C
+9010,FCV Dender EH,Dender,schedule-bridged,C
+9465,Petrolul Ploiesti,Petrolul,schedule-bridged,C
+9644,Raków Częstochowa,Rakow,schedule-bridged,BC
+10004,Paris FC,Paris FC,schedule-bridged,C
+10217,Sarpsborg 08 Fotballforening,Sarpsborg 08,schedule-bridged,C
+10484,Kasimpasa,Kasimpasa,schedule-bridged,C
+11282,Alanyaspor,Alanyaspor,schedule-bridged,C
+11380,ASFC Buzau (2016-2025),Gloria Buzau,schedule-bridged,C
+11688,Giresunspor,Giresunspor,schedule-bridged,C
+12321,Girona FC,Girona,exact-normalised,AC
+15906,Termalica Bruk-Bet Nieciecza Klub Sportowy,Termalica B-B.,schedule-bridged,C
+16795,Granada CF,Granada,exact-normalised,AC
+19657,Vendsyssel FF,Vendsyssel,schedule-bridged,C
+19771,Akhisarspor,Akhisar Belediyespor,schedule-bridged,BC
+19789,Yeni Malatyaspor,Yeni Malatyaspor,schedule-bridged,C
+20100,FC Vestsjaelland,Vestsjaelland,schedule-bridged,C
+21101,Kristiansund Ballklubb,Kristiansund,schedule-bridged,C
+21957,AO Platanias,Platanias,schedule-bridged,C
+22110,FC Helsingör,Helsingor,schedule-bridged,C
+22431,Stal Mielec,Stal Mielec,schedule-bridged,C
+23184,KFUM-Kameratene Oslo,KFUM Oslo,schedule-bridged,C
+23826,RB Leipzig,RB Leipzig,exact-normalised,AC
+24245,Ümraniyespor,Umraniyespor,schedule-bridged,C
+28643,SK Beveren,Beveren,exact-normalised,AC
+28760,SK Austria Klagenfurt,A. Klagenfurt,schedule-bridged,C
+28893,Puszcza Niepolomice,Puszcza,schedule-bridged,C
+29228,Royal Excel Mouscron (-2022),Mouscron,schedule-bridged,C
+29700,AFC Unirea 04 Slobozia,Unirea Slobozia,schedule-bridged,C
+29831,FCV Farul Constanta,Farul Constanta,schedule-bridged,C
+30120,Athlitiki Enosi Kifisias,Kifisia,schedule-bridged,C
+33966,ACSM Politehnica Iasi,Poli Iasi,schedule-bridged,C
+37255,FK Csikszereda Miercurea Ciuc,Csikszereda M. Ciuc,schedule-bridged,C
+37624,FC Metaloglobus Bucharest,Metaloglobus Bucharest,schedule-bridged,C
+39722,Erzurumspor FK,Erzurum BB,schedule-bridged,C
+40812,Universitatea Craiova,Univ. Craiova,schedule-bridged,BC
+41274,Beerschot VA,Beerschot VA,schedule-bridged,C
+41278,ACSC FC Arges,FC Arges,schedule-bridged,C
+44006,Bodrum FK,Bodrumspor,schedule-bridged,C
+54189,RWD Molenbeek,RWD Molenbeek,schedule-bridged,C
+54585,Sepsi OSK Sf. Gheorghe,Sepsi Sf. Gheorghe,exact-normalised,AC
+58049,FC Hermannstadt,FC Hermannstadt,schedule-bridged,C
+60949,Volou Neos Podosferikos Syllogos,Volos NFC,schedule-bridged,C
+110302,Avs Futebol,AVS,schedule-bridged,C

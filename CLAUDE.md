@@ -127,10 +127,23 @@ outputs/         # csv tables + figures
 - Home advantage is applied **once**, in the Elo update. The Poisson model uses
   the raw rating difference and carries home advantage in its own intercept.
 - The market is a **diagnostic only** and never enters an objective.
-- **Stopping rule, reached.** Four covariate candidates were tested under this
-  protocol and all failed: Dixon-Coles, market-implied ratings (both the
-  standardised and the Elo-units mappings), fixture congestion, and squad market
-  value. Elo plus association offsets is treated as the ceiling on this data; do
-  not add further covariates without new evidence or a materially better data
-  source. The one open lead is squad value, whose null came with only 22-25%
-  European coverage.
+- **Four covariate candidates failed** under this protocol: Dixon-Coles,
+  market-implied ratings (both the standardised and the Elo-units mappings), and
+  fixture congestion. Do not relitigate them without new evidence or a
+  materially better data source.
+- **Squad market value is accepted**, and with it the stopping rule declared
+  before candidate 1b does not fire. Its first run was a null at 22-25%
+  European coverage; that coverage was an implementation defect in the
+  Transfermarkt club mapping, and the binding coverage-fix re-run at ~50%
+  coverage gives pooled delta **-0.00099, cluster CI [-0.00187, -0.00008]**,
+  which excludes zero (stable across bootstrap draws and seeds). Fitted
+  `b_d_value` +0.0395 beside `b_elo` 0.709. It is a **pre-season squad-quality
+  prior** that cannot be refreshed while the source is paused, and it is
+  **accepted at half coverage**: the other half of European matches falls back
+  to Elo. See `results/candidate_squad_value_coverage_fix/`.
+- **Open before the forecast uses it:** `appearances.csv` includes national-team
+  matches, so at the 2026-27 as-of - six days after the 2026 World Cup - 16.3%
+  of players are assigned to their country instead of their club and drop out of
+  its value. The four scored seasons are unaffected (0.4-1.1%, rank correlation
+  1.0000), so the acceptance stands, but the forward-looking feature is wrong
+  until membership is restricted to clubs in `clubs.csv`.
