@@ -17,7 +17,7 @@ import pandas as pd
 from ucl import config
 from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
-from ucl.data import names
+from ucl.data import names, odds, odds
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 from ucl.sim.bracket import draw_bracket
@@ -101,6 +101,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     frame = frame.sort_values("p_champion", ascending=False).reset_index(drop=True)
 
+    # The market, as a diagnostic only - never a fitting target.
+    try:
+        market = odds.load_outright(cfg.label)
+    except FileNotFoundError:
+        market = None
+    if market is not None:
+        frame = frame.merge(
+            market[["team", "decimal_odds", "p_market"]], on="team", how="left"
+        )
+        frame["model_minus_market"] = frame.p_champion - frame.p_market
+        frame["model_over_market"] = frame.p_champion / frame.p_market
+
     # --- verification ---
     checks = {
         "P(champion) sums to 1": abs(frame.p_champion.sum() - 1.0) < 1e-9,
@@ -129,6 +141,22 @@ def main(argv: list[str] | None = None) -> int:
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     out = OUTPUTS_DIR / (args.out or f"forecast_{cfg.label}.csv")
     frame.to_csv(out, index=False, float_format="%.6f")
+    if market is not None:
+        priced = frame.p_market.notna()
+        unpriced_mass = float(frame.loc[~priced, "p_champion"].sum())
+        print(f"\n=== model vs market ({int(priced.sum())} of 36 priced, overround "
+              f"{market.attrs['overround']:.4f}, proportional de-vig) ===")
+        print(f"  the {int((~priced).sum())} unpriced clubs hold {unpriced_mass:.3f} of model "
+              f"probability; proportional de-vig gives that share to the priced clubs, so "
+              f"every market number reads about {unpriced_mass:.1%} high")
+        ranked = frame.loc[priced].reindex(
+            frame.loc[priced].model_minus_market.abs().sort_values(ascending=False).index)
+        print("  largest disagreements:")
+        for row in ranked.head(10).itertuples():
+            side = "model HIGH" if row.model_minus_market > 0 else "model LOW "
+            print(f"    {row.team:22s} model {row.p_champion:.3f}  market {row.p_market:.3f}  "
+                  f"{side} by {abs(row.model_minus_market):.3f}")
+
     print(f"\nsetup {setup:.1f}s, simulation {elapsed:.1f}s "
           f"({elapsed / n * 1000:.2f} ms/iteration), written to {out.name}")
     return 0 if all(checks.values()) else 1
