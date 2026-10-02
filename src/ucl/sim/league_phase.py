@@ -32,7 +32,10 @@ def simulate_match(
 ) -> tuple[int, int]:
     """Draw one scoreline and, by default, apply the Elo update for it."""
     elo_home, elo_away = ratings[home], ratings[away]
-    rate_home, rate_away = model.rates(elo_home, elo_away, neutral=neutral)
+    # By club id, not by rating alone: model v1 needs to know which clubs these
+    # are to look up their squad values.
+    rate_home, rate_away = model.rates_for(
+        home, away, elo_home, elo_away, neutral=neutral)
     hg = int(rng.poisson(float(rate_home) * scale))
     ag = int(rng.poisson(float(rate_away) * scale))
 

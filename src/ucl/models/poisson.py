@@ -51,6 +51,10 @@ class PoissonModel:
         away_term = self.a - self.b * d
         return np.exp(home_term), np.exp(away_term)
 
+    def rates_for(self, home, away, elo_home, elo_away, *, neutral: bool = False):
+        """The simulator's entry point. This model does not use the club ids."""
+        return self.rates(elo_home, elo_away, neutral=neutral)
+
     def as_dict(self) -> dict[str, float]:
         return {"a": self.a, "h": self.h, "b": self.b}
 

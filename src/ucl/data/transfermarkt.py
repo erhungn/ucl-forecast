@@ -73,6 +73,20 @@ def _tables():
     return valuations, appearances
 
 
+@lru_cache(maxsize=1)
+def _club_ids() -> frozenset[int]:
+    """Every club id in ``clubs.csv``; nothing else counts as a club.
+
+    ``appearances.csv`` also carries national-team matches, whose ids are not in
+    the club table. Without this filter a player whose last appearance inside
+    the membership window was for his country is assigned to the country and
+    drops out of his club's value - which is what happened at the 2026-27 as-of,
+    six days after the 2026 World Cup, to 16.3% of players.
+    """
+    clubs = pd.read_csv(CACHE_DIR / "clubs.csv", usecols=["club_id"])
+    return frozenset(int(c) for c in clubs.club_id)
+
+
 @lru_cache(maxsize=16)
 def squad_values(as_of: date) -> dict[str, float]:
     """Total squad value per club at ``as_of``, in euros.
@@ -80,12 +94,15 @@ def squad_values(as_of: date) -> dict[str, float]:
     A player belongs to the club he actually played for in the preceding 180
     days, and is counted at his latest valuation dated strictly before ``as_of``
     - so a transfer after that date leaves him at his old club, as it should.
+    Only appearances for a **club** count: a national-team match says nothing
+    about club membership, and the spec has always said club.
     """
     valuations, appearances = _tables()
     limit = pd.Timestamp(as_of)
     window = limit - pd.Timedelta(MEMBERSHIP_WINDOW_DAYS, "D")
 
     recent = appearances[(appearances.date < limit) & (appearances.date >= window)]
+    recent = recent[recent.player_club_id.isin(_club_ids())]
     # Most recent club per player inside the window.
     membership = (recent.sort_values("date")
                   .groupby("player_id").player_club_id.last())

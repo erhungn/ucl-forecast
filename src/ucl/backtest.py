@@ -66,7 +66,11 @@ def match_probabilities(
     elo_home, elo_away, model: PoissonModel, *, neutral: bool = False
 ) -> np.ndarray:
     """P(home, draw, away) by summing the independent-Poisson scoreline matrix."""
-    rate_home, rate_away = model.rates(elo_home, elo_away, neutral=neutral)
+    return probabilities_from_rates(*model.rates(elo_home, elo_away, neutral=neutral))
+
+
+def probabilities_from_rates(rate_home, rate_away) -> np.ndarray:
+    """The same sum, for a model whose rates are already in hand."""
     goals = np.arange(MAX_GOALS + 1)
     home_pmf = poisson.pmf(goals[None, :], np.asarray(rate_home)[:, None])
     away_pmf = poisson.pmf(goals[None, :], np.asarray(rate_away)[:, None])

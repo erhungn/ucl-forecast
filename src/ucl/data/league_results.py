@@ -134,4 +134,21 @@ def information(season_label: str = "2026-27", as_of=None) -> pd.DataFrame:
                      "files": group.source_file.nunique(),
                      "cached_to": group.date.max().date(), "used_to": used_to(group),
                      "fetched": None})
+
+    # The squad-value prior does not move with the as-of date: the source has
+    # been paused since 2026-07-06, so ``used_to`` is the season's frozen as-of
+    # whatever date the forecast is run for. A weekly update refreshes the
+    # ratings and not this.
+    from ucl.data import transfermarkt
+
+    if transfermarkt.CACHE_DIR.is_dir():
+        valuations, appearances = transfermarkt._tables()
+        rows.append({
+            "source": "squad_value/transfermarkt",
+            "status": "frozen (source paused)",
+            "files": len(read_manifest(transfermarkt.CACHE_DIR)),
+            "cached_to": max(valuations.date.max(), appearances.date.max()).date(),
+            "used_to": transfermarkt.as_of_for_season(season_label),
+            "fetched": None,
+        })
     return pd.DataFrame(rows)

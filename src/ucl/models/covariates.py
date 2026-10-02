@@ -25,7 +25,8 @@ from scipy.stats import poisson as poisson_dist
 
 from ucl import config
 
-__all__ = ["CovariateModel", "fit_covariate_model"]
+__all__ = ["CovariateModel", "fit_covariate_model", "SquadValueModel",
+           "fit_squad_value_model"]
 
 
 @dataclass
@@ -138,3 +139,84 @@ def fit_covariate_model(
         per_side={k: float(v) for k, v in side_c.items()},
         matches=len(data), converged=bool(result.success), log_likelihood=full,
     )
+
+
+@dataclass(frozen=True)
+class SquadValueModel:
+    """Model v1: the Elo Poisson model plus the pre-season squad-value prior.
+
+    The simulator works in club ids, so the covariate has to be looked up per
+    match rather than passed in as a column: :meth:`rates_for` takes the two
+    clubs. Where either club has no value the covariate is **zero for that
+    match** - the same convention the backtest scored, so the forecast is never
+    better informed than the test that accepted it.
+
+    The values are a snapshot at the season's as-of date (6 July), frozen: the
+    source has been paused since 2026-07-06, so a weekly update refreshes the
+    ratings and not this.
+    """
+
+    model: CovariateModel
+    values: dict[str, float]
+    as_of: object = None
+
+    @property
+    def a(self) -> float:
+        return self.model.a
+
+    @property
+    def h(self) -> float:
+        return self.model.h
+
+    @property
+    def b(self) -> float:
+        return self.model.b
+
+    def difference(self, home, away) -> np.ndarray:
+        """log(value_home) - log(value_away), zero unless both are valued."""
+        home_value = np.array([self.values.get(c, np.nan) for c in np.atleast_1d(home)])
+        away_value = np.array([self.values.get(c, np.nan) for c in np.atleast_1d(away)])
+        known = ~np.isnan(home_value) & ~np.isnan(away_value)
+        out = np.zeros(len(home_value))
+        out[known] = np.log(home_value[known]) - np.log(away_value[known])
+        return out
+
+    def rates_for(self, home, away, elo_home, elo_away, *, neutral: bool = False):
+        """Expected goals for (home, away), covariate included."""
+        difference = self.difference(home, away)
+        scalar = np.ndim(elo_home) == 0 and np.ndim(home) == 0
+        rate_home, rate_away = self.model.rates(
+            elo_home, elo_away, neutral=neutral,
+            symmetric={"d_value": difference[0] if scalar else difference})
+        return rate_home, rate_away
+
+    def rates(self, elo_home, elo_away, *, neutral: bool = False):
+        """Refused: without the club ids the covariate cannot be evaluated.
+
+        Silently dropping it would make the forecast quietly Elo-only, which is
+        the kind of bug that cost two re-runs already.
+        """
+        raise TypeError(
+            "SquadValueModel needs the club ids; call rates_for(home, away, ...)")
+
+    def as_dict(self) -> dict:
+        return self.model.as_dict()
+
+    def coverage(self, home, away) -> float:
+        """Share of the given fixtures where both clubs are valued."""
+        home = np.atleast_1d(home)
+        away = np.atleast_1d(away)
+        known = np.array([c in self.values for c in home])
+        known_away = np.array([c in self.values for c in away])
+        return float(np.mean(known & known_away))
+
+
+def fit_squad_value_model(pre_match: pd.DataFrame, values: dict[str, float],
+                          *, as_of=None) -> SquadValueModel:
+    """Fit model v1 on pre-match ratings and a squad-value snapshot."""
+    frame = pre_match.copy()
+    model = SquadValueModel(CovariateModel(0.0, 0.0, 0.0, {"d_value": 0.0}), values, as_of)
+    frame["d_value"] = model.difference(
+        frame.home_id.to_numpy(), frame.away_id.to_numpy())
+    fitted = fit_covariate_model(frame, symmetric=("d_value",))
+    return SquadValueModel(fitted, values, as_of)

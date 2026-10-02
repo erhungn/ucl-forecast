@@ -114,6 +114,7 @@ def _squad_values_from(valuations, appearances, as_of) -> dict[str, float]:
     """Recompute squad values from pre-trimmed tables, as the loader would."""
     window = as_of - pd.Timedelta(transfermarkt.MEMBERSHIP_WINDOW_DAYS, "D")
     recent = appearances[(appearances.date < as_of) & (appearances.date >= window)]
+    recent = recent[recent.player_club_id.isin(transfermarkt._club_ids())]
     membership = recent.sort_values("date").groupby("player_id").player_club_id.last()
     priced = valuations[valuations.date < as_of]
     latest = priced.sort_values("date").groupby("player_id").market_value_in_eur.last()
@@ -130,3 +131,33 @@ def test_value_difference_is_zero_when_either_club_is_unknown():
     difference = transfermarkt.value_difference(values, ["A", "A"], ["B", "Sabah"])
     assert difference[0] == pytest.approx(0.6931471805599453)
     assert difference[1] == 0.0
+
+
+def test_membership_counts_club_appearances_only():
+    """A national team is not a club, so its matches say nothing about squads.
+
+    ``appearances.csv`` carries national-team rows for the 2026 World Cup and
+    the 2025-26 Africa Cup of Nations. The World Cup ran 11-28 June 2026, six
+    days before the 2026-27 as-of, so without this filter 16.3% of players were
+    assigned to their country and dropped out of their club's value.
+    """
+    appearances = transfermarkt._tables()[1]
+    club_ids = transfermarkt._club_ids()
+    as_of = pd.Timestamp(transfermarkt.as_of_for_season("2026-27"))
+    window = as_of - pd.Timedelta(transfermarkt.MEMBERSHIP_WINDOW_DAYS, "D")
+    recent = appearances[(appearances.date < as_of) & (appearances.date >= window)]
+    # The filter is not vacuous: non-club ids do appear in the window.
+    assert not recent.player_club_id.isin(club_ids).all()
+
+    values = transfermarkt.squad_values(transfermarkt.as_of_for_season("2026-27"))
+    # Under the bug these three read 406m, 251m and 193m.
+    assert values["Paris Saint-Germain"] > 1_000e6
+    assert values["Manchester City"] > 1_000e6
+    assert values["Bayern Munich"] > 900e6
+    assert values["Bayern Munich"] > values["Porto"]
+
+
+def test_only_club_ids_from_the_club_table_reach_the_mapping():
+    clubs = pd.read_csv(transfermarkt.CACHE_DIR / "clubs.csv")
+    assert transfermarkt._club_ids() == frozenset(int(c) for c in clubs.club_id)
+    assert set(transfermarkt.club_map()) <= transfermarkt._club_ids()

@@ -1,0 +1,13 @@
+{
+  "a": 0.16946818308190015,
+  "h": 0.23395930251475908,
+  "b": 0.6969814641250833,
+  "b_d_value": 0.039871783556354304,
+  "matches": 65389,
+  "converged": true,
+  "log_likelihood": -192143.8560867181,
+  "value_as_of": "2026-07-06",
+  "clubs_valued": 232,
+  "league_phase_clubs_valued": 32,
+  "fixture_coverage": 0.7916666666666666
+}

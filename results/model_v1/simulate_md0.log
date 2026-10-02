@@ -1,0 +1,64 @@
+
+=== information set (as of 2026-09-07) ===
+                        source                 status  files  cached_to    used_to             fetched
+        domestic/football_data                present     73 2026-09-21 2026-09-06 2026-10-02T11:01:43
+domestic/football_data_history                present     55 2021-05-23 2021-05-23 2026-10-02T14:46:36
+domestic/football_data_current                 absent      0       None       None                None
+         european/openfootball                present     25 2026-05-30 2026-05-30                None
+            european/wikipedia                present     23 2026-09-10 2026-08-27                None
+     squad_value/transfermarkt frozen (source paused)      4 2026-06-28 2026-07-06                None
+2026-27: 144 fixtures to simulate, 36 teams, 50000 iterations, seed 20260907
+model a=0.16947 h=0.23396 b=0.69698 b_d_value=0.03987 [v1]
+  squad value: 32/36 clubs valued, both clubs valued in 79.2% of the 144 fixtures; the rest fall back to Elo
+  unvalued: LASK, Sabah, Slovan Bratislava, Viking
+
+=== verification ===
+  [PASS] P(champion) sums to 1
+  [PASS] P(top8)+P(play-off)+P(eliminated) = 1 per club
+  [PASS] 8 clubs in the top-8 band per iteration
+  [PASS] 16 clubs in the play-off band per iteration
+  [PASS] 12 clubs eliminated per iteration
+  [PASS] 16 clubs reach the round of 16
+  [PASS] 8 reach the quarter-finals
+  [PASS] 4 reach the semi-finals
+  [PASS] 2 reach the final
+  [PASS] stage probabilities are monotone
+  unresolved league-phase ties: 0 (0.0000 per iteration)
+
+=== model vs market (27 of 36 priced, overround 1.3078, proportional de-vig) ===
+  the 9 unpriced clubs hold 0.010 of model probability; proportional de-vig gives that share to the priced clubs, so every market number reads about 1.0% high
+  largest disagreements:
+    Arsenal                model 0.229  market 0.109  model HIGH by 0.120
+    Bayern Munich          model 0.180  market 0.109  model HIGH by 0.071
+    Paris Saint-Germain    model 0.066  market 0.127  model LOW  by 0.061
+    Liverpool              model 0.028  market 0.076  model LOW  by 0.048
+    Real Madrid            model 0.065  market 0.096  model LOW  by 0.031
+    Manchester United      model 0.027  market 0.045  model LOW  by 0.018
+    Inter                  model 0.047  market 0.029  model HIGH by 0.018
+    Napoli                 model 0.005  market 0.022  model LOW  by 0.018
+    Atletico Madrid        model 0.009  market 0.026  model LOW  by 0.018
+    RB Leipzig             model 0.003  market 0.015  model LOW  by 0.012
+
+=== matchday 1: 18 fixtures ===
+  home                   away                     home   draw   away    likely      P
+  AEK Athens             LASK                    0.492  0.248  0.260  1-1       0.118
+  Borussia Dortmund      Villarreal              0.606  0.218  0.176  1-0       0.112
+  Club Brugge            Aston Villa             0.340  0.259  0.401  1-1       0.123
+  Lille                  Real Betis              0.402  0.259  0.338  1-1       0.123
+  Porto                  Manchester City         0.296  0.255  0.449  1-1       0.121
+  Real Madrid            Inter                   0.468  0.252  0.280  1-1       0.120
+  Barcelona              Feyenoord               0.802  0.131  0.067  2-0       0.127
+  Liverpool              Atletico Madrid         0.514  0.243  0.243  1-1       0.116
+  Napoli                 Arsenal                 0.168  0.213  0.618  0-1       0.112
+  Paris Saint-Germain    Slovan Bratislava       0.870  0.091  0.038  3-0       0.127
+  Sporting CP            Galatasaray             0.608  0.217  0.175  1-0       0.112
+  VfB Stuttgart          Viking                  0.524  0.241  0.235  1-1       0.115
+  Bayern Munich          Bodo/Glimt              0.751  0.158  0.092  2-0       0.125
+  Como                   RB Leipzig              0.498  0.247  0.255  1-1       0.117
+  Fenerbahce             Roma                    0.284  0.253  0.463  1-1       0.120
+  Manchester United      Sabah                   0.770  0.148  0.082  2-0       0.126
+  PSV Eindhoven          Shakhtar Donetsk        0.636  0.207  0.157  2-0       0.112
+  Slavia Praha           Lens                    0.308  0.257  0.435  1-1       0.122
+  (the modal scoreline carries only ~8-12% probability; it is not a prediction)
+
+setup 4.4s, simulation 286.0s (5.72 ms/iteration), written to forecast_2026-27.csv

@@ -15,10 +15,11 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from ucl.backtest import match_probabilities
+from ucl.backtest import probabilities_from_rates
 from ucl.config import OUTPUTS_DIR, season as season_config
-from ucl.data import league_results
+from ucl.data import league_results, transfermarkt
 from ucl.evaluate import log_loss, rps
+from ucl.models.covariates import fit_squad_value_model
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 
@@ -29,6 +30,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", default="2026-27")
     parser.add_argument("--matchday", type=int, default=1)
+    parser.add_argument("--model", choices=("v1", "elo"), default="v1",
+                        help="v1: Elo plus the squad-value prior; elo: the frozen baseline")
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
 
@@ -39,14 +42,20 @@ def main(argv: list[str] | None = None) -> int:
 
     # The information set is the cutoff: this is the pre-tournament forecast.
     ratings = elo_as_of(cfg.cutoff_date)
-    model = fit_poisson(ratings.pre_match)
+    if args.model == "v1":
+        value_as_of = transfermarkt.as_of_for_season(cfg.label)
+        model = fit_squad_value_model(
+            ratings.pre_match, transfermarkt.squad_values(value_as_of), as_of=value_as_of)
+    else:
+        model = fit_poisson(ratings.pre_match)
     missing = [c for c in set(played.home_id) | set(played.away_id) if c not in ratings.ratings]
     if missing:
         raise SystemExit(f"no rating for {missing}")
 
     elo_home = played.home_id.map(ratings.ratings).to_numpy(dtype=float)
     elo_away = played.away_id.map(ratings.ratings).to_numpy(dtype=float)
-    probabilities = match_probabilities(elo_home, elo_away, model)
+    probabilities = probabilities_from_rates(*model.rates_for(
+        played.home_id.to_numpy(), played.away_id.to_numpy(), elo_home, elo_away))
     outcomes = np.where(played.hg > played.ag, 0, np.where(played.hg == played.ag, 1, 2))
 
     per_match = -np.log(np.clip(probabilities[np.arange(len(played)), outcomes], 1e-15, 1))
@@ -63,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     })
 
     print(f"=== {cfg.label} matchday {args.matchday}: {len(frame)} matches, "
-          f"forecast frozen at {cfg.cutoff_date} ===\n")
+          f"forecast frozen at {cfg.cutoff_date}, model {args.model} ===\n")
     print(frame.to_string(index=False, float_format=lambda v: f"{v:.3f}"))
 
     uniform = np.full_like(probabilities, 1 / 3)

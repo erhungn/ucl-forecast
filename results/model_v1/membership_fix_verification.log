@@ -1,0 +1,30 @@
+=== candidate 'squad_value' [membership-fix verification]: forward chaining, primary test = pooled ===
+  covariate coverage (both clubs known), by test season:
+    2022-23: European 48.5%, domestic 57.8%
+    2023-24: European 51.8%, domestic 58.3%
+    2024-25: European 49.9%, domestic 55.8%
+    2025-26: European 57.4%, domestic 57.4%
+  fold 2022-23: train 2021-22                       half-life    365d        training 1.00199 delta -0.00066 (4s)
+  fold 2023-24: train 2021-22+2022-23               half-life    365d        training 0.99238 delta +0.00055 (2s)
+  fold 2024-25: train 2021-22+2022-23+2023-24       half-life    365d        training 0.98904 delta -0.00334 (2s)
+  fold 2025-26: train 2021-22+2022-23+2023-24+2024-25 half-life    365d        training 0.98902 delta -0.00038 (2s)
+
+=== per fold, pooled scope ===
+  2022-23: n= 4728 delta -0.00066 cluster [-0.00248, +0.00129] per-match [-0.00210, +0.00081]
+  2023-24: n= 4770 delta +0.00055 cluster [-0.00099, +0.00215] per-match [-0.00096, +0.00207]
+  2024-25: n= 4881 delta -0.00334 cluster [-0.00498, -0.00179] per-match [-0.00467, -0.00199]
+  2025-26: n= 4809 delta -0.00038 cluster [-0.00230, +0.00175] per-match [-0.00183, +0.00121]
+
+=== POOLED, primary test (pooled) ===
+  matches 19188, clusters 1309
+  weighted mean delta log-loss: -0.00099 (negative = the candidate is better)
+  cluster   95% CI [-0.00187, -0.00008]  excludes zero: True
+  per-match 95% CI [-0.00176, -0.00026]  excludes zero: True
+
+  DECISION: ACCEPT squad_value
+
+=== sensitivities (not the decision) ===
+  European only: -0.00226 [-0.00443, -0.00009] over 1832 matches
+  all matches pooled: -0.00099 [-0.00187, -0.00008]
+
+total 17s

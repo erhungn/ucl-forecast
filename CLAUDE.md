@@ -56,13 +56,19 @@ Outputs:
   venue (flag: Atletico Madrid's home ground).
 
 ## Model
-1. Ratings: ClubElo ratings as of the cutoff date (cross-league calibrated).
-2. Goal model: Dixon-Coles with an Elo covariate:
-   `log(lambda_ij) = mu + home + beta * (elo_i - elo_j) / 400 + att_i - def_j`
-   - att/def deviations shrunk toward zero (ridge penalty or Bayesian prior)
-   - exponential time-decay weights (tune xi on backtests)
-   - low-score correction rho
-   - optional: fit on xG instead of goals and compare
+1. Ratings: **our own Elo** replayed from all domestic and European results
+   since 2012, with association-level strength offsets fitted on pre-cutoff
+   European matches for the cross-league scale. (ClubElo was unreachable;
+   `data/clubelo.py` remains an optional cross-check.)
+2. Goal model, **as built (model v1)**: independent Poisson on the Elo
+   difference plus a pre-season squad-value term, fitted by MLE on pre-match
+   ratings:
+   `log(lambda_home) = a + h + b*d + b_value*d_value`, `d = (elo_h - elo_a)/400`,
+   `d_value = log(value_h) - log(value_a)`, zero unless both clubs are valued.
+   Dixon-Coles (tau, ridge-shrunk att/def, time decay) was built and tested
+   against this and returned a null; the code stays in `models/dixon_coles.py`
+   for later. xG is blocked on data: no maintained free source covers the
+   backtest window.
 3. Simulation: Monte Carlo, default N = 50_000.
    - "Hot" simulation: update Elo inside each iteration after every simulated
      match.
@@ -102,11 +108,14 @@ outputs/         # csv tables + figures
 3.5 Backtest harness and Elo tuning - DONE. Reordered ahead of Dixon-Coles:
    the simulator was sound and the ratings were the weak part, so tuning them
    first gives milestone 4 a fixed reference. Frozen as `elo-baseline-v0`.
-4. Dixon-Coles with Elo covariate, fitted and compared to the Elo baseline
+4. Dixon-Coles with Elo covariate, fitted and compared to the Elo baseline -
+   DONE, and a null; the Elo baseline stayed the forecast model
 5. Backtests: forward chaining over 2021-22 to 2025-26 (was 2024-25 and
-   2025-26 only; extended once history reached 2016-17)
-6. Frozen 2026-27 pre-tournament forecast; later, an "update after
-   matchday k" mode
+   2025-26 only; extended once history reached 2016-17) - DONE
+6. Frozen 2026-27 pre-tournament forecast and the "update after matchday k"
+   mode, driven by an as-of date - DONE
+7. New information sources, one at a time against the accepted model. Four
+   nulls, then squad market value accepted - DONE. Frozen as `model-v1`.
 
 ## What the backtests established (do not relitigate without new evidence)
 - **Protocol.** Forward chaining: for each test season, tune on the seasons
@@ -131,19 +140,18 @@ outputs/         # csv tables + figures
   market-implied ratings (both the standardised and the Elo-units mappings), and
   fixture congestion. Do not relitigate them without new evidence or a
   materially better data source.
-- **Squad market value is accepted**, and with it the stopping rule declared
-  before candidate 1b does not fire. Its first run was a null at 22-25%
-  European coverage; that coverage was an implementation defect in the
-  Transfermarkt club mapping, and the binding coverage-fix re-run at ~50%
-  coverage gives pooled delta **-0.00099, cluster CI [-0.00187, -0.00008]**,
-  which excludes zero (stable across bootstrap draws and seeds). Fitted
-  `b_d_value` +0.0395 beside `b_elo` 0.709. It is a **pre-season squad-quality
-  prior** that cannot be refreshed while the source is paused, and it is
-  **accepted at half coverage**: the other half of European matches falls back
-  to Elo. See `results/candidate_squad_value_coverage_fix/`.
-- **Open before the forecast uses it:** `appearances.csv` includes national-team
-  matches, so at the 2026-27 as-of - six days after the 2026 World Cup - 16.3%
-  of players are assigned to their country instead of their club and drop out of
-  its value. The four scored seasons are unaffected (0.4-1.1%, rank correlation
-  1.0000), so the acceptance stands, but the forward-looking feature is wrong
-  until membership is restricted to clubs in `clubs.csv`.
+- **Squad market value is accepted, and is model v1**: pooled delta
+  **-0.00099, cluster CI [-0.00187, -0.00008]**, excluding zero and stable
+  across bootstrap draws and seeds. `b_value` +0.0399 beside `b_elo` 0.697.
+  The stopping rule declared before candidate 1b therefore does not fire.
+  See `results/model_v1/`.
+- It is **accepted at about half coverage** - 48-57% of European matches in the
+  backtest had both clubs valued, the rest falling back to Elo - and it is a
+  **pre-season prior**, frozen at 6 July, that cannot be refreshed while the
+  source is paused. Both belong in any statement of what it delivers.
+- **Two implementation defects preceded that acceptance, and both were found by
+  inspecting the feature rather than the test statistic.** Incomplete name
+  mapping (110 of 796 clubs) and national-team appearances counted as club
+  membership (16.3% of players at the 2026-27 as-of, six days after the 2026
+  World Cup). A null from a covariate is only evidence once the covariate has
+  been looked at: print it, sort it, and see whether it says what it should.

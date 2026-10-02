@@ -1,0 +1,81 @@
+/Users/erhungunay/ucl-forecast/scripts/simulate.py:80: DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`).Please use a specific unit instead.
+  as_of = (pd.Timestamp(first) - pd.Timedelta("1D")).date()
+
+=== information set (as of 2026-10-12) ===
+                        source                 status  files  cached_to    used_to             fetched
+        domestic/football_data                present     73 2026-09-21 2026-09-21 2026-10-02T11:01:43
+domestic/football_data_history                present     55 2021-05-23 2021-05-23 2026-10-02T14:46:36
+domestic/football_data_current                 absent      0       None       None                None
+         european/openfootball                present     25 2026-05-30 2026-05-30                None
+            european/wikipedia                present     23 2026-09-10 2026-09-10                None
+     squad_value/transfermarkt frozen (source paused)      4 2026-06-28 2026-07-06                None
+  league phase: matchdays 1-1 fixed at their actual scores (18 matches), 126 fixtures simulated
+  NOTE: domestic results end 2026-09-21, 21 days before the as-of date; that form is missing from the ratings. A refresh into data/raw/football_data_current/ would close it.
+2026-27: 126 fixtures to simulate, 36 teams, 50000 iterations, seed 20260907
+model a=0.16993 h=0.23411 b=0.69711 b_d_value=0.03994 [v1]
+  squad value: 32/36 clubs valued, both clubs valued in 79.2% of the 144 fixtures; the rest fall back to Elo
+  unvalued: LASK, Sabah, Slovan Bratislava, Viking
+
+=== verification ===
+  [PASS] P(champion) sums to 1
+  [PASS] P(top8)+P(play-off)+P(eliminated) = 1 per club
+  [PASS] 8 clubs in the top-8 band per iteration
+  [PASS] 16 clubs in the play-off band per iteration
+  [PASS] 12 clubs eliminated per iteration
+  [PASS] 16 clubs reach the round of 16
+  [PASS] 8 reach the quarter-finals
+  [PASS] 4 reach the semi-finals
+  [PASS] 2 reach the final
+  [PASS] stage probabilities are monotone
+  unresolved league-phase ties: 0 (0.0000 per iteration)
+
+=== model vs market (27 of 36 priced, overround 1.3078, proportional de-vig) ===
+  the 9 unpriced clubs hold 0.005 of model probability; proportional de-vig gives that share to the priced clubs, so every market number reads about 0.5% high
+  largest disagreements:
+    Arsenal                model 0.194  market 0.109  model HIGH by 0.085
+    Bayern Munich          model 0.193  market 0.109  model HIGH by 0.083
+    Paris Saint-Germain    model 0.070  market 0.127  model LOW  by 0.057
+    Liverpool              model 0.033  market 0.076  model LOW  by 0.044
+    Real Madrid            model 0.066  market 0.096  model LOW  by 0.029
+    Manchester City        model 0.117  market 0.090  model HIGH by 0.027
+    Barcelona              model 0.125  market 0.102  model HIGH by 0.023
+    Manchester United      model 0.024  market 0.045  model LOW  by 0.021
+    Napoli                 model 0.004  market 0.022  model LOW  by 0.019
+    Atletico Madrid        model 0.012  market 0.026  model LOW  by 0.015
+
+=== change since matchday 0 (forecast_2026-27.csv) ===
+  team                              P(top8)        P(champion)             P(out)
+  Manchester City        0.497->0.677 (+0.180) 0.089->0.117 (+0.028) 0.058->0.012 (-0.046)
+  Inter                  0.516->0.352 (-0.164) 0.047->0.037 (-0.010) 0.053->0.074 (+0.020)
+  Real Madrid            0.465->0.600 (+0.135) 0.065->0.066 (+0.002) 0.067->0.019 (-0.048)
+  Porto                  0.291->0.160 (-0.130) 0.015->0.010 (-0.005) 0.155->0.210 (+0.055)
+  PSV Eindhoven          0.223->0.099 (-0.124) 0.011->0.005 (-0.005) 0.211->0.319 (+0.108)
+  Liverpool              0.380->0.503 (+0.123) 0.028->0.033 (+0.004) 0.106->0.038 (-0.068)
+  Aston Villa            0.339->0.458 (+0.119) 0.027->0.027 (+0.000) 0.121->0.042 (-0.079)
+  Borussia Dortmund      0.291->0.380 (+0.089) 0.021->0.025 (+0.005) 0.140->0.060 (-0.080)
+  Roma                   0.297->0.210 (-0.087) 0.017->0.016 (-0.001) 0.142->0.141 (-0.001)
+  Barcelona              0.581->0.657 (+0.076) 0.109->0.125 (+0.016) 0.036->0.014 (-0.022)
+
+=== matchday 2: 18 fixtures ===
+  home                   away                     home   draw   away    likely      P
+  Arsenal                Lille                   0.825  0.118  0.057  2-0       0.126
+  Atletico Madrid        Manchester United       0.405  0.259  0.336  1-1       0.123
+  Galatasaray            Barcelona               0.141  0.197  0.661  0-2       0.116
+  Inter                  Club Brugge             0.596  0.221  0.183  1-0       0.112
+  Lens                   Sporting CP             0.282  0.253  0.465  1-1       0.120
+  RB Leipzig             PSV Eindhoven           0.382  0.260  0.358  1-1       0.124
+  Sabah                  Slavia Praha            0.403  0.259  0.338  1-1       0.123
+  Viking                 Bayern Munich           0.134  0.192  0.674  0-2       0.117
+  Villarreal             Napoli                  0.388  0.260  0.352  1-1       0.123
+  Aston Villa            Fenerbahce              0.650  0.202  0.148  2-0       0.114
+  Bodo/Glimt             Borussia Dortmund       0.293  0.254  0.453  1-1       0.121
+  Feyenoord              Como                    0.304  0.256  0.440  1-1       0.122
+  LASK                   Liverpool               0.202  0.229  0.569  0-1       0.111
+  Manchester City        Paris Saint-Germain     0.495  0.247  0.258  1-1       0.118
+  Real Betis             Porto                   0.378  0.260  0.362  1-1       0.124
+  Roma                   Real Madrid             0.346  0.260  0.395  1-1       0.123
+  Shakhtar Donetsk       AEK Athens              0.442  0.256  0.303  1-1       0.122
+  Slovan Bratislava      VfB Stuttgart           0.177  0.218  0.605  0-1       0.112
+  (the modal scoreline carries only ~8-12% probability; it is not a prediction)
+
+setup 4.2s, simulation 280.6s (5.61 ms/iteration), written to forecast_2026-27_md1.csv

@@ -3,6 +3,10 @@
 Each iteration plays the 144 league-phase fixtures with ratings updating as it
 goes, ranks the table under Article 18, draws the knockout bracket inside the
 Article 19 constraints, and plays it out to a champion.
+
+``--model v1`` (the default) is the accepted model: Elo plus the pre-season
+squad-value prior. ``--model elo`` is the frozen `elo-baseline-v0` model, kept
+so the two can be compared and the archived baseline reproduced.
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ from ucl import config
 from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
 from ucl.data import league_results, names, odds, odds
+from ucl.models.covariates import fit_squad_value_model
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 from ucl.sim.bracket import draw_bracket
@@ -50,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="information-set date (default: the day before the next matchday)")
     parser.add_argument("--refresh", action="store_true",
                         help="re-fetch the league-phase page before reading results")
+    parser.add_argument("--model", choices=("v1", "elo"), default="v1",
+                        help="v1: Elo plus the squad-value prior; elo: the frozen baseline")
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
     if cfg.tournament_format != "league_phase":
@@ -101,8 +108,15 @@ def main(argv: list[str] | None = None) -> int:
                   f"data/raw/football_data_current/ would close it.")
 
     ratings = elo_as_of(as_of)
-    model = fit_poisson(ratings.pre_match)
     teams = sorted(set(fixtures.home_id) | set(fixtures.away_id))
+    if args.model == "v1":
+        from ucl.data import transfermarkt
+
+        value_as_of = transfermarkt.as_of_for_season(cfg.label)
+        values = transfermarkt.squad_values(value_as_of)
+        model = fit_squad_value_model(ratings.pre_match, values, as_of=value_as_of)
+    else:
+        model = fit_poisson(ratings.pre_match)
     missing = [t for t in teams if t not in ratings.ratings]
     if missing:
         raise SystemExit(f"no rating for {missing}")
@@ -111,7 +125,14 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"{cfg.label}: {len(remaining)} fixtures to simulate, {len(teams)} teams, "
           f"{args.iterations} iterations, seed {args.seed}")
-    print(f"model a={model.a:.5f} h={model.h:.5f} b={model.b:.5f}")
+    print("model " + " ".join(f"{k}={v:.5f}" for k, v in model.as_dict().items())
+          + f" [{args.model}]")
+    if args.model == "v1":
+        valued = [t for t in teams if t in model.values]
+        share = model.coverage(fixtures.home_id.to_numpy(), fixtures.away_id.to_numpy())
+        print(f"  squad value: {len(valued)}/36 clubs valued, both clubs valued in "
+              f"{share:.1%} of the 144 fixtures; the rest fall back to Elo")
+        print("  unvalued: " + ", ".join(sorted(set(teams) - set(valued))))
 
     counts = {stage: Counter() for stage in STAGES}
     positions = Counter()
@@ -233,12 +254,14 @@ def main(argv: list[str] | None = None) -> int:
     # The next matchday, from the frozen model at the current ratings.
     next_matchday = fixtures[fixtures.matchday == matchday + 1]
     if len(next_matchday):
-        from ucl.backtest import match_probabilities
+        from ucl.backtest import probabilities_from_rates
 
         elo_home = next_matchday.home_id.map(base).to_numpy(dtype=float)
         elo_away = next_matchday.away_id.map(base).to_numpy(dtype=float)
-        probabilities = match_probabilities(elo_home, elo_away, model)
-        rate_home, rate_away = model.rates(elo_home, elo_away)
+        rate_home, rate_away = model.rates_for(
+            next_matchday.home_id.to_numpy(), next_matchday.away_id.to_numpy(),
+            elo_home, elo_away)
+        probabilities = probabilities_from_rates(rate_home, rate_away)
         print(f"\n=== matchday {matchday + 1}: {len(next_matchday)} fixtures ===")
         print(f"  {'home':22s} {'away':22s} {'home':>6s} {'draw':>6s} {'away':>6s}"
               f"  {'likely':>8s} {'P':>6s}")
