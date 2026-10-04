@@ -102,8 +102,8 @@ if tracked is not None and len(tracked):
     board = tracking.summary(tracked)
     rows = []
     for row in board.itertuples():
-        gap = getattr(row, "vs_v1", float("nan"))
-        error = getattr(row, "vs_v1_standard_error", float("nan"))
+        gap = getattr(row, "vs_reference", float("nan"))
+        error = getattr(row, "vs_reference_standard_error", float("nan"))
         rows.append(
             f'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;'
             f'border-bottom:1px solid #243041">'
@@ -115,7 +115,8 @@ if tracked is not None and len(tracked):
             f'{row.rps:.4f}</b></span>'
             f'<span style="color:#64748b;font:500 11.5px/1.3 {cards.FONT};'
             f'text-align:right;white-space:nowrap">'
-            + (f"{gap:+.4f} ± {error:.4f} vs v1" if gap == gap else "published")
+            + (f"{gap:+.4f} ± {error:.4f} vs {tracking.REFERENCE}"
+               if gap == gap else "published")
             + f'</span></div>')
     st.html("".join(rows))
 
@@ -129,15 +130,17 @@ if tracked is not None and len(tracked):
             ["matchday", "model", "value"]]
         st.line_chart(chart, x="matchday", y="value", color="model", height=300)
 
+    paired_error = board.loc[board.model == "v1", "vs_reference_standard_error"]
+    error = float(paired_error.iloc[0]) if len(paired_error) else float("nan")
     st_helpers.note(
-        f"<b>This settles nothing yet.</b> The paired difference between v1 and "
-        f"v1+A is ±{board[board.model == 'v1+A'].vs_v1_standard_error.iloc[0]:.4f} "
-        f"on {int(board.n.iloc[0])} matches, which is an order of magnitude "
-        f"larger than the 0.0004 the five-season backtest resolved. It is "
-        f"recorded from the first matchday because it can only accumulate, and "
-        f"because a comparison reconstructed later is a comparison nobody can "
-        f"check. <b>v1 remains the published forecast</b>; v1+A was accepted by "
-        f"the backtest but has not been promoted.")
+        f"<b>Monitoring, not a gate.</b> The paired difference between v1 and "
+        f"v2 carries a standard error of ±{error:.4f} on "
+        f"{int(board.n.iloc[0])} matches, and over all 144 league-phase matches "
+        f"it will still be about <b>three times</b> the 0.0004 the five-season "
+        f"backtest resolved. This season cannot choose between them. The "
+        f"decision rests on the backtest, which accepted the shot ratings with "
+        f"all four folds negative; this table would catch something badly "
+        f"wrong, and nothing else.")
 
 # --- per match -------------------------------------------------------------
 st_helpers.section("Fixtures")

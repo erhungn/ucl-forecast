@@ -1,11 +1,14 @@
 """Prospective comparison of the candidate models on this season's matches.
 
-The backtest is the only thing that decides anything, and it is finished: v1
-plus the shot ratings is what the forward chain accepted, minutes-weighting is
-not. But five seasons of history resolved a difference of 0.0004 nats, and the
-league phase is 144 matches - so this season cannot settle anything on its own.
-It can only accumulate, which is why it is worth recording from the start
-rather than reconstructed later.
+The backtest decides; this does not. The forward chain accepted the shot
+ratings and rejected minutes-weighting, and that is what promoted v2.
+
+**This season cannot resolve v1 against v2, and is not a gate.** The paired
+standard error after matchday 1 is 0.004, and over all 144 league-phase matches
+it will be roughly 0.0014 - still about three times the 0.0004 the five-season
+backtest measured. It is monitoring: it would catch something badly wrong, and
+it accumulates, which is only worth anything if it is recorded as the season
+goes rather than reconstructed afterwards.
 
 Every model's probabilities are computed from the **same frozen information
 set**: the 2026-09-07 cutoff, the day before matchday 1. No model sees a result
@@ -24,15 +27,18 @@ import pandas as pd
 from ucl.config import SEASONS
 from ucl.evaluate import log_loss, rps
 
-__all__ = ["MODELS", "UNIFORM", "probabilities", "track", "running"]
+__all__ = ["MODELS", "REFERENCE", "UNIFORM", "probabilities", "track",
+           "running", "summary"]
 
 #: The models being followed, and what each adds to the one before. The order
 #: is the order they were accepted or rejected in.
 MODELS: dict[str, str] = {
-    "v1": "Elo + association offsets + squad value (published)",
-    "v1+A": "v1 + GAP shot ratings (accepted, not promoted)",
-    "v1+A+B": "v1 + A with minutes-weighted squad value (rejected)",
+    "v2": "Elo + association offsets + squad value + GAP shot ratings (published)",
+    "v1": "Elo + association offsets + squad value (the previous published model)",
+    "v2+B": "v2 with minutes-weighted squad value instead of the total (rejected)",
 }
+#: The model every other is compared against: whatever is published.
+REFERENCE = "v2"
 UNIFORM = "uniform"
 
 
@@ -44,7 +50,7 @@ def _fitted(season_label: str, model: str):
     if model == "v1":
         ratings, values, fitted = _fitted_squad_value(cutoff, season_label)
         return ratings, fitted, values, None
-    weighting = "minutes" if model == "v1+A+B" else "total"
+    weighting = "minutes" if model == "v2+B" else "total"
     ratings, values, residuals, _, fitted = _fitted_gap(
         cutoff, season_label, weighting)
     return ratings, fitted, values, residuals
@@ -152,6 +158,8 @@ def summary(frame: pd.DataFrame) -> pd.DataFrame:
     The standard error is on the *paired* difference, not on each model's own
     log-loss: the models see the same matches, so what matters is how much
     their per-match losses differ, and that is far smaller than either level.
+    Even so it cannot resolve the difference the backtest measured - see the
+    module docstring.
     """
     if not len(frame):
         return pd.DataFrame(columns=["model", "n", "log_loss", "rps"])
@@ -165,10 +173,10 @@ def summary(frame: pd.DataFrame) -> pd.DataFrame:
         row = {"model": model, "n": len(group),
                "log_loss": float(group.log_loss.mean()),
                "rps": float(group.rps.mean())}
-        if model != "v1" and "v1" in wide.columns and model in wide.columns:
-            paired = (wide[model] - wide["v1"]).dropna()
-            row["vs_v1"] = float(paired.mean())
-            row["vs_v1_standard_error"] = (
+        if model != REFERENCE and REFERENCE in wide.columns and model in wide.columns:
+            paired = (wide[model] - wide[REFERENCE]).dropna()
+            row["vs_reference"] = float(paired.mean())
+            row["vs_reference_standard_error"] = (
                 float(paired.std(ddof=1) / np.sqrt(len(paired)))
                 if len(paired) > 1 else float("nan"))
         rows.append(row)

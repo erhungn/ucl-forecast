@@ -12,7 +12,8 @@ import pandas as pd
 import pytest
 
 from ucl.models.covariates import (
-    CovariateModel, SquadValueModel, fit_covariate_model, fit_squad_value_model,
+    ClubCovariate, CovariateModel, ForecastModel, fit_covariate_model,
+    fit_squad_value_model, value_covariate,
 )
 from ucl.models.poisson import fit_poisson
 from ucl.sim.league_phase import simulate_match
@@ -20,15 +21,21 @@ from ucl.sim.league_phase import simulate_match
 VALUES = {"rich": 800e6, "poor": 50e6}
 
 
-def model(b_value: float = 0.04) -> SquadValueModel:
-    return SquadValueModel(
-        CovariateModel(a=0.16, h=0.23, b=0.70, symmetric={"d_value": b_value}), VALUES)
+def model(b_value: float = 0.04) -> ForecastModel:
+    """Model v1: the general covariate model carrying one covariate."""
+    return ForecastModel(
+        CovariateModel(a=0.16, h=0.23, b=0.70, symmetric={"d_value": b_value}),
+        (value_covariate(VALUES),), label="v1")
+
+
+def difference(v1: ForecastModel, home, away):
+    return v1.differences(home, away)["d_value"]
 
 
 def test_rates_for_matches_the_covariate_model_given_the_difference():
     v1 = model()
-    difference = np.log(VALUES["rich"]) - np.log(VALUES["poor"])
-    expected = v1.model.rates(1900.0, 1700.0, symmetric={"d_value": difference})
+    gap = np.log(VALUES["rich"]) - np.log(VALUES["poor"])
+    expected = v1.model.rates(1900.0, 1700.0, symmetric={"d_value": gap})
     actual = v1.rates_for("rich", "poor", 1900.0, 1700.0)
     assert actual == pytest.approx(expected)
 
@@ -43,12 +50,55 @@ def test_the_covariate_is_zero_unless_both_clubs_are_valued():
 
 def test_the_difference_is_antisymmetric():
     v1 = model()
-    assert v1.difference("rich", "poor") == pytest.approx(-v1.difference("poor", "rich"))
+    assert difference(v1, "rich", "poor") == pytest.approx(
+        -difference(v1, "poor", "rich"))
 
 
 def test_rates_without_club_ids_is_refused_rather_than_silently_elo_only():
     with pytest.raises(TypeError, match="club ids"):
         model().rates(1900.0, 1700.0)
+
+
+# --- model v2: the same machinery carrying four covariates ----------------
+
+def _v2(b_value: float = 0.04, b_shots: float = 0.023) -> ForecastModel:
+    shots = {"rich": 2.0, "poor": -1.0}
+    return ForecastModel(
+        CovariateModel(a=0.16, h=0.23, b=0.70,
+                       symmetric={"d_value": b_value, "d_gap_sot": b_shots}),
+        (value_covariate(VALUES),
+         ClubCovariate("d_gap_sot",
+                       lambda home, away: np.array(
+                           [shots.get(h, 0.0) - shots.get(a, 0.0)
+                            for h, a in zip(np.atleast_1d(home),
+                                            np.atleast_1d(away))]),
+                       lambda club: club in shots)),
+        label="v2")
+
+
+def test_several_covariates_are_all_applied():
+    v2 = _v2()
+    one = model().rates_for("rich", "poor", 1900.0, 1700.0)
+    both = v2.rates_for("rich", "poor", 1900.0, 1700.0)
+    # The shot term adds to the home rate and subtracts from the away rate.
+    assert both[0] > one[0] and both[1] < one[1]
+    assert v2.names == ("d_value", "d_gap_sot")
+
+
+def test_coverage_is_reported_for_each_covariate_separately():
+    v2 = _v2()
+    shares = v2.coverage(["rich", "rich", "other"], ["poor", "unknown", "poor"])
+    assert set(shares) == {"d_value", "d_gap_sot"}
+    assert shares["d_value"] == pytest.approx(1 / 3)
+    assert shares["d_gap_sot"] == pytest.approx(1 / 3)
+
+
+def test_a_zero_coefficient_covariate_changes_nothing():
+    """Adding a covariate the fit gave no weight must leave v1's rates alone."""
+    v1 = model()
+    v2 = _v2(b_shots=0.0)
+    assert v2.rates_for("rich", "poor", 1900.0, 1700.0) == pytest.approx(
+        v1.rates_for("rich", "poor", 1900.0, 1700.0))
 
 
 def test_rates_for_is_vectorised():
@@ -63,7 +113,8 @@ def test_rates_for_is_vectorised():
 
 def test_coverage_counts_fixtures_where_both_clubs_are_valued():
     v1 = model()
-    assert v1.coverage(["rich", "rich"], ["poor", "unknown"]) == 0.5
+    # Now reported per covariate, since a model may carry several.
+    assert v1.coverage(["rich", "rich"], ["poor", "unknown"]) == {"d_value": 0.5}
 
 
 def _synthetic(b_value: float, seed: int = 7) -> pd.DataFrame:
@@ -124,7 +175,8 @@ def test_the_elo_update_ignores_the_covariate():
     # The same scoreline through the plain model must move the rating identically.
     plain_ratings = {"rich": 1800.0, "poor": 1800.0}
     rng2 = np.random.default_rng(3)
-    plain = SquadValueModel(CovariateModel(0.16, 0.23, 0.70, {"d_value": 0.0}), {})
+    plain = ForecastModel(CovariateModel(0.16, 0.23, 0.70, {"d_value": 0.0}),
+                          (value_covariate({}),), label="v1")
     hg2, ag2 = simulate_match("rich", "poor", plain_ratings, plain, rng2)
     assert (hg, ag) == (hg2, ag2)
     assert plain_ratings["rich"] - 1800.0 == pytest.approx(moved)

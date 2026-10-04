@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--season", default=paths.SEASON)
     parser.add_argument("-n", "--iterations", type=int, default=config.N_SIMULATIONS)
     parser.add_argument("--seed", type=int, default=config.RANDOM_SEED)
-    parser.add_argument("--model", choices=("v1", "elo"), default="v1")
+    parser.add_argument("--model", choices=("v2", "v1", "elo"), default="v2")
     parser.add_argument("--prune-stale", action="store_true",
                         help="delete cache files superseded by a newer copy")
     parser.add_argument("--no-refresh", action="store_true",
@@ -193,12 +193,29 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
         log(f"  {directory.name}: {len(verified)} file(s) verified")
 
     # --- 3. seed live/ from the frozen archive ------------------------------
+    # The matchday-0 snapshot anchors every later matchday's d_p_* columns, so
+    # it has to come from the model being published. After a model switch the
+    # old snapshot is still on disk, and leaving it there would compute a
+    # one-matchday change across two different models - which is not a change
+    # in anything.
     seed = paths.forecast_path(0, cfg.label)
-    if not seed.exists():
+    switched = previous.get("model") not in (None, args.model)
+    if not seed.exists() or switched:
         archived = paths.ARCHIVE_DIR / f"forecast_{cfg.label}.csv"
         if archived.exists():
             update.publish(archived, seed)
-            log(f"\nseeded {seed.name} from {archived.relative_to(config.PROJECT_ROOT)}")
+            why = (f"model changed from {previous.get('model')} to {args.model}"
+                   if switched else "no published matchday 0 yet")
+            log(f"\nseeded {seed.name} from "
+                f"{archived.relative_to(config.PROJECT_ROOT)} ({why})")
+            if switched:
+                # Every later snapshot was produced by the old model.
+                for stale in sorted(paths.season_dir(cfg.label).glob(
+                        "forecast_md*.csv")):
+                    if stale != seed:
+                        stale.unlink()
+                        log(f"  removed {stale.name}: produced by "
+                            f"{previous.get('model')}")
 
     # --- 4. refresh the played matches, exactly once ------------------------
     log("\n=== results ===")
@@ -342,13 +359,15 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
                        float_format="%.6f")
         summary = tracking.summary(tracked)
         for row in summary.itertuples():
-            gap = (f"  {row.vs_v1:+.4f} vs v1 (SE {row.vs_v1_standard_error:.4f})"
-                   if isinstance(getattr(row, "vs_v1", None), float)
-                   and row.vs_v1 == row.vs_v1 else "")
+            value = getattr(row, "vs_reference", None)
+            gap = (f"  {value:+.4f} vs {tracking.REFERENCE} "
+                   f"(SE {row.vs_reference_standard_error:.4f})"
+                   if isinstance(value, float) and value == value else "")
             log(f"  {row.model:8} log-loss {row.log_loss:.4f} "
                 f"RPS {row.rps:.4f} over {row.n} matches{gap}")
-        log("  this is not evidence yet: the paired standard error is an order "
-            "of magnitude larger than the difference the backtest resolved.")
+        log("  monitoring, not a gate: over all 144 league-phase matches the "
+            "paired standard error will still be about three times the "
+            "difference the backtest resolved.")
         status["tracked_models"] = list(summary.model)
     else:
         log("  no played matches yet")

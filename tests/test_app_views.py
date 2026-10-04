@@ -141,7 +141,7 @@ def test_movement_draws_a_chart_and_the_movers():
 def test_played_matches_reports_the_archived_matchday_one_score():
     app = run("played_matches")
     html = bodies(app)
-    assert "0.6913" in html and "0.1367" in html
+    assert "0.6943" in html and "0.1377" in html      # v2's matchday 1
     assert len(app.warning) == 1
     assert "anecdote" in app.warning[0].value
 

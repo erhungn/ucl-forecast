@@ -1,0 +1,54 @@
+{
+  "candidate": "gap",
+  "post_hoc": false,
+  "run_label": "milestone 8 candidate A, binding",
+  "baseline": "squad_value",
+  "coverage": {
+    "2022-23": {
+      "european": 0.4317073170731707,
+      "domestic": 0.7043618739903069,
+      "clubs_rated": 291
+    },
+    "2023-24": {
+      "european": 0.4742014742014742,
+      "domestic": 0.6999316473000684,
+      "clubs_rated": 301
+    },
+    "2024-25": {
+      "european": 0.4350282485875706,
+      "domestic": 0.6981477246741368,
+      "clubs_rated": 310
+    },
+    "2025-26": {
+      "european": 0.4576271186440678,
+      "domestic": 0.7023041474654378,
+      "clubs_rated": 318
+    }
+  },
+  "primary": "pooled",
+  "cluster": {
+    "difference": -0.00042396704457825225,
+    "low": -0.0007635230307659532,
+    "high": -8.306820558380086e-05,
+    "excludes_zero": true,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "per_match": {
+    "difference": -0.00042396704457825225,
+    "low": -0.0007371453737364553,
+    "high": -0.0001047182681882862,
+    "excludes_zero": true,
+    "clusters": null,
+    "n": 19188
+  },
+  "all_matches": {
+    "difference": -0.00042396704457825225,
+    "low": -0.0007635230307659532,
+    "high": -8.306820558380086e-05,
+    "excludes_zero": true,
+    "clusters": 1309,
+    "n": 19188
+  },
+  "accepted": true
+}

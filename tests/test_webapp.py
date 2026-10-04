@@ -94,15 +94,19 @@ def test_forecast_series_is_long_and_its_bands_sum_to_one(live):
 
 
 def test_frozen_scores_reproduce_the_archived_matchday_one(live):
-    """The numbers in results/model_v1/README.md, recomputed by the app."""
+    """The numbers in results/model_v2/README.md, recomputed by the app.
+
+    v1 scored 0.6913 / 0.1367 on the same matches; the published model is now
+    v2, so the archive the app falls back on is v2's.
+    """
     frozen = scoring.frozen_series(SEASON, live_dir=live)
     summary = scoring.summarise(frozen)
     assert summary["n"] == 18
-    assert summary["log_loss"] == pytest.approx(0.6913, abs=5e-5)
-    assert summary["rps"] == pytest.approx(0.1367, abs=5e-5)
+    assert summary["log_loss"] == pytest.approx(0.6943, abs=5e-5)
+    assert summary["rps"] == pytest.approx(0.1377, abs=5e-5)
     assert summary["uniform_log_loss"] == pytest.approx(1.0986, abs=5e-5)
     assert summary["uniform_rps"] == pytest.approx(0.2593, abs=5e-5)
-    assert summary["standard_error"] == pytest.approx(0.090, abs=5e-4)
+    assert summary["standard_error"] == pytest.approx(0.091, abs=5e-4)
 
 
 def test_cumulative_running_scores_match_the_single_matchday(live):

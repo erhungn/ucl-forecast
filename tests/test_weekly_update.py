@@ -182,3 +182,42 @@ def test_the_script_runs():
         capture_output=True, text=True)
     assert result.returncode == 0
     assert "--prune-stale" in result.stdout
+
+
+def test_the_matchday_zero_archive_points_at_the_current_model():
+    """The fallback snapshot must be the published model's, not a superseded one.
+
+    It anchors every later matchday's d_p_* columns, so pointing it at an old
+    archive computes a one-matchday change across two different models - which
+    is not a change in anything. This caught exactly that on the v1-to-v2
+    switch.
+    """
+    import json
+
+    from ucl.webapp import paths
+
+    assert paths.ARCHIVE_DIR.name == "model_v2"
+    published = json.load(open(paths.ARCHIVE_DIR / "model_2026-27.json"))
+    assert published["model"] == "v2"
+    for older in paths.PREVIOUS_ARCHIVES:
+        assert older.exists() and older != paths.ARCHIVE_DIR
+
+
+def test_every_published_snapshot_came_from_the_published_model():
+    """live/ must not mix models across a delta."""
+    import json
+
+    from ucl.webapp import loaders, paths
+
+    status = loaders.load_status(paths.SEASON)
+    if not status:
+        pytest.skip("no update has run")
+    archived = pd.read_csv(paths.ARCHIVE_DIR / f"forecast_{paths.SEASON}.csv")
+    live = pd.read_csv(paths.forecast_path(0, paths.SEASON))
+    merged = archived[["team", "p_champion", "mean_position"]].merge(
+        live[["team", "p_champion", "mean_position"]], on="team",
+        suffixes=("_archive", "_live"))
+    assert len(merged) == 36
+    for column in ("p_champion", "mean_position"):
+        assert (merged[f"{column}_archive"] - merged[f"{column}_live"]
+                ).abs().max() == pytest.approx(0.0, abs=1e-9)

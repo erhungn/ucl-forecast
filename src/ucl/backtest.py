@@ -619,8 +619,8 @@ def _fitted_squad_value(cutoff: date, season_label: str):
 
 
 #: The GAP covariate columns, in a fixed order so the fitted coefficients can
-#: be read back by name.
-GAP_COLUMNS = tuple(f"d_gap_{measure}" for measure in ("sot", "shots_off", "corners"))
+#: be read back by name. Defined with the model assembly it belongs to.
+from ucl.models.forecast import GAP_COLUMNS  # noqa: E402
 
 
 @lru_cache(maxsize=16)
@@ -641,32 +641,19 @@ def _fitted_gap(cutoff: date, season_label: str, weighting: str = "total"):
     else is identical, so a test between the two isolates the weighting.
     """
     from ucl.data import transfermarkt
-    from ucl.models import gap
-    from ucl.models.covariates import fit_covariate_model
+    from ucl.models.forecast import fit_v2
 
     training = _training_frame(cutoff)
     offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
     ratings = replay(training, offsets, DEFAULT_PARAMS)
 
-    shots = gap.domestic_frame(cutoff)
-    residuals = {}
-    parameters = {}
-    for measure in gap.MEASURES:
-        parameters[measure] = gap.fit_params(shots, measure)
-        state = gap.replay(shots, measure, parameters[measure])
-        residuals[measure] = gap.residual_ratings(state, ratings.ratings)
-
     as_of = transfermarkt.as_of_for_season(season_label)
     values = (transfermarkt.squad_values_minutes_weighted(as_of)
               if weighting == "minutes" else transfermarkt.squad_values(as_of))
-    frame = ratings.pre_match.copy()
-    frame["d_value"] = transfermarkt.value_difference(
-        values, frame.home_id.to_numpy(), frame.away_id.to_numpy())
-    for measure, column in zip(gap.MEASURES, GAP_COLUMNS):
-        frame[column] = gap.match_difference(
-            residuals[measure], frame.home_id.to_numpy(), frame.away_id.to_numpy())
-    model = fit_covariate_model(frame, symmetric=("d_value", *GAP_COLUMNS))
-    return ratings, values, residuals, parameters, model
+    fitted = fit_v2(ratings.pre_match, values, ratings.ratings,
+                    as_of=cutoff, value_as_of=as_of)
+    return (ratings, values, fitted.details["residuals"],
+            fitted.details["gap_params"], fitted.model)
 
 
 @lru_cache(maxsize=8)

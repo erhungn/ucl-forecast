@@ -4,9 +4,10 @@ Each iteration plays the 144 league-phase fixtures with ratings updating as it
 goes, ranks the table under Article 18, draws the knockout bracket inside the
 Article 19 constraints, and plays it out to a champion.
 
-``--model v1`` (the default) is the accepted model: Elo plus the pre-season
-squad-value prior. ``--model elo`` is the frozen `elo-baseline-v0` model, kept
-so the two can be compared and the archived baseline reproduced.
+``--model v2`` (the default) is the current model: Elo plus the pre-season
+squad-value prior plus the three GAP shot-rating residuals. ``--model v1`` and
+``--model elo`` are the earlier accepted models, kept so the three can be
+compared and their archives reproduced - both still do so bit-identically.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from ucl.data import fixtures as fx
 from ucl.data import league_results, names, odds
 from ucl.data.cutoff import as_of_for_matchday
 from ucl.models import scorelines
-from ucl.models.covariates import fit_squad_value_model
+from ucl.models.forecast import fit as fit_forecast
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 from ucl.sim.bracket import draw_bracket
@@ -56,8 +57,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="information-set date (default: the day before the next matchday)")
     parser.add_argument("--refresh", action="store_true",
                         help="re-fetch the league-phase page before reading results")
-    parser.add_argument("--model", choices=("v1", "elo"), default="v1",
-                        help="v1: Elo plus the squad-value prior; elo: the frozen baseline")
+    parser.add_argument("--model", choices=("v2", "v1", "elo"), default="v2",
+                        help="v2: v1 plus the GAP shot ratings; v1: Elo plus the "
+                             "squad-value prior; elo: the frozen baseline")
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
     if cfg.tournament_format != "league_phase":
@@ -101,12 +103,14 @@ def main(argv: list[str] | None = None) -> int:
 
     ratings = elo_as_of(as_of)
     teams = sorted(set(fixtures.home_id) | set(fixtures.away_id))
-    if args.model == "v1":
+    if args.model in ("v1", "v2"):
         from ucl.data import transfermarkt
 
         value_as_of = transfermarkt.as_of_for_season(cfg.label)
         values = transfermarkt.squad_values(value_as_of)
-        model = fit_squad_value_model(ratings.pre_match, values, as_of=value_as_of)
+        model = fit_forecast(args.model, ratings.pre_match, values,
+                             ratings.ratings, as_of=as_of,
+                             value_as_of=value_as_of)
     else:
         model = fit_poisson(ratings.pre_match)
     missing = [t for t in teams if t not in ratings.ratings]
@@ -119,12 +123,15 @@ def main(argv: list[str] | None = None) -> int:
           f"{args.iterations} iterations, seed {args.seed}")
     print("model " + " ".join(f"{k}={v:.5f}" for k, v in model.as_dict().items())
           + f" [{args.model}]")
-    if args.model == "v1":
-        valued = [t for t in teams if t in model.values]
-        share = model.coverage(fixtures.home_id.to_numpy(), fixtures.away_id.to_numpy())
-        print(f"  squad value: {len(valued)}/36 clubs valued, both clubs valued in "
-              f"{share:.1%} of the 144 fixtures; the rest fall back to Elo")
-        print("  unvalued: " + ", ".join(sorted(set(teams) - set(valued))))
+    if args.model in ("v1", "v2"):
+        shares = model.coverage(fixtures.home_id.to_numpy(),
+                                fixtures.away_id.to_numpy())
+        for covariate in model.covariates:
+            reached = [t for t in teams if covariate.covers(t)]
+            print(f"  {covariate.name:16} {len(reached):2}/36 clubs, both clubs in "
+                  f"{shares[covariate.name]:5.1%} of the 144 fixtures"
+                  + ("" if len(reached) == 36 else
+                     "; missing " + ", ".join(sorted(set(teams) - set(reached)))))
 
     counts = {stage: Counter() for stage in STAGES}
     positions = Counter()

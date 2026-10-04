@@ -19,7 +19,7 @@ from ucl.backtest import probabilities_from_rates
 from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import league_results, transfermarkt
 from ucl.evaluate import log_loss, rps
-from ucl.models.covariates import fit_squad_value_model
+from ucl.models.forecast import fit as fit_forecast
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 
@@ -30,8 +30,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", default="2026-27")
     parser.add_argument("--matchday", type=int, default=1)
-    parser.add_argument("--model", choices=("v1", "elo"), default="v1",
-                        help="v1: Elo plus the squad-value prior; elo: the frozen baseline")
+    parser.add_argument("--model", choices=("v2", "v1", "elo"), default="v2",
+                        help="v2: v1 plus the GAP shot ratings; v1: Elo plus the "
+                             "squad-value prior; elo: the frozen baseline")
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
 
@@ -42,10 +43,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # The information set is the cutoff: this is the pre-tournament forecast.
     ratings = elo_as_of(cfg.cutoff_date)
-    if args.model == "v1":
+    if args.model in ("v1", "v2"):
         value_as_of = transfermarkt.as_of_for_season(cfg.label)
-        model = fit_squad_value_model(
-            ratings.pre_match, transfermarkt.squad_values(value_as_of), as_of=value_as_of)
+        model = fit_forecast(
+            args.model, ratings.pre_match,
+            transfermarkt.squad_values(value_as_of), ratings.ratings,
+            as_of=cfg.cutoff_date, value_as_of=value_as_of)
     else:
         model = fit_poisson(ratings.pre_match)
     missing = [c for c in set(played.home_id) | set(played.away_id) if c not in ratings.ratings]

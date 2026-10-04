@@ -4,10 +4,10 @@ A pre-tournament forecast of the 2026-27 UEFA Champions League from a frozen
 information set: an Elo rating system with cross-league calibration, a Poisson
 match model, and 50,000 Monte Carlo tournaments played through the actual UEFA
 rules. Candidate improvements were evaluated by forward chaining over five
-seasons against a pre-declared primary test with a cluster bootstrap. Seven
-candidates were tried: five returned nulls, one was significantly worse than the
-baseline, and one - a pre-season squad-value covariate - was accepted and became
-the final model, `model-v1`.
+seasons against a pre-declared primary test with a cluster bootstrap. Nine
+candidates were tried: six returned nulls, one was significantly worse than the
+baseline, and two were accepted - a pre-season squad-value covariate, then
+shot-based GAP ratings - giving the current model, `model-v2`.
 
 Cutoff: **2026-09-07**, the day before Matchday 1.
 
@@ -21,12 +21,12 @@ Headline numbers (`results/model_v1/forecast_2026-27.csv`):
 
 | club | P(top 8) | P(champion) | market |
 |---|---|---|---|
-| Arsenal | 0.790 | 0.229 | 0.109 |
-| Bayern Munich | 0.736 | 0.180 | 0.109 |
-| Barcelona | 0.581 | 0.109 | 0.102 |
-| Manchester City | 0.497 | 0.089 | 0.090 |
-| Paris Saint-Germain | 0.434 | 0.066 | 0.127 |
-| Real Madrid | 0.465 | 0.065 | 0.096 |
+| Arsenal | 0.786 | 0.220 | 0.109 |
+| Bayern Munich | 0.747 | 0.200 | 0.109 |
+| Barcelona | 0.577 | 0.104 | 0.102 |
+| Manchester City | 0.497 | 0.090 | 0.090 |
+| Real Madrid | 0.483 | 0.073 | 0.096 |
+| Paris Saint-Germain | 0.424 | 0.061 | 0.127 |
 
 The market column is a de-vigged pre-season outright snapshot, used **only** as a
 diagnostic - it never enters any objective. See
@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 546 tests, ~60s
+.venv/bin/python -m pytest                                       # 551 tests, ~60s
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -141,26 +141,37 @@ is fitted by a Davidson model (MLE in Elo points, with a draw parameter) on all
 pre-cutoff European matches, and added to starting ratings. That is what makes
 "Bodø/Glimt vs Barcelona" meaningful.
 
-## Model v1
+## Model v2
 
 ```
 d       = (elo_home - elo_away) / 400
 d_value = log(value_home) - log(value_away)        # 0 unless both clubs are valued
+d_gap_m = Elo-residual GAP shot ratings, one per measure m
 
-log(lambda_home) = a + h + b*d + b_value*d_value
-log(lambda_away) = a     - b*d - b_value*d_value
+log(lambda_home) = a + h + b*d + b_value*d_value + sum_m b_m * d_gap_m
+log(lambda_away) = a     - b*d - b_value*d_value - sum_m b_m * d_gap_m
 ```
 
-| a | h | b | b_value |
-|---|---|---|---|
-| 0.16947 | 0.23396 | 0.69698 | **0.03987** |
+| a | h | b | b_value | sot | shots off | corners |
+|---|---|---|---|---|---|---|
+| 0.16951 | 0.23373 | 0.69818 | +0.04004 | **+0.02331** | -0.00342 | -0.00319 |
+
+The shot term is the part of a club's GAP rating that Elo does not explain:
+within each league the ratings are regressed on Elo and only the residual is
+kept, because no cached match carries both shot data and two clubs from
+different leagues, so raw shot ratings rank a club that dominates a weak league
+above Manchester City. League quality therefore stays with Elo, where European
+results have already calibrated it. `--model v1` and `--model elo` still
+reproduce their archives bit-identically.
 
 Poisson MLE on 65,389 pre-cutoff matches at **pre-match** ratings. Squad value is
 a pre-season prior: the snapshot is 6 July of the season's starting year, the
-staleness the frozen source imposes. Where either club is unvalued the covariate
+staleness the frozen source imposes. Where either club is uncovered a covariate
 is zero for that match - the convention the backtest scored, so the forecast is
-never better informed than the test that accepted it. Squad value shifts the goal
-rates only; the Elo update inside the simulation uses Elo alone.
+never better informed than the test that accepted it. Coverage: squad value
+reaches 32 of the 36 clubs and 79.2% of the 144 fixtures, the shot ratings 29
+and 64.6%. Every covariate shifts the goal rates only; the Elo update inside the
+simulation uses Elo alone.
 
 ## Simulator
 
@@ -305,7 +316,7 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 573 tests in all.
+`.venv-app/bin/python -m pytest` - 578 tests in all.
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 five pages give nothing away, but the update button starts a five-minute job
@@ -378,13 +389,13 @@ scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, bu
                      check_*, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
 app/                 Streamlit entry point and the six views
-tests/               573 tests (546 in .venv, all of them in .venv-app)
+tests/               578 tests (551 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)
 ```
 
-Tags: `elo-baseline-v0` (the Elo-only reference), `model-v1` (final).
+Tags: `elo-baseline-v0` (the Elo-only reference), `model-v1`, `model-v2` (current).
 
 ## How this was built
 

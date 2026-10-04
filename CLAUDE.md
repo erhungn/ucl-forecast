@@ -60,11 +60,13 @@ Outputs:
    since 2012, with association-level strength offsets fitted on pre-cutoff
    European matches for the cross-league scale. (ClubElo was unreachable;
    `data/clubelo.py` remains an optional cross-check.)
-2. Goal model, **as built (model v1)**: independent Poisson on the Elo
-   difference plus a pre-season squad-value term, fitted by MLE on pre-match
-   ratings:
-   `log(lambda_home) = a + h + b*d + b_value*d_value`, `d = (elo_h - elo_a)/400`,
-   `d_value = log(value_h) - log(value_a)`, zero unless both clubs are valued.
+2. Goal model, **as built (model v2)**: independent Poisson on the Elo
+   difference, a pre-season squad-value term and three shot-rating terms,
+   fitted jointly by MLE on pre-match ratings:
+   `log(lambda_home) = a + h + b*d + b_value*d_value + sum_m b_m*d_gap_m`,
+   `d = (elo_h - elo_a)/400`, `d_value = log(value_h) - log(value_a)`,
+   `d_gap_m` the Elo-residual GAP difference per attacking measure. Any
+   covariate is zero unless both clubs are covered.
    Dixon-Coles (tau, ridge-shrunk att/def, time decay) was built and tested
    against this and returned a null; the code stays in `models/dixon_coles.py`
    for later. xG is blocked on data: no maintained free source covers the
@@ -116,6 +118,10 @@ outputs/         # csv tables + figures
    mode, driven by an as-of date - DONE
 7. New information sources, one at a time against the accepted model. Four
    nulls, then squad market value accepted - DONE. Frozen as `model-v1`.
+8. A second outright benchmark, shot-based GAP ratings and minutes-weighted
+   squad value - DONE. The benchmark showed favourite-longshot bias accounts
+   for part of the market gap; GAP ratings accepted and promoted to
+   `model-v2`; minutes-weighting rejected.
 
 ## What the backtests established (do not relitigate without new evidence)
 - **Protocol.** Forward chaining: for each test season, tune on the seasons
@@ -149,13 +155,32 @@ outputs/         # csv tables + figures
   backtest had both clubs valued, the rest falling back to Elo - and it is a
   **pre-season prior**, frozen at 6 July, that cannot be refreshed while the
   source is paused. Both belong in any statement of what it delivers.
-- **Shot-based GAP ratings are accepted** (milestone 8, candidate A): pooled
-  delta **-0.00042, cluster CI [-0.00076, -0.00008]**, measured against model
-  v1 and stable across bootstrap draws and seeds. Wheatcroft's GAP ratings on
+- **Shot-based GAP ratings are accepted and promoted: the current model is
+  `model-v2`** (milestone 8, candidate A): pooled delta **-0.00042, cluster CI
+  [-0.00076, -0.00008]**, measured against model v1, all four folds negative
+  and stable across bootstrap draws and seeds. Wheatcroft's GAP ratings on
   shots on target, shots off target and corners, implemented from arXiv
   2001.09097. The signal is **shots on target** (`b` +0.023 to +0.031 across
   every cutoff); shots off target is slightly negative and corners carry
-  nothing. See `results/candidate_gap/`.
+  nothing. See `results/model_v2/` and `results/candidate_gap/`.
+- **The covariate model carries any number of covariates**
+  (`ForecastModel`, assembled in `models/forecast.py`). The gate on every
+  generalisation of it: configured as v1 it must reproduce
+  `results/model_v1/forecast_2026-27.csv` **bit-identically** at 50,000
+  iterations, and the three archived candidate deltas must reproduce to the
+  last digit. Otherwise a v1-v2 comparison measures the refactor.
+- **v2 moves four named clubs towards the market and one away.** Arsenal
+  2.10x -> 2.01x the de-vigged bookmaker, Porto 1.96x -> 1.70x, Real Madrid
+  0.67x -> 0.76x, Manchester United 0.59x -> 0.68x - each in the direction its
+  shot residual implies. But Bayern out-shoots its Elo by +1.09 and v2 raises
+  it from 0.180 to 0.200, widening the gap. In aggregate mean |model - market|
+  barely moves (0.0187 -> 0.0183). **v2 is not a fix for limitation 1.**
+- **This season cannot choose between v1 and v2.** The paired standard error is
+  0.004 after matchday 1 and about 0.0014 over all 144 league-phase matches,
+  still roughly three times the effect the backtest resolved.
+  `live/<season>/model_tracking.csv` follows both from the same frozen
+  information set as **monitoring, not a gate**; it would catch something badly
+  wrong and nothing finer.
 - **Shot ratings have no cross-league bridge**, so they enter as the *residual*
   of a per-league regression on Elo. No cached match carries both shot data and
   two clubs from different leagues - the extra leagues and every European match

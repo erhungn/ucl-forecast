@@ -282,7 +282,7 @@ def test_fixture_cards_carry_the_chips_when_the_columns_are_there():
 
 # --- prospective model tracking -------------------------------------------
 
-def test_the_tracking_summary_pairs_each_model_against_v1():
+def test_the_tracking_summary_pairs_each_model_against_the_published_one():
     """The standard error must be on the paired difference, not the level.
 
     The models see the same matches, so what matters is how much their
@@ -298,7 +298,7 @@ def test_the_tracking_summary_pairs_each_model_against_v1():
     # pairing exists to exploit.
     base = 0.7 + rng.normal(0, 0.3, 40)
     rows = []
-    for model, shift in (("v1", 0.0), ("v1+A", 0.01), ("uniform", 0.4)):
+    for model, shift in (("v2", 0.0), ("v1", 0.01), ("uniform", 0.4)):
         for index in range(40):
             rows.append({"matchday": 1 + index // 18, "home": f"H{index}",
                          "away": f"A{index}", "model": model,
@@ -306,12 +306,13 @@ def test_the_tracking_summary_pairs_each_model_against_v1():
                          "p_actual": 0.5})
     frame = pd.DataFrame(rows)
     board = tracking.summary(frame)
-    assert set(board.model) == {"v1", "v1+A", "uniform"}
-    paired = board[board.model == "v1+A"].iloc[0]
-    assert paired.vs_v1 == pytest.approx(0.01, abs=1e-9)
+    assert set(board.model) == {"v2", "v1", "uniform"}
+    assert tracking.REFERENCE == "v2"
+    paired = board[board.model == "v1"].iloc[0]
+    assert paired.vs_reference == pytest.approx(0.01, abs=1e-9)
     # Identical noise in both series, so the paired error is ~0 while each
     # model's own spread is 0.3.
-    assert paired.vs_v1_standard_error < 1e-9
+    assert paired.vs_reference_standard_error < 1e-9
 
 
 def test_the_running_scores_accumulate():
@@ -321,7 +322,7 @@ def test_the_running_scores_accumulate():
     for matchday, loss in ((1, 1.0), (2, 0.0)):
         for index in range(2):
             rows.append({"matchday": matchday, "home": f"H{index}",
-                         "away": f"A{index}", "model": "v1",
+                         "away": f"A{index}", "model": "v2",
                          "log_loss": loss, "rps": loss / 2, "p_actual": 0.5})
     running = tracking.running(pd.DataFrame(rows))
     assert running.log_loss.tolist() == [1.0, 0.0]

@@ -14,15 +14,18 @@ from pathlib import Path
 from ucl.config import LIVE_DIR, PROJECT_ROOT
 
 __all__ = [
-    "LIVE_DIR", "ARCHIVE_DIR", "SEASON", "season_dir", "forecast_path",
+    "LIVE_DIR", "ARCHIVE_DIR", "PREVIOUS_ARCHIVES", "SEASON", "season_dir", "forecast_path",
     "next_matchday_path", "evaluation_path", "information_path", "tracking_path",
     "status_path", "log_path", "available_matchdays", "latest_matchday",
     "scored_matchdays",
 ]
 
-#: The frozen pre-tournament archive, used as the matchday-0 fallback so the
-#: app works before the first weekly run.
-ARCHIVE_DIR = PROJECT_ROOT / "results" / "model_v1"
+#: The current model's frozen archive, used as the matchday-0 fallback so the
+#: app works before the first weekly run. Must track whichever model is
+#: published, or the app falls back on a superseded forecast.
+ARCHIVE_DIR = PROJECT_ROOT / "results" / "model_v2"
+#: Earlier published models, newest first, for comparison.
+PREVIOUS_ARCHIVES = (PROJECT_ROOT / "results" / "model_v1",)
 SEASON = "2026-27"
 
 _FORECAST = re.compile(r"^forecast_md(\d+)\.csv$")
