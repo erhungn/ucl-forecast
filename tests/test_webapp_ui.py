@@ -231,3 +231,50 @@ def test_the_streamlit_theme_and_the_palette_agree():
     assert theme["primaryColor"].lower() == palette.ACCENT
     assert theme["borderColor"].lower() == palette.BORDER
     assert [c.lower() for c in theme["chartCategoricalColors"]] == palette.CATEGORICAL
+
+
+# --- the goal chips -------------------------------------------------------
+
+def test_the_goal_chips_report_xg_the_total_and_the_margin():
+    html = cards.goal_chips_html({
+        "home": "Paris Saint-Germain", "away": "Slovan Bratislava",
+        "xg_home": 3.1468, "xg_away": 0.5637, "p_over_2_5": 0.716255,
+        "favourite": "Paris Saint-Germain", "p_favourite_by_3": 0.490812})
+    assert "3.15–0.56" in html            # two decimals, en dash
+    assert "over 2.5" in html and "72%" in html
+    assert "PSG by 3+" in html and "49%" in html
+
+
+def test_the_chips_name_the_favoured_side_by_its_code():
+    html = cards.goal_chips_html({
+        "home": "Napoli", "away": "Arsenal", "xg_home": 0.91, "xg_away": 1.95,
+        "p_over_2_5": 0.5447, "favourite": "Arsenal", "p_favourite_by_3": 0.184})
+    assert "ARS by 3+" in html
+    assert "NAP by 3+" not in html
+
+
+def test_the_chips_are_omitted_when_the_rates_are_absent():
+    """The frozen evaluation tables carry probabilities but no rates."""
+    assert cards.goal_chips_html({"home": "Arsenal", "away": "Napoli"}) == ""
+    assert cards.goal_chips_html(
+        {"xg_home": float("nan"), "xg_away": 1.0}) == ""
+
+
+def test_the_chips_degrade_one_at_a_time():
+    """xG alone still renders; the tail numbers are each optional."""
+    html = cards.goal_chips_html({"xg_home": 1.5, "xg_away": 1.1})
+    assert "1.50–1.10" in html
+    assert "over 2.5" not in html and "by 3+" not in html
+
+
+def test_fixture_cards_carry_the_chips_when_the_columns_are_there():
+    rows = [{"home": "Barcelona", "away": "Feyenoord", "date": "13 Oct",
+             "p_home": 0.802, "p_draw": 0.131, "p_away": 0.067,
+             "pick": "home", "modal_score": "2-0", "p_modal": 0.127,
+             "xg_home": 2.69, "xg_away": 0.66, "p_over_2_5": 0.6505,
+             "favourite": "Barcelona", "p_favourite_by_3": 0.3752}]
+    html = cards.fixture_cards_html(rows)
+    assert "2.69–0.66" in html
+    assert "BAR by 3+" in html and "38%" in html
+    # And the modal scoreline is still there, as asked, just no longer alone.
+    assert "likely 2-0" in html

@@ -2,12 +2,12 @@
   "season": "2026-27",
   "state": "ok",
   "message": "",
-  "pid": 22355,
+  "pid": 27236,
   "model": "v1",
   "iterations": 50000,
   "seed": 20260907,
-  "git_commit": "95a3d547edb0ec3f4165eabb5f17120f794d6c20",
-  "started_at_utc": "2026-10-02T19:46:17+00:00",
+  "git_commit": "a571064e2598003396c8f0cf87f36dfd2cd9ab93",
+  "started_at_utc": "2026-10-04T10:38:12+00:00",
   "collisions": [],
   "pruned": [],
   "wikipedia_refreshed": false,
@@ -49,8 +49,8 @@
       "used_to": "2026-07-06"
     }
   },
-  "finished_at_utc": "2026-10-02T19:50:52+00:00",
-  "duration_seconds": 274.8,
+  "finished_at_utc": "2026-10-04T10:42:40+00:00",
+  "duration_seconds": 267.8,
   "artefacts": [
     "forecast_md1.csv",
     "next_matchday_2.csv",

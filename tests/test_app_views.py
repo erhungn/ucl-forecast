@@ -101,6 +101,22 @@ def test_the_next_matchday_bar_widths_sum_to_one_hundred():
         assert sum(widths) == pytest.approx(100.0, abs=1e-6)
 
 
+def test_the_next_matchday_chips_match_the_published_rates():
+    """xG, over-2.5 and the 3+ margin on the card, against the CSV."""
+    app = run("next_matchday")
+    html = bodies(app)
+    matchday = paths.latest_matchday() + 1
+    fixtures = loaders.load_next_matchday(matchday, paths.SEASON)
+    assert "xg_home" in fixtures.columns, "re-run scripts/weekly_update.py"
+    from ucl.webapp import clubs
+
+    for row in fixtures.itertuples():
+        assert f"{row.xg_home:.2f}\u2013{row.xg_away:.2f}" in html
+        assert f"{clubs.code(row.favourite)} by 3+" in html
+    # The modal scoreline is kept, not replaced.
+    assert "likely" in html
+
+
 def test_the_title_race_shows_ten_clubs_and_expands_to_all():
     app = run("title_race")
     assert bodies(app).count("border-radius:10px") == 10

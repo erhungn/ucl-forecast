@@ -17,13 +17,13 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
-from scipy.stats import poisson
 
 from ucl import config
 from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
 from ucl.data import league_results, names, odds
 from ucl.data.cutoff import as_of_for_matchday
+from ucl.models import scorelines
 from ucl.models.covariates import fit_squad_value_model
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
@@ -258,13 +258,14 @@ def main(argv: list[str] | None = None) -> int:
             elo_home, elo_away)
         probabilities = probabilities_from_rates(rate_home, rate_away)
         outcomes = ("home", "draw", "away")
+        # The scoreline distribution the rates imply: the modal score, the
+        # expected goals themselves, and the two tail probabilities that
+        # actually separate a one-sided fixture from a close one.
+        derived = scorelines.summarise_fixture(rate_home, rate_away)
         rows = []
         for i, row in enumerate(next_matchday.itertuples()):
-            goals = np.arange(0, 11)
-            joint = (poisson.pmf(goals[:, None], rate_home[i])
-                     * poisson.pmf(goals[None, :], rate_away[i]))
-            h, a = np.unravel_index(joint.argmax(), joint.shape)
             pick = int(probabilities[i].argmax())
+            favourite = row.home_id if derived["home_favoured"][i] else row.away_id
             rows.append({
                 "season": cfg.label, "matchday": matchday + 1,
                 "date": row.date.date(),
@@ -273,18 +274,28 @@ def main(argv: list[str] | None = None) -> int:
                 "p_home": probabilities[i, 0], "p_draw": probabilities[i, 1],
                 "p_away": probabilities[i, 2], "pick": outcomes[pick],
                 "p_pick": probabilities[i, pick],
-                "modal_score": f"{h}-{a}", "p_modal": float(joint.max()),
+                "modal_score": f"{derived['modal_home'][i]}-{derived['modal_away'][i]}",
+                "p_modal": float(derived["probability_modal"][i]),
+                "xg_home": float(derived["expected_home"][i]),
+                "xg_away": float(derived["expected_away"][i]),
+                "p_over_2_5": float(derived["probability_over"][i]),
+                "favourite": favourite,
+                "p_favourite_by_3": float(derived["probability_favourite_margin"][i]),
             })
         preview = pd.DataFrame(rows)
         # One frame drives both the table and the file, so they cannot disagree.
         print(f"\n=== matchday {matchday + 1}: {len(preview)} fixtures ===")
         print(f"  {'home':22s} {'away':22s} {'home':>6s} {'draw':>6s} {'away':>6s}"
-              f"  {'likely':>8s} {'P':>6s}")
+              f"  {'xG':>11s} {'o2.5':>6s} {'likely':>8s} {'P':>6s} {'3+':>10s}")
         for row in preview.itertuples():
             print(f"  {row.home:22s} {row.away:22s} {row.p_home:6.3f} "
                   f"{row.p_draw:6.3f} {row.p_away:6.3f}  "
-                  f"{row.modal_score:<8s} {row.p_modal:6.3f}")
-        print("  (the modal scoreline carries only ~8-12% probability; it is not a prediction)")
+                  f"{row.xg_home:4.2f}-{row.xg_away:<5.2f} {row.p_over_2_5:6.3f} "
+                  f"{row.modal_score:<8s} {row.p_modal:6.3f} "
+                  f"{row.p_favourite_by_3:6.3f}")
+        print("  (the modal scoreline carries only ~8-12% probability; it is not a "
+              "prediction. xG are the fitted Poisson rates; o2.5 is P(3 or more "
+              "goals); 3+ is P(the favourite wins by three or more).)")
         # Deliberately not renamed by --out: the forecast may be a scratch run,
         # this table is deterministic and is what the app reads.
         preview_path = OUTPUTS_DIR / f"next_matchday_{matchday + 1}_{cfg.label}.csv"

@@ -28,6 +28,7 @@ from ucl.webapp.palette import (
 
 __all__ = [
     "LABEL_MINIMUM", "FONT", "badge_html", "badge_pair_html", "delta_html",
+    "goal_chips_html",
     "stacked_bar_html", "narrow_outcomes", "bar_row_html", "fixture_cards_html",
     "club_cards_html", "compact_rows_html", "mover_rows_html", "card",
 ]
@@ -144,6 +145,38 @@ def bar_row_html(label: str, value: float, colour: str, *,
     )
 
 
+def goal_chips_html(row) -> str:
+    """Expected goals and the two tail probabilities, as a line of chips.
+
+    The modal scoreline is 1-0, 1-1 or 2-0 for most fixtures however lopsided
+    they are, so on its own it hides the difference between a close game and a
+    rout. These three numbers are what separate them, and they come from the
+    same rates the bar does.
+
+    Returns an empty string when the columns are absent - the frozen evaluation
+    tables carry probabilities but not rates.
+    """
+    if row.get("xg_home") is None or row.get("xg_away") is None:
+        return ""
+    if row["xg_home"] != row["xg_home"]:                    # NaN
+        return ""
+
+    def chip(label: str, value: str) -> str:
+        return (f'<span style="background:rgba(148,163,184,0.12);'
+                f'border-radius:5px;padding:2px 7px;white-space:nowrap">'
+                f'<span style="color:{FAINT}">{label}</span> '
+                f'<span style="color:{TEXT};font-weight:700">{value}</span></span>')
+
+    chips = [chip("xG", f'{float(row["xg_home"]):.2f}–{float(row["xg_away"]):.2f}')]
+    if row.get("p_over_2_5") is not None:
+        chips.append(chip("over 2.5", f'{float(row["p_over_2_5"]) * 100:.0f}%'))
+    if row.get("favourite") and row.get("p_favourite_by_3") is not None:
+        chips.append(chip(f'{escape(clubs.code(str(row["favourite"])))} by 3+',
+                          f'{float(row["p_favourite_by_3"]) * 100:.0f}%'))
+    return (f'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;'
+            f'font:500 11px/1.6 {FONT}">{"".join(chips)}</div>')
+
+
 def _title_line(home: str, away: str, *, date: str = "") -> str:
     home_badge, away_badge = badge_pair_html(home, away)
     stamp = (f'<span style="color:{FAINT};font:500 11px/1.3 {FONT}">'
@@ -195,6 +228,7 @@ def fixture_cards_html(rows, *, show_result: bool = False) -> str:
             + stacked_bar_html(*probabilities)
             + (f'<div style="color:{MUTED};font:500 11.5px/1.45 {FONT};'
                f'margin-top:8px">{" · ".join(footer)}</div>' if footer else "")
+            + goal_chips_html(row)
         )
         out.append(card(body))
     return "".join(out) or _empty("No fixtures to show.")

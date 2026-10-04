@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 472 tests, ~60s
+.venv/bin/python -m pytest                                       # 498 tests, ~60s
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -274,7 +274,12 @@ a uniform baseline, and the information set with the update button.
 
 Probabilities are drawn as cards with horizontal stacked bars rather than wide
 tables, because a table is the one Streamlit layout that does not reflow on a
-phone. Clubs are identified by three-letter codes on badges in their own kit
+phone. Each fixture card also carries the expected goals, P(over 2.5) and the
+favourite's chance of winning by three or more: the modal scoreline is 1-0, 1-1
+or 2-0 for most fixtures however lopsided they are, so on its own it hides the
+difference between a close game and a rout. Those three come from closed forms
+on the same Poisson rates - the sum of two Poissons for the total, the Skellam
+law for the margin - and are tested against sums over the scoreline matrix. Clubs are identified by three-letter codes on badges in their own kit
 colours - no crests or logos. Every badge is checked to WCAG AA (4.5:1) by test,
 and because a dozen of these clubs play in near-identical reds and yellows, two
 badges in one card switch the away side to an outline whenever the colours are
@@ -299,7 +304,7 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 498 tests in all.
+`.venv-app/bin/python -m pytest` - 525 tests in all.
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 five pages give nothing away, but the update button starts a five-minute job
@@ -360,7 +365,7 @@ scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, bu
                      check_*, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
 app/                 Streamlit entry point and the six views
-tests/               498 tests (472 in .venv, all of them in .venv-app)
+tests/               525 tests (498 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)
