@@ -14,8 +14,9 @@ simulation, not after it.
     8. forecast              - scripts/simulate.py
     9. score                 - scripts/evaluate_matchday.py per played matchday
    10. information set       - what each source knew
-   11. publish               - atomically, into live/<season>/
-   12. status.json           - provenance for the run
+   11. model tracking        - every candidate scored on the played matches
+   12. publish               - atomically, into live/<season>/
+   13. status.json           - provenance for the run
 
 Artefacts go to ``live/<season>/``, which only this script writes. ``outputs/``
 stays scratch: the test suite runs the simulator into it with a handful of
@@ -328,7 +329,31 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
         for row in information.itertuples()
     }
 
-    # --- 11. publish ---------------------------------------------------------
+    # --- 11. prospective model tracking --------------------------------------
+    # Every candidate's probabilities for the played matches, all from the same
+    # frozen cutoff information set. Nothing here changes the forecast; it
+    # accumulates evidence on this season, which 144 matches cannot settle.
+    log("\n=== model tracking ===")
+    from ucl import tracking
+
+    tracked = tracking.track(cfg.label, played)
+    if len(tracked):
+        tracked.to_csv(paths.tracking_path(cfg.label), index=False,
+                       float_format="%.6f")
+        summary = tracking.summary(tracked)
+        for row in summary.itertuples():
+            gap = (f"  {row.vs_v1:+.4f} vs v1 (SE {row.vs_v1_standard_error:.4f})"
+                   if isinstance(getattr(row, "vs_v1", None), float)
+                   and row.vs_v1 == row.vs_v1 else "")
+            log(f"  {row.model:8} log-loss {row.log_loss:.4f} "
+                f"RPS {row.rps:.4f} over {row.n} matches{gap}")
+        log("  this is not evidence yet: the paired standard error is an order "
+            "of magnitude larger than the difference the backtest resolved.")
+        status["tracked_models"] = list(summary.model)
+    else:
+        log("  no played matches yet")
+
+    # --- 12. publish ---------------------------------------------------------
     log("\n=== published ===")
     artefacts = []
     suffix = f"_md{matchday}" if matchday > 0 else ""
@@ -348,10 +373,12 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
                 source, paths.evaluation_path(played_matchday, cfg.label)).name)
     information.to_csv(paths.information_path(cfg.label), index=False)
     artefacts.append(paths.information_path(cfg.label).name)
+    if paths.tracking_path(cfg.label).exists():
+        artefacts.append(paths.tracking_path(cfg.label).name)
     for name in artefacts:
         log(f"  live/{cfg.label}/{name}")
 
-    # --- 12. status ----------------------------------------------------------
+    # --- 13. status ----------------------------------------------------------
     finish("ok", artefacts=artefacts)
     log(f"\ndone in {status['duration_seconds']}s, "
         f"through matchday {matchday}, as of {as_of}")

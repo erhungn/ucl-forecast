@@ -17,7 +17,7 @@ from ucl.webapp import paths
 
 __all__ = [
     "load_forecast", "load_next_matchday", "load_evaluation",
-    "load_information", "load_status", "tail_log",
+    "load_information", "load_tracking", "load_status", "tail_log",
 ]
 
 _HINT = "run scripts/weekly_update.py to publish it"
@@ -60,6 +60,11 @@ def load_evaluation(matchday: int, season: str = paths.SEASON,
 def load_information(season: str = paths.SEASON, **kwargs) -> pd.DataFrame:
     """The information set as it stood when the forecast was produced."""
     return _read_csv(paths.information_path(season, **kwargs))
+
+
+def load_tracking(season: str = paths.SEASON, **kwargs) -> pd.DataFrame:
+    """Every candidate model's probabilities on the matches played so far."""
+    return _read_csv(paths.tracking_path(season, **kwargs))
 
 
 def load_status(season: str = paths.SEASON, **kwargs) -> dict:

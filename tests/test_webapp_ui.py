@@ -278,3 +278,59 @@ def test_fixture_cards_carry_the_chips_when_the_columns_are_there():
     assert "BAR by 3+" in html and "38%" in html
     # And the modal scoreline is still there, as asked, just no longer alone.
     assert "likely 2-0" in html
+
+
+# --- prospective model tracking -------------------------------------------
+
+def test_the_tracking_summary_pairs_each_model_against_v1():
+    """The standard error must be on the paired difference, not the level.
+
+    The models see the same matches, so what matters is how much their
+    per-match losses differ - far smaller than either model's own log-loss, and
+    the only quantity that could ever resolve a 0.0004 effect.
+    """
+    import numpy as np
+
+    from ucl import tracking
+
+    rng = np.random.default_rng(3)
+    # The same match-level noise for every model, which is the situation the
+    # pairing exists to exploit.
+    base = 0.7 + rng.normal(0, 0.3, 40)
+    rows = []
+    for model, shift in (("v1", 0.0), ("v1+A", 0.01), ("uniform", 0.4)):
+        for index in range(40):
+            rows.append({"matchday": 1 + index // 18, "home": f"H{index}",
+                         "away": f"A{index}", "model": model,
+                         "log_loss": base[index] + shift, "rps": 0.13,
+                         "p_actual": 0.5})
+    frame = pd.DataFrame(rows)
+    board = tracking.summary(frame)
+    assert set(board.model) == {"v1", "v1+A", "uniform"}
+    paired = board[board.model == "v1+A"].iloc[0]
+    assert paired.vs_v1 == pytest.approx(0.01, abs=1e-9)
+    # Identical noise in both series, so the paired error is ~0 while each
+    # model's own spread is 0.3.
+    assert paired.vs_v1_standard_error < 1e-9
+
+
+def test_the_running_scores_accumulate():
+    from ucl import tracking
+
+    rows = []
+    for matchday, loss in ((1, 1.0), (2, 0.0)):
+        for index in range(2):
+            rows.append({"matchday": matchday, "home": f"H{index}",
+                         "away": f"A{index}", "model": "v1",
+                         "log_loss": loss, "rps": loss / 2, "p_actual": 0.5})
+    running = tracking.running(pd.DataFrame(rows))
+    assert running.log_loss.tolist() == [1.0, 0.0]
+    assert running.cumulative_log_loss.tolist() == [1.0, 0.5]
+    assert running.cumulative_n.tolist() == [2, 4]
+
+
+def test_an_unknown_model_is_refused():
+    from ucl import tracking
+
+    with pytest.raises(ValueError, match="unknown model"):
+        tracking.probabilities("2026-27", ["Arsenal"], ["Napoli"], "v9")

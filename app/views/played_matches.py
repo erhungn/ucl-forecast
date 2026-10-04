@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from ucl.webapp import cards, charts, paths, scoring, st_helpers
+from ucl.webapp import cards, charts, loaders, paths, scoring, st_helpers
 
 SEASON = paths.SEASON
 
@@ -86,6 +86,58 @@ if pieces:
                         use_container_width=True)
         st_helpers.note("Cumulative, so each point includes every matchday up "
                         "to it.")
+
+# --- the candidate models against each other -------------------------------
+try:
+    tracked = loaders.load_tracking(SEASON)
+except FileNotFoundError:
+    tracked = None
+
+if tracked is not None and len(tracked):
+    from ucl import tracking
+
+    st_helpers.section(
+        "Candidate models on this season",
+        "every model from the same frozen information set, the 2026-09-07 cutoff")
+    board = tracking.summary(tracked)
+    rows = []
+    for row in board.itertuples():
+        gap = getattr(row, "vs_v1", float("nan"))
+        error = getattr(row, "vs_v1_standard_error", float("nan"))
+        rows.append(
+            f'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;'
+            f'border-bottom:1px solid #243041">'
+            f'<span style="color:#e5e7eb;font:700 13px/1.3 {cards.FONT};'
+            f'width:72px">{row.model}</span>'
+            f'<span style="color:#94a3b8;font:500 12px/1.3 {cards.FONT};'
+            f'flex:1 1 auto">log-loss <b style="color:#e5e7eb">'
+            f'{row.log_loss:.4f}</b> · RPS <b style="color:#e5e7eb">'
+            f'{row.rps:.4f}</b></span>'
+            f'<span style="color:#64748b;font:500 11.5px/1.3 {cards.FONT};'
+            f'text-align:right;white-space:nowrap">'
+            + (f"{gap:+.4f} ± {error:.4f} vs v1" if gap == gap else "published")
+            + f'</span></div>')
+    st.html("".join(rows))
+
+    if tracked.matchday.nunique() > 1:
+        running = tracking.running(tracked)
+        metric = st.segmented_control(
+            "Tracking metric", ["log_loss", "rps"], default="log_loss",
+            label_visibility="collapsed", key="tracking_metric")
+        chart = running.rename(columns={
+            f"cumulative_{metric or 'log_loss'}": "value"})[
+            ["matchday", "model", "value"]]
+        st.line_chart(chart, x="matchday", y="value", color="model", height=300)
+
+    st_helpers.note(
+        f"<b>This settles nothing yet.</b> The paired difference between v1 and "
+        f"v1+A is ±{board[board.model == 'v1+A'].vs_v1_standard_error.iloc[0]:.4f} "
+        f"on {int(board.n.iloc[0])} matches, which is an order of magnitude "
+        f"larger than the 0.0004 the five-season backtest resolved. It is "
+        f"recorded from the first matchday because it can only accumulate, and "
+        f"because a comparison reconstructed later is a comparison nobody can "
+        f"check. <b>v1 remains the published forecast</b>; v1+A was accepted by "
+        f"the backtest but has not been promoted.")
 
 # --- per match -------------------------------------------------------------
 st_helpers.section("Fixtures")

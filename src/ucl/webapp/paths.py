@@ -15,8 +15,9 @@ from ucl.config import LIVE_DIR, PROJECT_ROOT
 
 __all__ = [
     "LIVE_DIR", "ARCHIVE_DIR", "SEASON", "season_dir", "forecast_path",
-    "next_matchday_path", "evaluation_path", "information_path", "status_path",
-    "log_path", "available_matchdays", "latest_matchday", "scored_matchdays",
+    "next_matchday_path", "evaluation_path", "information_path", "tracking_path",
+    "status_path", "log_path", "available_matchdays", "latest_matchday",
+    "scored_matchdays",
 ]
 
 #: The frozen pre-tournament archive, used as the matchday-0 fallback so the
@@ -47,6 +48,10 @@ def evaluation_path(matchday: int, season: str = SEASON, **kwargs) -> Path:
 
 def information_path(season: str = SEASON, **kwargs) -> Path:
     return season_dir(season, **kwargs) / "information_set.csv"
+
+
+def tracking_path(season: str = SEASON, **kwargs) -> Path:
+    return season_dir(season, **kwargs) / "model_tracking.csv"
 
 
 def status_path(season: str = SEASON, **kwargs) -> Path:

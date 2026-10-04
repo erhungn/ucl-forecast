@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 498 tests, ~60s
+.venv/bin/python -m pytest                                       # 546 tests, ~60s
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -244,8 +244,9 @@ python scripts/colab/fetch_current.py --season 2627 --prune-stale   # from Colab
 
 `weekly_update.py` is the whole cycle in one command: it checks the caches,
 refreshes the league-phase page once, detects the last **complete** matchday,
-re-forecasts through it, scores what was played, and publishes to
-`live/<season>/`, which is the only directory the app reads. It refuses rather
+re-forecasts through it, scores what was played, scores every candidate model
+on the played matches, and publishes to `live/<season>/`, which is the only
+directory the app reads. It refuses rather
 than guesses - mid-round, on a skipped round, on a cache collision (unless
 `--prune-stale`), or when a verification check fails - and it does no work at
 all when the inputs are unchanged.
@@ -304,7 +305,7 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 525 tests in all.
+`.venv-app/bin/python -m pytest` - 573 tests in all.
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 five pages give nothing away, but the update button starts a five-minute job
@@ -377,7 +378,7 @@ scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, bu
                      check_*, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
 app/                 Streamlit entry point and the six views
-tests/               525 tests (498 in .venv, all of them in .venv-app)
+tests/               573 tests (546 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)
