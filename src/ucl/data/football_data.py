@@ -25,7 +25,7 @@ from ucl.data.cutoff import filter_to_cutoff
 from ucl.data.manifest import verify_cache
 
 __all__ = [
-    "CACHE_DIR", "HISTORY_CACHE_DIR", "CACHE_DIRS", "MAIN_LEAGUES",
+    "CACHE_DIR", "HISTORY_CACHE_DIR", "CACHE_DIRS", "MAIN_LEAGUES", "SHOT_COLUMNS",
     "EXTRA_LEAGUES", "load_results", "available_files",
 ]
 
@@ -66,6 +66,17 @@ EXTRA_LEAGUES: dict[str, str] = {
 
 # Closing odds kept for the de-vigged bookmaker benchmark; absent in older files.
 ODDS_COLUMNS = ["PSCH", "PSCD", "PSCA", "B365CH", "B365CD", "B365CA", "AvgCH", "AvgCD", "AvgCA"]
+
+#: Shots, shots on target and corners, for shot-based ratings. Present in the
+#: main-league files only - the extra-league schema is goals and odds alone -
+#: and non-null on exactly the same rows, so one coverage figure covers all six.
+#: Named in full rather than lowercased like the odds: football-data calls the
+#: away-shots column ``AS``, and ``frame.as`` is a syntax error.
+SHOT_COLUMNS = {
+    "HS": "shots_home", "AS": "shots_away",
+    "HST": "sot_home", "AST": "sot_away",
+    "HC": "corners_home", "AC": "corners_away",
+}
 
 COLUMNS = [
     "date", "home", "away", "hg", "ag", "country", "league", "season",
@@ -148,6 +159,9 @@ def _load_main(path: Path) -> pd.DataFrame:
         frame[column.lower()] = pd.to_numeric(raw.get(column), errors="coerce")
     for source, target in (("HxG", "hxg"), ("AxG", "axg")):
         frame[target] = pd.to_numeric(raw.get(source), errors="coerce")
+    for source, target in SHOT_COLUMNS.items():
+        # raw.get returns None for the five 2016-17 files with no stats block.
+        frame[target] = pd.to_numeric(raw.get(source), errors="coerce")
     return frame
 
 
@@ -177,6 +191,8 @@ def _load_extra(path: Path) -> pd.DataFrame:
     # No shot data in the extra-leagues files; keep the column shape identical.
     frame["hxg"] = np.nan
     frame["axg"] = np.nan
+    for target in SHOT_COLUMNS.values():
+        frame[target] = np.nan
     return frame
 
 

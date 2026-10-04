@@ -618,6 +618,51 @@ def _fitted_squad_value(cutoff: date, season_label: str):
     return ratings, values, model
 
 
+#: The GAP covariate columns, in a fixed order so the fitted coefficients can
+#: be read back by name.
+GAP_COLUMNS = tuple(f"d_gap_{measure}" for measure in ("sot", "shots_off", "corners"))
+
+
+@lru_cache(maxsize=16)
+def _fitted_gap(cutoff: date, season_label: str):
+    """Model v1 plus the three GAP residual covariates.
+
+    The tuned side of candidate A is v1 *and* the shot ratings, so the
+    squad-value term is fitted here too and the test is paired against v1
+    rather than against Elo.
+
+    Each measure's learning rate and phis are fitted on this cutoff's data
+    alone, by least squares against observed attacking output - an objective
+    that never sees a match result. The ratings are then regressed on Elo
+    within each league and only the residual is kept.
+    """
+    from ucl.data import transfermarkt
+    from ucl.models import gap
+    from ucl.models.covariates import fit_covariate_model
+
+    training = _training_frame(cutoff)
+    offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
+    ratings = replay(training, offsets, DEFAULT_PARAMS)
+
+    shots = gap.domestic_frame(cutoff)
+    residuals = {}
+    parameters = {}
+    for measure in gap.MEASURES:
+        parameters[measure] = gap.fit_params(shots, measure)
+        state = gap.replay(shots, measure, parameters[measure])
+        residuals[measure] = gap.residual_ratings(state, ratings.ratings)
+
+    values = transfermarkt.squad_values(transfermarkt.as_of_for_season(season_label))
+    frame = ratings.pre_match.copy()
+    frame["d_value"] = transfermarkt.value_difference(
+        values, frame.home_id.to_numpy(), frame.away_id.to_numpy())
+    for measure, column in zip(gap.MEASURES, GAP_COLUMNS):
+        frame[column] = gap.match_difference(
+            residuals[measure], frame.home_id.to_numpy(), frame.away_id.to_numpy())
+    model = fit_covariate_model(frame, symmetric=("d_value", *GAP_COLUMNS))
+    return ratings, values, residuals, parameters, model
+
+
 @lru_cache(maxsize=8)
 def _fitted_congestion(cutoff: date):
     """Elo ratings plus the rest-day model."""
@@ -646,6 +691,12 @@ def score_season_covariate(
         from ucl.data import transfermarkt
 
         ratings, values, model = _fitted_squad_value(cfg.cutoff_date, season_label)
+    elif candidate == "gap":
+        from ucl.data import transfermarkt
+        from ucl.models import gap as gap_model
+
+        ratings, values, residuals, _, model = _fitted_gap(
+            cfg.cutoff_date, season_label)
     elif candidate == "congestion":
         ratings, model = _fitted_congestion(cfg.cutoff_date)
         history = _training_frame(cfg.cutoff_date)[["date", "home_id", "away_id"]]
@@ -671,6 +722,15 @@ def score_season_covariate(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())
                 rate_home, rate_away = model.rates(
                     elo_home, elo_away, symmetric={"d_value": difference})
+            elif candidate == "gap":
+                symmetric = {"d_value": transfermarkt.value_difference(
+                    values, usable.home_id.to_numpy(), usable.away_id.to_numpy())}
+                for measure, column in zip(gap_model.MEASURES, GAP_COLUMNS):
+                    symmetric[column] = gap_model.match_difference(
+                        residuals[measure], usable.home_id.to_numpy(),
+                        usable.away_id.to_numpy())
+                rate_home, rate_away = model.rates(
+                    elo_home, elo_away, symmetric=symmetric)
             else:
                 combined = pd.concat(
                     [history, usable[["date", "home_id", "away_id"]]], ignore_index=True)
@@ -704,20 +764,38 @@ def score_season_covariate(
 def paired_losses_covariate(
     season_label: str, candidate: str, *, half_life_days: float = 365.0,
     mode: str = "frozen", european_weight: float = 3.0,
+    baseline: str | None = None,
 ) -> pd.DataFrame:
-    """A candidate against the accepted baseline on the same matches, paired."""
+    """A candidate against the accepted baseline on the same matches, paired.
+
+    ``baseline`` names what the candidate is measured against: ``None`` is the
+    Elo baseline, which is what the earlier candidates were tested against
+    because that was the accepted model at the time. A candidate declared
+    against **model v1** must pass ``"squad_value"`` instead - pairing it
+    against Elo alone would credit it with the squad-value term's gain as well
+    as its own, and accept it for someone else's work.
+    """
     rows = score_season_covariate(
         season_label, candidate, half_life_days=half_life_days, modes=(mode,))
     rows = rows[rows["mode"] == mode].reset_index(drop=True)
-    base = _match_losses(score_season(season_label, DEFAULT_PARAMS, modes=(mode,)), mode)
-    if len(rows) != len(base) or not (rows.home.to_numpy() == base.home.to_numpy()).all():
+    if baseline is None:
+        base = _match_losses(
+            score_season(season_label, DEFAULT_PARAMS, modes=(mode,)), mode)
+        base_losses, base_home = base.loss.to_numpy(), base.home.to_numpy()
+    else:
+        base_rows = score_season_covariate(
+            season_label, baseline, half_life_days=half_life_days, modes=(mode,))
+        base_rows = base_rows[base_rows["mode"] == mode].reset_index(drop=True)
+        base_losses = _losses_from_rows(base_rows)
+        base_home = base_rows.home.to_numpy()
+    if len(rows) != len(base_losses) or not (rows.home.to_numpy() == base_home).all():
         raise ValueError(f"{season_label}: {candidate} and the baseline do not align")
     losses = _losses_from_rows(rows)
     return pd.DataFrame({
         "season": season_label, "competition": rows.competition, "home": rows.home,
         "cluster": season_label + "/" + rows.home.astype(str),
-        "loss_tuned": losses, "loss_default": base.loss.to_numpy(),
-        "difference": losses - base.loss.to_numpy(),
+        "loss_tuned": losses, "loss_default": base_losses,
+        "difference": losses - base_losses,
         "weight": np.where(rows.competition != "domestic", european_weight, 1.0),
     })
 

@@ -149,6 +149,35 @@ outputs/         # csv tables + figures
   backtest had both clubs valued, the rest falling back to Elo - and it is a
   **pre-season prior**, frozen at 6 July, that cannot be refreshed while the
   source is paused. Both belong in any statement of what it delivers.
+- **Shot-based GAP ratings are accepted** (milestone 8, candidate A): pooled
+  delta **-0.00042, cluster CI [-0.00076, -0.00008]**, measured against model
+  v1 and stable across bootstrap draws and seeds. Wheatcroft's GAP ratings on
+  shots on target, shots off target and corners, implemented from arXiv
+  2001.09097. The signal is **shots on target** (`b` +0.023 to +0.031 across
+  every cutoff); shots off target is slightly negative and corners carry
+  nothing. See `results/candidate_gap/`.
+- **Shot ratings have no cross-league bridge**, so they enter as the *residual*
+  of a per-league regression on Elo. No cached match carries both shot data and
+  two clubs from different leagues - the extra leagues and every European match
+  have no shot columns - and raw ratings put Celtic and Ajax above Manchester
+  City. Regressing on Elo leaves league quality where European results have
+  already calibrated it. Do not standardise within league: that is candidate
+  1's error.
+- **The shot ratings independently flag Arsenal and Porto** as over-rated by
+  Elo (-1.52 and -1.18 shots on target below prediction), which is the two
+  clubs the market diagnostic also disputes - the first corroboration of
+  limitation 1 from a source the market had no part in.
+- **A candidate must be paired against the accepted model, not against Elo.**
+  `paired_losses_covariate` takes a `baseline`; candidate A passes
+  `squad_value`. Measuring a candidate that contains the squad-value term
+  against Elo alone would credit it with that term's gain as well as its own.
+- **Favourite-longshot bias in the outright benchmark is measured, not
+  assumed** (milestone 8, part 1). A second market agrees with the bookmaker
+  within a few percent on favourites and differs about twofold on longshots, so
+  proportional de-vigging understates the favourites: Arsenal is 1.83x the
+  exchange's raw price, not 2.10x the bookmaker's de-vigged one. The exchange
+  is too thin to replace the benchmark (13 usable prices against a
+  pre-declared minimum of 15), so both are reported.
 - **Two implementation defects preceded that acceptance, and both were found by
   inspecting the feature rather than the test statistic.** Incomplete name
   mapping (110 of 796 clubs) and national-team appearances counted as club

@@ -12,6 +12,10 @@ The primary test differs by candidate, and is pre-declared here:
   leaves a far smaller sample, and the bar is correspondingly harder.
 * ``congestion`` - the usual x3-weighted pooled log-loss.
 * ``squad_value`` - the usual x3-weighted pooled log-loss.
+* ``gap`` - the usual x3-weighted pooled log-loss, measured against **model
+  v1** rather than against Elo, because v1 is what is accepted. Pairing a
+  candidate that contains the squad-value term against Elo alone would credit
+  it with that term's gain as well as its own.
 
 ``--label`` marks a re-run whose only change is an implementation fix, so the
 output says which run it is. For ``squad_value`` the covariate's coverage is
@@ -37,7 +41,10 @@ from ucl.config import BACKTEST_SEASONS, OUTPUTS_DIR
 # actually exists; the degenerate region is reported, not searched.
 HALF_LIVES = [61.0, 91.0, 183.0, 365.0, 548.0, 730.0, 1096.0]
 PRIMARY = {"market": "european", "market_elo": "european", "congestion": "pooled",
-           "squad_value": "pooled"}
+           "squad_value": "pooled", "gap": "pooled"}
+#: What each candidate is measured against. Absent means the Elo baseline,
+#: which is what was accepted when the earlier candidates were tested.
+BASELINE = {"gap": "squad_value"}
 #: market_elo is candidate 1b, declared after candidate 1 failed: the same
 #: market strengths mapped into Elo units per league instead of standardised.
 POST_HOC = {"market_elo"}
@@ -50,23 +57,48 @@ def folds():
 
 def _coverage_by_season(candidate: str, seasons: list[str]) -> dict:
     """Share of scored matches where the covariate is defined for both clubs."""
-    if candidate != "squad_value":
-        return {}
     from ucl.backtest import _evaluation_frames
-    from ucl.data import transfermarkt
+    from ucl.config import SEASONS
 
-    out = {}
-    for season in seasons:
-        values = transfermarkt.squad_values(transfermarkt.as_of_for_season(season))
-        domestic, euro = _evaluation_frames(season)
-        out[season] = {
-            "european": transfermarkt.coverage(
-                values, euro.home_id.to_numpy(), euro.away_id.to_numpy()),
-            "domestic": transfermarkt.coverage(
-                values, domestic.home_id.to_numpy(), domestic.away_id.to_numpy()),
-            "clubs_valued": len(values),
-        }
-    return out
+    if candidate == "squad_value":
+        from ucl.data import transfermarkt
+
+        out = {}
+        for season in seasons:
+            values = transfermarkt.squad_values(
+                transfermarkt.as_of_for_season(season))
+            domestic, euro = _evaluation_frames(season)
+            out[season] = {
+                "european": transfermarkt.coverage(
+                    values, euro.home_id.to_numpy(), euro.away_id.to_numpy()),
+                "domestic": transfermarkt.coverage(
+                    values, domestic.home_id.to_numpy(), domestic.away_id.to_numpy()),
+                "clubs_valued": len(values),
+            }
+        return out
+
+    if candidate == "gap":
+        import numpy as np
+
+        from ucl.backtest import _fitted_gap
+        from ucl.models import gap as gap_model
+
+        out = {}
+        for season in seasons:
+            *_, residuals, _, _ = (None, *_fitted_gap(
+                SEASONS[season].cutoff_date, season))
+            domestic, euro = _evaluation_frames(season)
+            rated = residuals["sot"]
+            shares = {}
+            for name, frame in (("european", euro), ("domestic", domestic)):
+                difference = gap_model.match_difference(
+                    rated, frame.home_id.to_numpy(), frame.away_id.to_numpy())
+                shares[name] = float(np.mean(difference != 0.0))
+            shares["clubs_rated"] = len(rated)
+            out[season] = shares
+        return out
+
+    return {}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -85,13 +117,16 @@ def main(argv: list[str] | None = None) -> int:
                                 if candidate in POST_HOC else "")
     if args.label:
         label += f" [{args.label}]"
+    baseline = BASELINE.get(candidate)
     print(f"=== candidate {label}: forward chaining, primary test = {primary} ===")
+    print(f"  measured against: {baseline or 'the Elo baseline'}")
     coverage = _coverage_by_season(candidate, [test for test, _ in folds()])
     if coverage:
         print("  covariate coverage (both clubs known), by test season:")
         for season, share in coverage.items():
+            extra = share.get("clubs_valued") or share.get("clubs_rated")
             print(f"    {season}: European {share['european']:.1%}, "
-                  f"domestic {share['domestic']:.1%}")
+                  f"domestic {share['domestic']:.1%}  ({extra} clubs)")
     rows, paired = [], []
     for test, train in folds():
         tick = time.perf_counter()
@@ -106,7 +141,8 @@ def main(argv: list[str] | None = None) -> int:
             half_life, edge, training_value = 365.0, False, pooled_objective_covariate(
                 train, candidate, european_only=european_only)
 
-        frame = paired_losses_covariate(test, candidate, half_life_days=half_life)
+        frame = paired_losses_covariate(test, candidate, half_life_days=half_life,
+                                        baseline=baseline)
         frame["fold"] = test
         paired.append(frame)
         walk = paired_losses_covariate(
@@ -170,7 +206,8 @@ def main(argv: list[str] | None = None) -> int:
 
     with open(OUTPUTS_DIR / f"candidate_{candidate}_decision.json", "w", encoding="utf-8") as fh:
         json.dump({"candidate": candidate, "post_hoc": candidate in POST_HOC,
-                   "run_label": args.label, "coverage": coverage,
+                   "run_label": args.label, "baseline": baseline or "elo",
+                   "coverage": coverage,
                    "primary": primary, "cluster": cluster,
                    "per_match": per_match, "all_matches": full, "accepted": accepted}, fh, indent=2)
         fh.write("\n")
