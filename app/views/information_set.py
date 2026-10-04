@@ -18,6 +18,7 @@ except FileNotFoundError as error:
     information = None
 
 if information is not None:
+    st_helpers.freshness_badge(status, information)
     st.caption(
         "`cached_to` is the last match in the cache; `used_to` is the last one "
         "the forecast actually used. They differ whenever the cache runs past "
@@ -33,7 +34,7 @@ if information is not None:
 
 # --- provenance -----------------------------------------------------------
 if status:
-    st.subheader("This run")
+    st_helpers.section("This run")
     left, right = st.columns(2)
     left.markdown(
         f"- through matchday **{status.get('through_matchday')}**\n"
@@ -57,7 +58,7 @@ if status:
                  + ", ".join(status["pruned"]))
 
 # --- the update -----------------------------------------------------------
-st.subheader("Weekly update")
+st_helpers.section("Weekly update")
 st.caption(
     "Refreshes the league-phase results, re-forecasts through the last "
     "complete matchday, scores what was played, and publishes everything to "

@@ -1,6 +1,12 @@
-# Settings for the local forecast app. The address is deliberately not set
-# here: scripts/run_app.sh passes it, so the default stays localhost-only and
-# exposing the app on the network is always an explicit act.
+# Settings for the local forecast app.
+#
+# The address is deliberately not set here: scripts/run_app.sh passes it, so
+# the default stays localhost-only and exposing the app on the network is
+# always an explicit act.
+#
+# The theme values below mirror src/ucl/webapp/palette.py, which the
+# hand-drawn cards use. A test asserts the two agree, so the chrome Streamlit
+# draws and the cards drawn on top of it cannot drift apart.
 [server]
 headless = true
 port = 8501
@@ -10,4 +16,26 @@ fileWatcherType = "auto"
 gatherUsageStats = false
 
 [theme]
-base = "light"
+# Dark, explicitly: one consistent look rather than whatever the phone's OS
+# happens to prefer.
+base = "dark"
+backgroundColor = "#0b1220"
+secondaryBackgroundColor = "#111827"
+textColor = "#e5e7eb"
+primaryColor = "#2dd4bf"
+borderColor = "#243041"
+linkColor = "#2dd4bf"
+baseRadius = "0.6rem"
+buttonRadius = "0.5rem"
+showWidgetBorder = true
+baseFontSize = 15
+headingFontSizes = ["1.6rem", "1.25rem", "1.05rem", "0.95rem", "0.9rem", "0.85rem"]
+metricValueFontSize = "1.4rem"
+chartCategoricalColors = [
+    "#2dd4bf", "#fb923c", "#a78bfa", "#60a5fa",
+    "#f472b6", "#facc15", "#34d399", "#f87171",
+]
+
+[theme.sidebar]
+backgroundColor = "#0e1627"
+borderColor = "#243041"

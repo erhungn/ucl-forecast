@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 377 tests, ~60s
+.venv/bin/python -m pytest                                       # 472 tests, ~60s
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -267,10 +267,18 @@ stays at 2026-07-06 while the others advance, visibly, in every run.
 
 ## Local app
 
-A single-user Streamlit app over the published forecasts: the title race, the
-next matchday's 1X2 probabilities, movement across matchdays, the played
-matches scored against a uniform baseline, and the information set with the
-update button.
+A single-user Streamlit app over the published forecasts, built mobile-first: a
+home screen with the state of the season, the title race, the next matchday's
+1X2 probabilities, movement across matchdays, the played matches scored against
+a uniform baseline, and the information set with the update button.
+
+Probabilities are drawn as cards with horizontal stacked bars rather than wide
+tables, because a table is the one Streamlit layout that does not reflow on a
+phone. Clubs are identified by three-letter codes on badges in their own kit
+colours - no crests or logos. Every badge is checked to WCAG AA (4.5:1) by test,
+and because a dozen of these clubs play in near-identical reds and yellows, two
+badges in one card switch the away side to an outline whenever the colours are
+too close to tell apart.
 
 ```bash
 python3 -m venv .venv-app
@@ -283,6 +291,15 @@ Streamlit lives in its own `.venv-app` so `requirements.lock.txt` stays exactly
 the model's environment; `weekly_update.py` always runs the pipeline with
 `.venv/bin/python` whichever interpreter serves the UI. The app only reads
 `live/` and `results/model_v1/`.
+
+The theme is dark, set in `.streamlit/config.toml`, which overrides the
+viewer's own light/dark preference by design. Those colours mirror
+`src/ucl/webapp/palette.py`, and a test asserts the two agree so the chrome and
+the hand-drawn cards cannot drift apart.
+
+The suite runs in both environments: `.venv` covers everything but the Altair
+and AppTest modules, which skip there and run under
+`.venv-app/bin/python -m pytest` - 498 tests in all.
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 five pages give nothing away, but the update button starts a five-minute job
@@ -337,12 +354,13 @@ src/ucl/
   sim/               league_phase.py, tiebreakers.py, bracket.py, knockout.py
   backtest.py        forward chaining, paired losses, cluster bootstrap
   evaluate.py        log-loss, RPS, Brier, calibration
-  webapp/            logic behind the local app (no Streamlit imports but one)
+  webapp/            logic behind the local app: palette, clubs, cards, charts
+                     (no Streamlit imports but one)
 scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, build_*,
                      check_*, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
-app/                 Streamlit entry point and the five views
-tests/               377 tests
+app/                 Streamlit entry point and the six views
+tests/               498 tests (472 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)

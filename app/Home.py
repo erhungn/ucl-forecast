@@ -14,14 +14,18 @@ import streamlit as st
 
 from ucl.webapp import paths, st_helpers
 
-st.set_page_config(page_title="UCL 2026-27 forecast", page_icon=":material/trophy:",
-                   layout="wide")
+# "centered" rather than "wide": the cards are built for a phone, and a
+# centred column keeps them a readable width on a desktop too.
+st.set_page_config(page_title="UCL 2026-27", page_icon=":material/trophy:",
+                   layout="centered", initial_sidebar_state="collapsed")
 
 st_helpers.sidebar(paths.SEASON)
 
 navigation = st.navigation([
+    st.Page("views/overview.py", title="Home", icon=":material/home:",
+            default=True),
     st.Page("views/title_race.py", title="Title race",
-            icon=":material/leaderboard:", default=True),
+            icon=":material/leaderboard:"),
     st.Page("views/next_matchday.py", title="Next matchday",
             icon=":material/sports_soccer:"),
     st.Page("views/movement.py", title="Movement", icon=":material/trending_up:"),

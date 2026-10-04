@@ -1,6 +1,7 @@
 # The app environment: Streamlit plus the model package, kept separate from
 # requirements.lock.txt so the model's reproduction recipe stays exactly the
-# pipeline's own dependencies.
+# pipeline's own dependencies. pytest is here too, because the AppTest view
+# tests can only run where Streamlit is installed.
 #   python3 -m venv .venv-app && .venv-app/bin/python -m pip install -r requirements.app.lock.txt -e .
 altair==6.3.0
 anyio==4.15.1
@@ -11,6 +12,7 @@ click==8.5.0
 h11==0.16.0
 httptools==0.8.0
 idna==3.20
+iniconfig==2.3.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
 jsonschema==4.26.0
@@ -21,9 +23,12 @@ numpy==2.5.2
 packaging==26.3
 pandas==2.3.3
 pillow==12.3.0
+pluggy==1.6.0
 protobuf==7.36.2
 pyarrow==25.0.1
 pydeck==0.9.3
+Pygments==2.21.0
+pytest==9.1.1
 python-dateutil==2.9.0.post0
 python-multipart==0.0.32
 pytz==2026.4

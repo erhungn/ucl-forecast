@@ -3,12 +3,17 @@
 Keeping it in one place means the test suite never needs Streamlit installed,
 and the logic in the sibling modules stays callable from a plain interpreter.
 
-This module is also the only writer of anything, and it writes nothing itself:
-it starts ``scripts/weekly_update.py`` as a detached child and then reads the
-log that script owns. A Streamlit rerun - any widget click, a phone dropping
-the websocket - raises inside the script thread, so a loop that streamed the
-subprocess here would lose the tail of a five-minute run. Tailing a file does
-not care.
+The cards are drawn with ``st.html`` and inline styles. That is not a stylistic
+preference: checked on a phone, ``st.markdown(unsafe_allow_html=True)`` lost the
+labels inside the bars, while ``st.html`` rendered exactly as written. A whole
+list of cards goes out in one ``st.html`` call, which keeps the spacing even and
+the element count down.
+
+This module is also the only thing that starts anything, and it writes nothing
+itself: it launches ``scripts/weekly_update.py`` detached and then reads the log
+that script owns. A Streamlit rerun - any widget click, a phone dropping the
+websocket - raises inside the script thread, so a loop streaming a subprocess
+here would lose the tail of a five-minute run. Tailing a file does not care.
 """
 
 from __future__ import annotations
@@ -21,18 +26,19 @@ import pandas as pd
 import streamlit as st
 
 from ucl import config
-from ucl.webapp import loaders, paths, staleness
+from ucl.webapp import freshness, loaders, paths, staleness
+from ucl.webapp.cards import FONT, card
+from ucl.webapp.palette import FAINT, MUTED, TEXT
 
 __all__ = [
     "SEASON", "update_argv", "is_running", "start_update", "sidebar",
-    "probability_table", "log_pane", "update_controls", "missing",
+    "section", "freshness_badge", "note", "missing", "probability_table",
+    "log_pane", "update_controls",
 ]
 
 SEASON = paths.SEASON
 MODEL_PYTHON = config.PROJECT_ROOT / ".venv" / "bin" / "python"
 UPDATE_SCRIPT = config.PROJECT_ROOT / "scripts" / "weekly_update.py"
-
-PERCENT = {"format": "%.1f%%"}
 
 
 def update_argv(season: str = SEASON, *, prune_stale: bool = False,
@@ -80,21 +86,51 @@ def missing(error: FileNotFoundError) -> None:
     st.info(f"{error}", icon=":material/hourglass_empty:")
 
 
+def section(title: str, caption: str = "") -> None:
+    """A compact section heading - tighter than st.subheader on a phone."""
+    body = (f'<div style="color:{TEXT};font:700 14px/1.3 {FONT};'
+            f'letter-spacing:0.2px;margin:2px 0 6px 0">{title}</div>')
+    if caption:
+        body += (f'<div style="color:{FAINT};font:500 11.5px/1.4 {FONT};'
+                 f'margin:-4px 0 8px 0">{caption}</div>')
+    st.html(body)
+
+
+def freshness_badge(status: dict, information: pd.DataFrame | None = None) -> str:
+    """Render the freshness badge and return its level."""
+    name, label, _ = freshness.level(status, information)
+    st.badge(label, color=freshness.LEVELS[name][1],
+             icon={"fresh": ":material/check_circle:",
+                   "ageing": ":material/schedule:",
+                   "stale": ":material/error:"}[name])
+    return name
+
+
+def note(text: str) -> None:
+    """A quiet caption, for the caveats that must stay attached to a number."""
+    st.html(f'<div style="color:{FAINT};font:500 11.5px/1.5 {FONT};'
+            f'margin:4px 0 10px 0">{text}</div>')
+
+
 def sidebar(season: str = SEASON) -> dict:
     """The run banner and any staleness warnings, on every page."""
     status = loaders.load_status(season)
+    try:
+        information = loaders.load_information(season)
+    except FileNotFoundError:
+        information = None
+
     with st.sidebar:
         st.markdown(f"### {season}")
         if not status:
             st.warning("No update has run yet; showing the frozen archive.")
             return status
-        matchday = status.get("through_matchday", 0)
+        freshness_badge(status, information)
         st.markdown(
-            f"**through matchday {matchday}**  \n"
+            f"**through matchday {status.get('through_matchday', 0)}**  \n"
             f"as of {status.get('as_of', '?')}  \n"
-            f"{status.get('iterations', '?'):,} iterations, model "
-            f"{status.get('model', '?')}  \n"
-            f"run {str(status.get('finished_at_utc', '?'))[:16]}"
+            f"{status.get('iterations', 0):,} iterations, model "
+            f"{status.get('model', '?')}"
         )
         if is_running(status):
             st.info("An update is running.", icon=":material/sync:")
@@ -102,22 +138,19 @@ def sidebar(season: str = SEASON) -> dict:
             st.error(f"Last run refused: {status.get('message', '')}")
         elif status.get("state") == "failed":
             st.error(f"Last run failed: {status.get('message', '')}")
-
-        try:
-            information = loaders.load_information(season)
-        except FileNotFoundError:
-            return status
-        for line in staleness.warnings(information, status):
-            st.warning(line, icon=":material/schedule:")
+        if information is not None:
+            for line in staleness.warnings(information, status):
+                st.warning(line, icon=":material/schedule:")
     return status
 
 
 def probability_table(frame: pd.DataFrame, *, percent=(), decimals=(),
                       progress=(), height: int | None = None) -> None:
-    """One place where number formatting is decided.
+    """The table view, kept for sorting 36 rows on a desktop.
 
-    ``st.dataframe`` sorts on a header click, which is what makes every table
-    in the app sortable without any code of its own.
+    ``st.dataframe`` sorts on a header click, which is why this is still worth
+    having beside the cards - but it scrolls sideways on a phone, so it is
+    never the default.
     """
     configuration = {}
     for column in percent:
@@ -129,9 +162,8 @@ def probability_table(frame: pd.DataFrame, *, percent=(), decimals=(),
     for column in progress:
         if column in frame.columns:
             configuration[column] = st.column_config.ProgressColumn(
-                format="%.3f", min_value=0.0, max_value=float(
-                    max(frame[column].max(), 1e-9)))
-    # Streamlit rejects height=None, so only pass one when asked for.
+                format="%.3f", min_value=0.0,
+                max_value=float(max(frame[column].max(), 1e-9)))
     extra = {"height": height} if height else {}
     st.dataframe(frame, hide_index=True, column_config=configuration, **extra)
 
@@ -154,7 +186,6 @@ def update_controls(season: str = SEASON) -> None:
     status = loaders.load_status(season)
     running = is_running(status)
 
-    token = None
     try:
         token = st.secrets.get("update_token")
     except Exception:                               # noqa: BLE001 - no secrets file
@@ -167,14 +198,12 @@ def update_controls(season: str = SEASON) -> None:
                 st.rerun()
             elif supplied:
                 st.error("Wrong token.")
-            st.caption(
-                "The update button is behind a token because this app is "
-                "served without authentication on your network.")
+            note("The update button is behind a token because this app is "
+                 "served without authentication on your network.")
             return
     else:
-        st.caption(
-            "No `update_token` in .streamlit/secrets.toml: anyone who can open "
-            "this page can start an update.")
+        note("No <code>update_token</code> in .streamlit/secrets.toml: anyone "
+             "who can open this page can start an update.")
 
     prune = st.checkbox(
         "Allow pruning superseded football-data files",
@@ -184,7 +213,8 @@ def update_controls(season: str = SEASON) -> None:
              "Ticking this lets the update delete them permanently.")
     force = st.checkbox("Re-run even if the inputs are unchanged", value=False)
 
-    if st.button("Run the weekly update", disabled=running, type="primary"):
+    if st.button("Run the weekly update", disabled=running, type="primary",
+                 width="stretch"):
         start_update(season, prune_stale=prune, force=force)
         st.rerun()
     if running:
