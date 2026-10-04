@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from ucl.webapp import cards, loaders, paths, st_helpers
+from ucl.models import scorelines
+from ucl.webapp import cards, clubs, loaders, paths, st_helpers
 
 SEASON = paths.SEASON
 
@@ -45,7 +46,23 @@ else:
     frame = frame.sort_values(["date", "home"])
 
 rows = frame.assign(date=frame.date.dt.strftime("%d %b")).to_dict("records")
-st.html(cards.fixture_cards_html(rows))
+
+# One card per element rather than one blob, so each can carry its own detail
+# panel underneath. cards.fixture_cards_html is exactly this concatenation, and
+# a test pins that, so the markup cannot drift from the other views'.
+grids = scorelines.folded_matrix(frame.xg_home.to_numpy(), frame.xg_away.to_numpy())
+for index, row in enumerate(rows):
+    st.html(cards.fixture_card_html(row))
+    with st.expander(f"Scoreline grid · {clubs.code(row['home'])} v "
+                     f"{clubs.code(row['away'])}"):
+        st.html(cards.scoreline_grid_html(grids[index], row["home"], row["away"]))
+        st_helpers.note(
+            f"Every scoreline's probability, as a percentage. The last row and "
+            f"column gather five goals or more, so the 36 cells are a complete "
+            f"distribution and add to 100%. Independent Poisson at the "
+            f"published rates ({row['xg_home']:.2f} and {row['xg_away']:.2f}), "
+            f"so there is no score-correlation correction - Dixon-Coles was "
+            f"tested against this model and returned a null.")
 
 st_helpers.note(
     "The bar is home / draw / away, left to right. <b>pick</b> is simply the "

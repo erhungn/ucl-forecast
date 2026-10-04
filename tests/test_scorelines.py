@@ -171,3 +171,44 @@ def test_a_goalless_model_is_handled_rather_than_dividing_by_zero():
     assert derived["probability_over"][0] == pytest.approx(0.0)
     assert derived["probability_modal"][0] == pytest.approx(1.0)
     assert derived["modal_home"][0] == 0 and derived["modal_away"][0] == 0
+
+
+def test_the_folded_matrix_is_a_complete_distribution():
+    """Folding the tail is the difference between a display and a truncation."""
+    matrix = scorelines.folded_matrix([2.5, 1.1], [0.7, 1.4])
+    assert matrix.shape == (2, 6, 6)
+    assert matrix.sum(axis=(1, 2)) == pytest.approx([1.0, 1.0], abs=1e-12)
+
+
+def test_the_folded_matrix_equals_summing_the_full_grid_into_bands():
+    """Two implementations of the same arithmetic, which is the point."""
+    rates_home, rates_away = [2.786, 0.92, 3.15], [0.637, 1.93, 0.56]
+    folded = scorelines.folded_matrix(rates_home, rates_away)
+    joint = scorelines.joint_matrix(rates_home, rates_away, max_goals=60)
+    gathered = np.zeros_like(folded)
+    for i in range(61):
+        for j in range(61):
+            gathered[:, min(i, 5), min(j, 5)] += joint[:, i, j]
+    assert gathered == pytest.approx(folded, abs=1e-12)
+
+
+def test_the_folded_matrix_agrees_with_the_closed_forms():
+    """The grid and the Skellam/Poisson answers must be the same numbers."""
+    rate_home, rate_away = [2.786], [0.637]
+    matrix = scorelines.folded_matrix(rate_home, rate_away)[0]
+    draw = float(np.trace(matrix[:5, :5]))
+    # The folded corner holds P(both score 5 or more), which includes draws, so
+    # the comparison is restricted to the exactly-known part of the grid.
+    exact = scorelines.joint_matrix(rate_home, rate_away, max_goals=60)[0]
+    assert draw == pytest.approx(float(np.trace(exact[:5, :5])), abs=1e-12)
+    assert matrix[:, 1:].sum() + matrix[:, 0].sum() == pytest.approx(1.0, abs=1e-12)
+
+
+def test_the_tail_band_is_the_exact_survival_function():
+    """The last row is P(home scores 5 or more), not a truncated sum."""
+    from scipy.stats import poisson
+
+    rate_home, rate_away = 3.15, 0.56
+    matrix = scorelines.folded_matrix([rate_home], [rate_away])[0]
+    assert matrix[5, :].sum() == pytest.approx(poisson.sf(4, rate_home), abs=1e-12)
+    assert matrix[:, 5].sum() == pytest.approx(poisson.sf(4, rate_away), abs=1e-12)

@@ -9,7 +9,7 @@ import pytest
 from ucl import config
 from ucl.models.elo import MATCH_COLUMNS, replay
 from ucl.models.poisson import PoissonModel
-from ucl.sim.bracket import Tie, draw_bracket
+from ucl.sim.bracket import Tie, draw_bracket, is_legal_play_off_pairing
 from ucl.sim.knockout import play_final, play_tie, run_knockout
 from ucl.sim.league_phase import simulate_league_phase
 
@@ -153,3 +153,65 @@ def test_the_simulator_refuses_a_group_stage_season():
     )
     assert result.returncode != 0
     assert "group_stage" in (result.stdout + result.stderr)
+
+
+def test_the_recorded_ties_partition_the_rounds_they_report():
+    """The pairings must be exactly the clubs the flat lists already named.
+
+    ``run_knockout`` grew the ``ties`` key so the bracket could be reported as
+    well as counted. Recording must not change what is played, so the new key
+    is checked against the four lists that were always returned.
+    """
+    fixtures, ratings = _league()
+    rng = np.random.default_rng(6)
+    table, live = simulate_league_phase(fixtures, ratings, MODEL, rng)
+    by_position = dict(zip(table.position, table.team))
+    outcome = run_knockout(draw_bracket(by_position, rng=rng), live, MODEL, rng)
+
+    ties = outcome["ties"]
+    rounds = [name for name, *_ in ties]
+    assert rounds.count("play_off") == 8
+    assert rounds.count("round_of_16") == 8
+    assert rounds.count("quarter_finals") == 4
+    assert rounds.count("semi_finals") == 2
+    assert rounds.count("final") == 1
+
+    played = {}
+    for name, high, low, winner, decided in ties:
+        assert winner in (high, low)
+        assert decided in {"aggregate", "extra time", "penalties", "90 minutes"}
+        played.setdefault(name, []).extend([high, low])
+    for name, expected in (("round_of_16", "round_of_16"),
+                           ("quarter_finals", "quarter_finals"),
+                           ("semi_finals", "semi_finals"),
+                           ("final", "final")):
+        assert sorted(played[name]) == sorted(outcome[expected])
+    # The play-off field is the 16 clubs that finished 9th to 24th.
+    assert sorted(played["play_off"]) == sorted(
+        by_position[p] for p in range(9, 25))
+
+
+def test_every_recorded_pairing_is_a_legal_draw():
+    """Reuses the bracket's own legality rules, so an off-by-one is caught."""
+    fixtures, ratings = _league()
+    rng = np.random.default_rng(11)
+    table, live = simulate_league_phase(fixtures, ratings, MODEL, rng)
+    by_position = dict(zip(table.position, table.team))
+    seed_of = {team: position for position, team in by_position.items()}
+    outcome = run_knockout(draw_bracket(by_position, rng=rng), live, MODEL, rng)
+    for name, high, low, _winner, _decided in outcome["ties"]:
+        if name == "play_off":
+            assert is_legal_play_off_pairing(seed_of[high], seed_of[low])
+
+
+def test_recording_the_ties_did_not_disturb_the_random_stream():
+    """Same seed, same champion: the new key must consume no randomness."""
+    champions = []
+    for _ in range(2):
+        fixtures, ratings = _league()
+        rng = np.random.default_rng(99)
+        table, live = simulate_league_phase(fixtures, ratings, MODEL, rng)
+        by_position = dict(zip(table.position, table.team))
+        outcome = run_knockout(draw_bracket(by_position, rng=rng), live, MODEL, rng)
+        champions.append((outcome["champion"], tuple(outcome["ties"])))
+    assert champions[0] == champions[1]

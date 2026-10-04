@@ -157,3 +157,25 @@ iterations. `simulate_md0.log` and `simulate_md1.log` are the runs.
 `gap_residuals_2026-27.csv`, `v1_vs_v2_market.csv`,
 `candidate_gap_decision.json`, `candidate_gap_folds.csv`,
 `gate_v1_reproduction.log`, `simulate_md0.log`, `simulate_md1.log`.
+
+## The matchday-0 detail artefacts
+
+Added for the app's club, projected-table and knockout pages. They are the
+pre-tournament snapshot, archived here because the weekly run forecasts through
+the latest **complete** matchday and so can never produce a matchday-0 artefact
+again - `weekly_update.py` step 3 seeds `live/` from these.
+
+| file | what it is |
+|---|---|
+| `positions_2026-27.csv` | `team, position, count` - P(finishing position) as integer counts out of 50,000. Rows and columns both sum to 50,000, and it averages to the `mean_position` already in the forecast. |
+| `knockout_paths_2026-27.csv` | `round, club, opponent, count` - who met whom, both directions of every tie. Summed over opponents it reproduces all five published stage probabilities exactly. |
+| `ratings_2026-27.csv` | `team, elo` at the as-of date. At matchday 0 that is the cutoff, so it equals `elo_at_cutoff`; at later matchdays it does not, and the app must not label the two alike. |
+| `remaining_fixtures_2026-27.csv` | every fixture's 1X2 at these ratings. Restricted to the next matchday it is byte-identical to `next_matchday_1_2026-27.csv`. Beyond it, it is **not** the simulator's marginal - it ignores the results in between. |
+| `club_inputs.csv` | the frozen covariates per club with coverage flags, from `scripts/export_club_inputs.py`. It reproduces `gap_residuals_2026-27.csv` and `../model_v1/squad_values_2026-27.csv` exactly; those two had no script behind them before. |
+
+These were produced by re-running the simulator at the archived seed after
+`run_knockout` gained an additive `ties` key and `simulate.py` four writers.
+**The gate was byte-identity**: `forecast_2026-27.csv` and
+`forecast_2026-27_md1.csv` are unchanged at 50,000 iterations and seed
+20260907, which is what proves the recording consumed no randomness. All twelve
+simulator checks pass in both runs, two of them new and about these files.

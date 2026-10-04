@@ -17,7 +17,8 @@ import pandas as pd
 import pytest
 
 from ucl.config import PROJECT_ROOT
-from ucl.webapp import cards, clubs, freshness, palette
+from ucl.models import scorelines
+from ucl.webapp import cards, clubs, freshness, nav, palette
 
 CONFIG = PROJECT_ROOT / ".streamlit" / "config.toml"
 
@@ -335,3 +336,108 @@ def test_an_unknown_model_is_refused():
 
     with pytest.raises(ValueError, match="unknown model"):
         tracking.probabilities("2026-27", ["Arsenal"], ["Napoli"], "v9")
+
+
+# --- links, which are how a club page is reached ---------------------------
+
+
+def test_a_code_round_trips_to_its_club_and_back():
+    for team, code in clubs.CODES.items():
+        assert clubs.from_code(code) == team
+        assert clubs.code(team) == code
+    assert len(set(clubs.CODES.values())) == 36
+
+
+def test_an_unknown_code_is_none_rather_than_an_error():
+    """The code arrives from a URL the user can edit."""
+    for value in ("ZZZ", "", "   ", "arsenal fc"):
+        assert clubs.from_code(value) is None
+    assert clubs.from_code("ars") == "Arsenal"      # case and padding forgiven
+    assert clubs.from_code(" BVB ") == "Borussia Dortmund"
+
+
+def test_a_club_whose_name_has_a_slash_still_makes_a_valid_link():
+    """``Bodo/Glimt`` is why the link carries the code and not the name."""
+    link = nav.club_href("Bodo/Glimt")
+    assert link == "club?club=BOD"
+    assert "/" not in link.split("?", 1)[1]
+
+
+def test_a_link_carries_the_pin_through_the_page_load_it_causes():
+    """A full navigation empties session state, so the pin must be in the URL."""
+    assert nav.club_href("Arsenal", pin="Porto") == "club?club=ARS&pin=POR"
+    assert nav.club_href("Arsenal", pin="POR") == "club?club=ARS&pin=POR"
+    assert nav.club_href("Arsenal", pin=None) == "club?club=ARS"
+    assert nav.club_href("Arsenal", pin="nonsense") == "club?club=ARS"
+    assert nav.home_href(pin="Porto") == "./?pin=POR"
+    assert nav.home_href() == "./"
+
+
+def test_which_club_a_url_means():
+    assert nav.resolve_club("ARS") == "Arsenal"
+    assert nav.resolve_club("Arsenal") == "Arsenal"
+    assert nav.resolve_club(None, pin="POR") == "Porto"
+    assert nav.resolve_club("", pin="POR") == "Porto"
+    assert nav.resolve_club("ZZZ", pin="POR") == "Porto"
+    assert nav.resolve_club("ZZZ", default="Arsenal") == "Arsenal"
+    assert nav.resolve_club(None) is None
+
+
+def test_a_club_name_cannot_inject_markup_through_its_link():
+    body = cards.club_link('"><script>x</script>', "inner")
+    assert "<script>" not in body
+    assert "inner" in body
+
+
+def test_a_linked_row_keeps_the_card_count_the_tests_rely_on():
+    """The anchor carries no radius, so counting cards still counts cards."""
+    rows = [{"team": "Arsenal", "value": 0.5}, {"team": "Porto", "value": 0.2}]
+    linked = cards.compact_rows_html(rows, pin="Arsenal")
+    plain = cards.compact_rows_html(rows, link=False)
+    assert linked.count("<a href=") == 2
+    assert plain.count("<a href=") == 0
+    assert linked.count("border-radius:10px") == plain.count("border-radius:10px")
+
+
+# --- the fixture card split, and the scoreline grid ------------------------
+
+
+def test_the_card_blob_is_exactly_the_concatenation_of_its_cards():
+    """A view may render one card at a time without the markup drifting."""
+    rows = [
+        {"home": "Arsenal", "away": "Porto", "p_home": 0.6, "p_draw": 0.25,
+         "p_away": 0.15, "date": "20 Oct"},
+        {"home": "Porto", "away": "Arsenal", "p_home": 0.3, "p_draw": 0.3,
+         "p_away": 0.4},
+    ]
+    assert cards.fixture_cards_html(rows) == "".join(
+        cards.fixture_card_html(row) for row in rows)
+    assert cards.fixture_cards_html(rows, show_result=True) == "".join(
+        cards.fixture_card_html(row, show_result=True) for row in rows)
+
+
+def test_the_scoreline_grid_is_a_complete_distribution():
+    """Folding the tail is what makes the printed percentages add to 100."""
+    matrix = scorelines.folded_matrix([2.5], [0.7])[0]
+    assert matrix.shape == (6, 6)
+    assert matrix.sum() == pytest.approx(1.0, abs=1e-12)
+    html = cards.scoreline_grid_html(matrix, "Arsenal", "Porto")
+    assert html.count("border-radius:3px") == 36
+    assert "5+" in html
+
+
+def test_the_grid_cells_are_the_probabilities_they_claim():
+    matrix = scorelines.folded_matrix([1.6], [1.1])[0]
+    html = cards.scoreline_grid_html(matrix, "Arsenal", "Porto")
+    printed = [int(value) for value in
+               re.findall(r'font:600 10\.5px/1 [^"]+">(\d+)</div>', html)]
+    expected = [round(float(value) * 100) for row in matrix for value in row]
+    assert printed == expected
+
+
+def test_a_bare_truncation_would_have_lost_a_sixth_of_the_mass():
+    """Why the last band exists, asserted rather than claimed in a comment."""
+    bare = scorelines.joint_matrix([2.786], [0.637], max_goals=4)[0].sum()
+    folded = scorelines.folded_matrix([2.786], [0.637])[0].sum()
+    assert bare < 0.86
+    assert folded == pytest.approx(1.0, abs=1e-12)

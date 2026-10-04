@@ -15,19 +15,15 @@ from ucl.webapp.palette import AWAY, HOME
 SEASON = paths.SEASON
 PURPLE = "#a78bfa"
 
+# The run banner, the freshness badge and the staleness warnings are written
+# by st_helpers.banner() in Home.py, which runs on every page.
 status = loaders.load_status(SEASON)
-try:
-    information = loaders.load_information(SEASON)
-except FileNotFoundError:
-    information = None
 
 matchday = paths.latest_matchday(SEASON)
 
 # --- header ---------------------------------------------------------------
-left, right = st.columns([3, 2], vertical_alignment="center")
-left.title("UCL 2026-27")
-with right:
-    st_helpers.freshness_badge(status, information)
+# No freshness badge here: st_helpers.banner() writes it on every page now.
+st.title("UCL 2026-27")
 
 headline = f"**Matchday {matchday}** played" if matchday else "Pre-tournament"
 next_matchday = status.get("next_matchday")
@@ -48,6 +44,23 @@ except FileNotFoundError as error:
     st_helpers.missing(error)
     st.stop()
 
+# --- the pinned club, if there is one -------------------------------------
+# The pin lives in the URL, so it survives the page loads that tapping a club
+# card causes, and saving the page to a phone's home screen is what makes it
+# outlive the session. Nothing is written to disk and there are no accounts.
+with st.expander("Pin a club", icon=":material/push_pin:"):
+    pin = st_helpers.pin_control(sorted(forecast.team))
+    st_helpers.note(
+        "Shown at the top of this screen. It travels in the address, so add "
+        "this page to your home screen to keep it.")
+
+if pin and (forecast.team == pin).any():
+    ranked = forecast.sort_values("p_champion", ascending=False).reset_index(drop=True)
+    ranked["position"] = ranked.index + 1
+    mine = ranked.loc[ranked.team == pin]
+    st_helpers.section(pin, "your pinned club")
+    st.html(cards.club_cards_html(mine.to_dict("records"), pin=pin))
+
 # --- favourites and movers, side by side on a desktop, stacked on a phone -
 favourites, movers = st.columns(2, gap="medium")
 
@@ -58,7 +71,7 @@ with favourites:
         {"team": row.team, "value": row.p_champion, "colour": PURPLE,
          "delta": getattr(row, "d_p_champion", None)}
         for row in top.itertuples()
-    ]))
+    ], pin=pin))
 
 with movers:
     moved = movement.movement(SEASON)
@@ -74,9 +87,9 @@ with movers:
              "before": row.p_top8_prev, "after": row.p_top8,
              "delta": row.d_p_top8}
             for row in ranked.itertuples()
-        ]))
+        ], pin=pin))
     else:
-        st.html(cards.mover_rows_html([]))
+        st.html(cards.mover_rows_html([], pin=pin))
 
 # --- the band the table is in --------------------------------------------
 st_helpers.section("The three bands",
@@ -87,11 +100,13 @@ band_one, band_two = st.columns(2, gap="medium")
 with band_one:
     st.html(cards.compact_rows_html([
         {"team": row.team, "value": row.p_top8, "colour": HOME,
-         "delta": getattr(row, "d_p_top8", None)} for row in eight.itertuples()]))
+         "delta": getattr(row, "d_p_top8", None)}
+        for row in eight.itertuples()], pin=pin))
 with band_two:
     st.html(cards.compact_rows_html([
         {"team": row.team, "value": row.p_eliminated, "colour": AWAY,
-         "delta": getattr(row, "d_p_eliminated", None)} for row in out.itertuples()]))
+         "delta": getattr(row, "d_p_eliminated", None)}
+        for row in out.itertuples()], pin=pin))
 
 # --- next fixtures --------------------------------------------------------
 if next_matchday:

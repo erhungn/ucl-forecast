@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 569 tests, ~60s
+.venv/bin/python -m pytest                                       # 598 tests
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -301,7 +301,11 @@ python scripts/colab/fetch_current.py --season 2627 --prune-stale   # from Colab
 refreshes the league-phase page once, detects the last **complete** matchday,
 re-forecasts through it, scores what was played, scores every candidate model
 on the played matches, and publishes to `live/<season>/`, which is the only
-directory the app reads. It refuses rather
+directory the app reads. Beside the forecast it publishes the position matrix,
+the knockout pairings, the current Elo and every remaining fixture's 1X2. The
+matchday-0 copies of those are seeded from `results/model_v2/`, because the
+weekly run forecasts through the latest *complete* matchday and so can never
+produce a matchday-0 artefact again. It refuses rather
 than guesses - mid-round, on a skipped round, on a cache collision (unless
 `--prune-stale`), or when a verification check fails - and it does no work at
 all when the inputs are unchanged.
@@ -330,10 +334,32 @@ stays at 2026-07-06 while the others advance, visibly, in every run.
 
 ## Local app
 
-A single-user Streamlit app over the published forecasts, built mobile-first: a
-home screen with the state of the season, the title race, the next matchday's
-1X2 probabilities, movement across matchdays, the played matches scored against
-a uniform baseline, and the information set with the update button.
+A single-user Streamlit app over the published forecasts, built mobile-first.
+Nine pages behind a top tab bar: the state of the season, the title race, the
+projected table, the next matchday's 1X2 probabilities, paths to the final,
+movement across matchdays, the played matches scored against a uniform
+baseline, the information set with the update button, and a page per club.
+
+Tapping a club anywhere opens its page - a link to `club?club=ARS`, since
+Streamlit cannot set a widget from inside injected HTML. That is a full page
+load, which empties the session, so the pinned club travels in the address
+beside it; a pinned club shows at the top of the home screen, and saving the
+page to a phone's home screen is what makes the pin outlive the browser
+session. Nothing is written and there are no accounts.
+
+Three pages are built on artefacts the simulator always computed and threw
+away. The **projected table** is P(finishing position) for all 36 clubs: the
+counter behind `mean_position`, which was averaged and discarded 50,000 times a
+run. **Paths to the final** is P(club A meets club B in round R), recorded from
+the pairings `run_knockout` used to flatten into a list of names. It is
+deliberately not a filled-in bracket: the draw is re-made inside the Article 19
+constraints in every iteration, so "the most likely club in bracket slot 3"
+would be a number with no referent. The seeding ladder shown beneath it is the
+regulation rather than a simulation, which is the part the real draw will slot
+into. Both artefacts are tested against the forecast they ship beside - summing
+the position matrix over 1-8, 9-24 and 25-36 reproduces the three published
+band probabilities, and summing a club's opponents in a round reproduces its
+published stage probability, both exactly.
 
 Probabilities are drawn as cards with horizontal stacked bars rather than wide
 tables, because a table is the one Streamlit layout that does not reflow on a
@@ -342,7 +368,14 @@ favourite's chance of winning by three or more: the modal scoreline is 1-0, 1-1
 or 2-0 for most fixtures however lopsided they are, so on its own it hides the
 difference between a close game and a rout. Those three come from closed forms
 on the same Poisson rates - the sum of two Poissons for the total, the Skellam
-law for the margin - and are tested against sums over the scoreline matrix. Clubs are identified by three-letter codes on badges in their own kit
+law for the margin - and are tested against sums over the scoreline matrix.
+Tapping a fixture opens the whole scoreline distribution as a grid. It runs 0-4
+goals each way with a fifth band gathering five or more, whose mass is the
+exact Poisson survival function: a bare 0-4 grid holds only 85% of the mass on
+a one-sided fixture, and a grid of percentages that visibly does not add up
+would be worse than one extra band.
+
+Clubs are identified by three-letter codes on badges in their own kit
 colours - no crests or logos. Every badge is checked to WCAG AA (4.5:1) by test,
 and because a dozen of these clubs play in near-identical reds and yellows, two
 badges in one card switch the away side to an outline whenever the colours are
@@ -358,7 +391,13 @@ scripts/run_app.sh --lan      # also reachable from a phone on the same Wi-Fi
 Streamlit lives in its own `.venv-app` so `requirements.lock.txt` stays exactly
 the model's environment; `weekly_update.py` always runs the pipeline with
 `.venv/bin/python` whichever interpreter serves the UI. The app only reads
-`live/` and `results/model_v1/`.
+`live/` and `results/model_v2/`, and a test asserts that running any page
+changes no file under `live/`, `results/` or `outputs/`.
+
+Page switches re-read the published CSVs rather than caching them: the whole of
+`live/` is 72KB and all eight loaders together take 3.3ms, so a cache would
+save nothing measurable and would add a way to serve a stale forecast after an
+update.
 
 The theme is dark, set in `.streamlit/config.toml`, which overrides the
 viewer's own light/dark preference by design. Those colours mirror
@@ -367,10 +406,10 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 596 tests in all.
+`.venv-app/bin/python -m pytest` - 649 tests in all (598 of them in `.venv`).
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
-five pages give nothing away, but the update button starts a five-minute job
+pages give nothing away, but the update button starts a five-minute job
 and, with its prune box ticked, deletes cached raw data. Put an `update_token`
 in `.streamlit/secrets.toml` (gitignored) and the button goes behind it; omit
 `--lan` and the app is localhost-only.
@@ -434,13 +473,14 @@ src/ucl/
   sim/               league_phase.py, tiebreakers.py, bracket.py, knockout.py
   backtest.py        forward chaining, paired losses, cluster bootstrap
   evaluate.py        log-loss, RPS, Brier, calibration
-  webapp/            logic behind the local app: palette, clubs, cards, charts
+  webapp/            logic behind the local app: palette, clubs, cards, charts,
+                     nav (URLs), opponents (knockout pairings)
                      (no Streamlit imports but one)
-scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, build_*,
-                     check_*, weekly_update
+scripts/             17 entry points: fetch, fit, simulate, backtest, tune_*, build_*,
+                     check_*, export_club_inputs, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
 app/                 Streamlit entry point and the six views
-tests/               596 tests (569 in .venv, all of them in .venv-app)
+tests/               649 tests (598 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)

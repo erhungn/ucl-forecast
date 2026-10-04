@@ -47,10 +47,10 @@ panels = st.toggle("Small multiples", value=False,
 if chosen:
     if panels:
         st.altair_chart(charts.small_multiples(series, column, chosen),
-                        use_container_width=True)
+                        width="stretch")
     else:
         st.altair_chart(charts.trend(series, column, chosen),
-                        use_container_width=True)
+                        width="stretch")
     st_helpers.note(
         f"{label} by matchday. Matchday 0 is the pre-tournament forecast; the "
         f"faint lines are the clubs not selected.")

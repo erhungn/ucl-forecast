@@ -22,7 +22,12 @@ from ucl.webapp.palette import (
 
 __all__ = [
     "MAX_SERIES", "LABELS", "trend", "small_multiples", "running_score",
+    "position_bars", "position_heatmap", "BAND_EDGES",
 ]
+
+#: The last position in each qualifying band: 1-8 straight through, 9-24 to the
+#: play-off, 25-36 out. Drawn as a rule so the heatmap reads against the format.
+BAND_EDGES = (8, 24)
 
 #: Beyond eight lines a categorical palette stops distinguishing them, which is
 #: why the club picker caps rather than colouring all 36.
@@ -144,3 +149,74 @@ def running_score(frame: pd.DataFrame, metric: str) -> alt.Chart:
         .configure_view(strokeWidth=0)
         .configure(background="transparent")
     )
+
+
+def position_bars(frame: pd.DataFrame, team: str) -> alt.LayerChart:
+    """One club's finishing-position distribution, with the band edges marked.
+
+    The per-club slice of the position matrix. It reads at phone width where
+    the full 36x36 grid is tight, and it is the question a person actually has
+    about their own club.
+    """
+    mine = frame[frame.team == team]
+    bars = (
+        alt.Chart(mine)
+        .mark_bar(color=HOME, cornerRadiusTopLeft=2, cornerRadiusTopRight=2)
+        .encode(
+            x=alt.X("position:O", title="finishing position",
+                    axis=alt.Axis(values=[1, 4, 8, 12, 16, 20, 24, 28, 32, 36],
+                                  labelColor=MUTED, titleColor=FAINT,
+                                  labelAngle=0, grid=False)),
+            y=alt.Y("probability:Q", title=None,
+                    axis=alt.Axis(format=".0%", labelColor=MUTED,
+                                  gridColor=BORDER)),
+            tooltip=["position:O", alt.Tooltip("probability:Q", format=".2%")],
+        )
+    )
+    edges = (
+        alt.Chart(pd.DataFrame({"position": list(BAND_EDGES)}))
+        .mark_rule(color=FAINT, strokeDash=[3, 3], xOffset=6)
+        .encode(x=alt.X("position:O"))
+    )
+    return (bars + edges).properties(height=150)
+
+
+def position_heatmap(frame: pd.DataFrame, order) -> alt.LayerChart:
+    """P(finishing position) for every club, clubs down and positions across.
+
+    Three choices make this legible on a phone rather than a wall of one
+    colour. The scale is square-root: the mass sits on each club's own few
+    positions, and a linear ramp leaves nine cells in ten indistinguishable.
+    Cells under half a percent are dropped, so the band each club occupies is
+    the only thing drawn. And rows are ordered by mean position, which turns
+    the whole grid into a single descending diagonal - the point of the chart.
+    """
+    drawn = frame[frame.probability >= 0.005].copy()
+    drawn["code"] = drawn.team.map(clubs.code)
+    codes = [clubs.code(team) for team in order]
+    cells = (
+        alt.Chart(drawn)
+        .mark_rect()
+        .encode(
+            x=alt.X("position:O", title=None,
+                    axis=alt.Axis(values=[1, 8, 16, 24, 36], labelAngle=0,
+                                  labelColor=MUTED, domain=False, ticks=False)),
+            y=alt.Y("code:N", title=None, sort=codes,
+                    axis=alt.Axis(labelColor=MUTED, labelFontSize=9,
+                                  labelPadding=1, domain=False, ticks=False)),
+            color=alt.Color(
+                "probability:Q", legend=None,
+                scale=alt.Scale(type="sqrt", domain=[0, 0.12], clamp=True,
+                                range=["#16343a", HOME])),
+            tooltip=["team:N", "position:O",
+                     alt.Tooltip("probability:Q", format=".1%")],
+        )
+    )
+    # A rule cannot sit between two ordinal categories, so the band edge is
+    # drawn as the outline of its own column.
+    edges = (
+        alt.Chart(drawn[drawn.position.isin(BAND_EDGES)])
+        .mark_rect(fill=None, stroke=TEXT, strokeWidth=0.6, strokeOpacity=0.5)
+        .encode(x=alt.X("position:O"), y=alt.Y("code:N", sort=codes))
+    )
+    return (cells + edges).properties(height=36 * 12)

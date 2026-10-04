@@ -29,7 +29,7 @@ from ucl.models.forecast import fit as fit_forecast
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
 from ucl.sim.bracket import draw_bracket
-from ucl.sim.knockout import run_knockout
+from ucl.sim.knockout import ROUNDS, run_knockout
 from ucl.sim.league_phase import simulate_league_phase
 
 STAGES = ["top8", "play_off", "eliminated", "round_of_16", "quarter_finals",
@@ -43,6 +43,50 @@ def load_fixtures(season_label: str) -> pd.DataFrame:
     frame["home_id"] = frame.home.map(lookup).fillna(frame.home)
     frame["away_id"] = frame.away.map(lookup).fillna(frame.away)
     return frame
+
+
+def fixture_table(subset: pd.DataFrame, base: dict[str, float], model,
+                  label: str) -> pd.DataFrame:
+    """Per-fixture probabilities from the fitted model at the current ratings.
+
+    No Monte Carlo is involved - this is the model evaluated once per fixture -
+    so it does not depend on the iteration count, and every row is independent
+    of every other. That is what lets the same function serve both the next
+    matchday and all the remaining ones.
+    """
+    from ucl.backtest import probabilities_from_rates
+
+    elo_home = subset.home_id.map(base).to_numpy(dtype=float)
+    elo_away = subset.away_id.map(base).to_numpy(dtype=float)
+    rate_home, rate_away = model.rates_for(
+        subset.home_id.to_numpy(), subset.away_id.to_numpy(), elo_home, elo_away)
+    probabilities = probabilities_from_rates(rate_home, rate_away)
+    outcomes = ("home", "draw", "away")
+    # The scoreline distribution the rates imply: the modal score, the expected
+    # goals themselves, and the two tail probabilities that actually separate a
+    # one-sided fixture from a close one.
+    derived = scorelines.summarise_fixture(rate_home, rate_away)
+    rows = []
+    for i, row in enumerate(subset.itertuples()):
+        pick = int(probabilities[i].argmax())
+        favourite = row.home_id if derived["home_favoured"][i] else row.away_id
+        rows.append({
+            "season": label, "matchday": int(row.matchday),
+            "date": row.date.date(),
+            # Club ids, as the evaluation tables use, so the two join.
+            "home": row.home_id, "away": row.away_id,
+            "p_home": probabilities[i, 0], "p_draw": probabilities[i, 1],
+            "p_away": probabilities[i, 2], "pick": outcomes[pick],
+            "p_pick": probabilities[i, pick],
+            "modal_score": f"{derived['modal_home'][i]}-{derived['modal_away'][i]}",
+            "p_modal": float(derived["probability_modal"][i]),
+            "xg_home": float(derived["expected_home"][i]),
+            "xg_away": float(derived["expected_away"][i]),
+            "p_over_2_5": float(derived["probability_over"][i]),
+            "favourite": favourite,
+            "p_favourite_by_3": float(derived["probability_favourite_margin"][i]),
+        })
+    return pd.DataFrame(rows)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -135,6 +179,12 @@ def main(argv: list[str] | None = None) -> int:
 
     counts = {stage: Counter() for stage in STAGES}
     positions = Counter()
+    # Who met whom, per round, both directions, so every club's row carries its
+    # own opponent distribution. Recording only; the RNG never sees it.
+    pairings = Counter()
+    #: How each tie was settled, reported in the log rather than published: it
+    #: is a property of the format, not of any club's forecast.
+    decided = Counter()
     unresolved_ties = 0
     rng = np.random.default_rng(args.seed)
 
@@ -162,6 +212,10 @@ def main(argv: list[str] | None = None) -> int:
         counts["semi_finals"].update(outcome["semi_finals"])
         counts["final"].update(outcome["final"])
         counts["champion"].update([outcome["champion"]])
+        for round_name, team_high, team_low, _winner, decided_by in outcome["ties"]:
+            pairings[(round_name, team_high, team_low)] += 1
+            pairings[(round_name, team_low, team_high)] += 1
+            decided[(round_name, decided_by)] += 1
     elapsed = time.perf_counter() - simulation_started
 
     n = args.iterations
@@ -186,6 +240,13 @@ def main(argv: list[str] | None = None) -> int:
         frame["model_over_market"] = frame.p_champion / frame.p_market
 
     # --- verification ---
+    # A club plays exactly one tie in each round it reaches, so its opponent
+    # counts must sum to the stage count the forecast publishes. That ties the
+    # new artefact to the old one inside the same run.
+    ties_per_club = Counter()
+    for (round_name, club, _opponent), count in pairings.items():
+        ties_per_club[(round_name, club)] += count
+
     checks = {
         "P(champion) sums to 1": abs(frame.p_champion.sum() - 1.0) < 1e-9,
         "P(top8)+P(play-off)+P(eliminated) = 1 per club":
@@ -198,6 +259,12 @@ def main(argv: list[str] | None = None) -> int:
         "8 reach the quarter-finals": abs(frame.p_quarter_finals.sum() - 8.0) < 1e-9,
         "4 reach the semi-finals": abs(frame.p_semi_finals.sum() - 4.0) < 1e-9,
         "2 reach the final": abs(frame.p_final.sum() - 2.0) < 1e-9,
+        # The two new artefacts, checked against the forecast they ship beside.
+        "36 clubs fill 36 positions in every iteration":
+            all(sum(positions[(t, p)] for t in teams) == n for p in range(1, 37)),
+        "each club's knockout pairings sum to its stage count":
+            all(ties_per_club[(round_name, team)] == counts[round_name][team]
+                for round_name in ROUNDS for team in teams),
         "stage probabilities are monotone":
             bool((frame.p_round_of_16 >= frame.p_quarter_finals - 1e-12).all()
                  and (frame.p_quarter_finals >= frame.p_semi_finals - 1e-12).all()
@@ -253,43 +320,64 @@ def main(argv: list[str] | None = None) -> int:
     # The next matchday, from the frozen model at the current ratings. This
     # table needs no Monte Carlo - it is the fitted model evaluated at the
     # as-of ratings - so it is identical whatever --iterations says.
-    next_matchday = fixtures[fixtures.matchday == matchday + 1]
     written = [out.name]
-    if len(next_matchday):
-        from ucl.backtest import probabilities_from_rates
 
-        elo_home = next_matchday.home_id.map(base).to_numpy(dtype=float)
-        elo_away = next_matchday.away_id.map(base).to_numpy(dtype=float)
-        rate_home, rate_away = model.rates_for(
-            next_matchday.home_id.to_numpy(), next_matchday.away_id.to_numpy(),
-            elo_home, elo_away)
-        probabilities = probabilities_from_rates(rate_home, rate_away)
-        outcomes = ("home", "draw", "away")
-        # The scoreline distribution the rates imply: the modal score, the
-        # expected goals themselves, and the two tail probabilities that
-        # actually separate a one-sided fixture from a close one.
-        derived = scorelines.summarise_fixture(rate_home, rate_away)
-        rows = []
-        for i, row in enumerate(next_matchday.itertuples()):
-            pick = int(probabilities[i].argmax())
-            favourite = row.home_id if derived["home_favoured"][i] else row.away_id
-            rows.append({
-                "season": cfg.label, "matchday": matchday + 1,
-                "date": row.date.date(),
-                # Club ids, as the evaluation tables use, so the two join.
-                "home": row.home_id, "away": row.away_id,
-                "p_home": probabilities[i, 0], "p_draw": probabilities[i, 1],
-                "p_away": probabilities[i, 2], "pick": outcomes[pick],
-                "p_pick": probabilities[i, pick],
-                "modal_score": f"{derived['modal_home'][i]}-{derived['modal_away'][i]}",
-                "p_modal": float(derived["probability_modal"][i]),
-                "xg_home": float(derived["expected_home"][i]),
-                "xg_away": float(derived["expected_away"][i]),
-                "p_over_2_5": float(derived["probability_over"][i]),
-                "favourite": favourite,
-                "p_favourite_by_3": float(derived["probability_favourite_margin"][i]),
-            })
-        preview = pd.DataFrame(rows)
+    # --- the distribution behind mean_position --------------------------------
+    # The counter was always built; collapsing it to a mean threw away the
+    # 36-way distribution, which is what the standings view needs.
+    # Integer counts, not probabilities: rounding 36 probabilities to six
+    # decimals would make every invariant below tolerance-bound, where counts
+    # make them exact. The app divides by the row total, which is n by
+    # construction.
+    positions_frame = pd.DataFrame(
+        [{"team": team, "position": position,
+          "count": positions[(team, position)]}
+         for team in teams for position in range(1, 37)]
+    )
+    positions_path = OUTPUTS_DIR / f"positions_{cfg.label}{suffix}.csv"
+    positions_frame.to_csv(positions_path, index=False)
+    written.append(positions_path.name)
+
+    # --- the ratings this run actually started from ---------------------------
+    # Elo at the as-of date, so after matchday k has been played. This is NOT
+    # the frozen cutoff rating the covariates were built on, and the app must
+    # not label the two the same way.
+    ratings_frame = pd.DataFrame({"team": teams,
+                                  "elo": [base[team] for team in teams]})
+    ratings_path = OUTPUTS_DIR / f"ratings_{cfg.label}{suffix}.csv"
+    ratings_frame.to_csv(ratings_path, index=False, float_format="%.3f")
+    written.append(ratings_path.name)
+
+    # --- who met whom, per knockout round -------------------------------------
+    # Both directions of every tie, so each club's rows are its own opponent
+    # distribution and sum to its probability of playing in that round.
+    order = {name: i for i, name in enumerate(ROUNDS)}
+    pairing_frame = pd.DataFrame(
+        [{"round": round_name, "club": club, "opponent": opponent,
+          "count": count}
+         for (round_name, club, opponent), count in sorted(
+             pairings.items(), key=lambda item: (order[item[0][0]], item[0][1],
+                                                 -item[1], item[0][2]))],
+        columns=["round", "club", "opponent", "count"],
+    )
+    pairing_path = OUTPUTS_DIR / f"knockout_paths_{cfg.label}{suffix}.csv"
+    pairing_frame.to_csv(pairing_path, index=False)
+    written.append(pairing_path.name)
+
+    print("\n=== knockout ties ===")
+    for round_name in ROUNDS:
+        total = sum(c for (r, _), c in decided.items() if r == round_name)
+        if not total:
+            continue
+        shares = ", ".join(
+            f"{how} {count / total:.1%}"
+            for (r, how), count in sorted(decided.items(), key=lambda i: -i[1])
+            if r == round_name)
+        print(f"  {round_name:15s} {total / n:.2f} ties per iteration: {shares}")
+
+    next_matchday = fixtures[fixtures.matchday == matchday + 1]
+    if len(next_matchday):
+        preview = fixture_table(next_matchday, base, model, cfg.label)
         # One frame drives both the table and the file, so they cannot disagree.
         print(f"\n=== matchday {matchday + 1}: {len(preview)} fixtures ===")
         print(f"  {'home':22s} {'away':22s} {'home':>6s} {'draw':>6s} {'away':>6s}"
@@ -308,6 +396,18 @@ def main(argv: list[str] | None = None) -> int:
         preview_path = OUTPUTS_DIR / f"next_matchday_{matchday + 1}_{cfg.label}.csv"
         preview.to_csv(preview_path, index=False, float_format="%.6f")
         written.append(preview_path.name)
+
+    # --- every remaining fixture, at today's ratings ---------------------------
+    # The same calculation as the table above, over matchdays matchday+1..8. For
+    # anything beyond the next matchday this is NOT the simulator's marginal: it
+    # ignores the results in between, which is exactly why the app labels it
+    # "at today's ratings".
+    remaining_fixtures = fixtures[fixtures.matchday > matchday]
+    if len(remaining_fixtures):
+        remaining_table = fixture_table(remaining_fixtures, base, model, cfg.label)
+        remaining_path = OUTPUTS_DIR / f"remaining_fixtures_{cfg.label}{suffix}.csv"
+        remaining_table.to_csv(remaining_path, index=False, float_format="%.6f")
+        written.append(remaining_path.name)
 
     print(f"\nsetup {setup:.1f}s, simulation {elapsed:.1f}s "
           f"({elapsed / n * 1000:.2f} ms/iteration), written to {', '.join(written)}")

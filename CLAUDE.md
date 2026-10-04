@@ -94,13 +94,21 @@ Outputs:
 src/ucl/
   config.py
   data/          # loaders, team-name mapping, cutoff checks
-  models/        # elo.py, dixon_coles.py
+  models/        # elo.py, poisson.py, covariates.py, gap.py, scorelines.py,
+                 # forecast.py, dixon_coles.py, market.py
   sim/           # league_phase.py, tiebreakers.py, knockout.py, bracket.py
+  webapp/        # the local app's logic; st_helpers.py is the only module
+                 # that imports Streamlit, nav.py the URL contract,
+                 # opponents.py the knockout pairings
   evaluate.py    # RPS, log-loss, calibration
-scripts/         # fetch_data.py, fit.py, simulate.py, backtest.py
+  significance.py  # block, cluster and two-way bootstraps, Diebold-Mariano
+scripts/         # fetch_data.py, fit.py, simulate.py, backtest.py,
+                 # weekly_update.py, export_club_inputs.py
+app/             # Home.py + views/, read-only over live/
 tests/
 data/raw/  data/processed/
-outputs/         # csv tables + figures
+live/<season>/   # what the app reads; written only by weekly_update.py
+outputs/         # scratch: csv tables + figures, and what tests clobber
 ```
 
 ## Milestones
@@ -125,6 +133,41 @@ outputs/         # csv tables + figures
 9. Significance of the accepted improvements - DONE. Two-way clustering shows
    neither acceptance is robustly significant; the decisions stand as made and
    the claims are restated. **Model development is closed.**
+10. Local app, round 2: club pages, the projected table, paths to the final,
+   fixture scoreline grids and a top tab bar - DONE. **No model change.** The
+   simulator gained four additive outputs (position matrix, knockout pairings,
+   current Elo, every remaining fixture's 1X2) and `run_knockout` an additive
+   `ties` key; the gate was that both 50,000-iteration forecasts stay
+   byte-identical to `results/model_v2/` at the archived seed, which they do.
+   `scripts/export_club_inputs.py` replaces two hand-written CSVs and
+   reproduces them exactly.
+
+## Rules the app work established
+- **Any new simulator output is additive, and the gate is byte-identity** of
+  every existing output at the archived seed. Accumulating inside the Monte
+  Carlo loop is safe only while no new statement touches `rng` and no existing
+  `rng` consumer moves; the gate proves it rather than assuming it.
+- **Publish counts, not probabilities,** for anything the app divides. Counts
+  make the invariants exact: the position matrix's rows and columns both sum to
+  the iteration count, and a club's opponent counts sum to its stage count.
+  Rounding 36 probabilities to six decimals would make every one of those
+  tolerance-bound instead.
+- **A new artefact must be tested against the forecast it ships beside.** The
+  position matrix reproduces the three published band probabilities and
+  `mean_position`; the pairings reproduce all five published stage
+  probabilities. Both hold exactly, which is what proves the artefact came out
+  of the same run.
+- **Do not run pytest while a gate run is in flight.** Three test modules shell
+  out to `simulate.py` at 5-25 iterations and write the same scratch
+  `outputs/`, which silently replaced a 50,000-iteration artefact mid-gate.
+- **No bracket is drawn as if it were the bracket.** `draw_bracket` re-randomises
+  every iteration, so a bracket slot has no persistent occupant; only
+  P(A meets B in round R) is reportable, and the seeding ladder is shown as the
+  regulation it is.
+- **The app stays a reader.** `st.context.cookies` is read-only and the pin is
+  therefore a URL parameter, not a file; a test asserts no page writes under
+  `live/`, `results/` or `outputs/`. Loader caching was measured and rejected:
+  3.3ms for every loader a page uses.
 
 ## What the backtests established (do not relitigate without new evidence)
 - **Acceptance rule, standing, from milestone 8 onward: the primary bootstrap

@@ -210,12 +210,30 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
                 f"{archived.relative_to(config.PROJECT_ROOT)} ({why})")
             if switched:
                 # Every later snapshot was produced by the old model.
-                for stale in sorted(paths.season_dir(cfg.label).glob(
-                        "forecast_md*.csv")):
-                    if stale != seed:
-                        stale.unlink()
-                        log(f"  removed {stale.name}: produced by "
-                            f"{previous.get('model')}")
+                for pattern in ("forecast_md*.csv", "positions_md*.csv",
+                                "knockout_paths_md*.csv", "ratings_md*.csv",
+                                "remaining_fixtures_md*.csv"):
+                    for stale in sorted(paths.season_dir(cfg.label).glob(pattern)):
+                        if stale != seed:
+                            stale.unlink()
+                            log(f"  removed {stale.name}: produced by "
+                                f"{previous.get('model')}")
+        # The weekly run forecasts through the latest complete matchday, so it
+        # can never produce a matchday-0 artefact again. These are seeded from
+        # the archive alongside the forecast, or the detail views would have
+        # nothing for matchday 0.
+        for archived_name, destination in (
+                (f"positions_{cfg.label}.csv", paths.positions_path(0, cfg.label)),
+                (f"knockout_paths_{cfg.label}.csv",
+                 paths.knockout_paths_path(0, cfg.label)),
+                (f"ratings_{cfg.label}.csv", paths.ratings_path(0, cfg.label)),
+                (f"remaining_fixtures_{cfg.label}.csv",
+                 paths.remaining_fixtures_path(0, cfg.label)),
+                ("club_inputs.csv", paths.club_inputs_path(cfg.label))):
+            archived_detail = paths.ARCHIVE_DIR / archived_name
+            if archived_detail.exists() and (not destination.exists() or switched):
+                update.publish(archived_detail, destination)
+                log(f"  seeded {destination.name}")
 
     # --- 4. refresh the played matches, exactly once ------------------------
     log("\n=== results ===")
@@ -385,6 +403,22 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
             preview, paths.next_matchday_path(matchday + 1, cfg.label)).name)
     elif len(later):
         log(f"  NOTE: {preview.name} was not written")
+    # The four artefacts the detail views read. Each is guarded: a view that
+    # cannot find its file says so and the rest of the app is unaffected.
+    for source_name, destination in (
+            (f"positions_{cfg.label}{suffix}.csv",
+             paths.positions_path(matchday, cfg.label)),
+            (f"knockout_paths_{cfg.label}{suffix}.csv",
+             paths.knockout_paths_path(matchday, cfg.label)),
+            (f"ratings_{cfg.label}{suffix}.csv",
+             paths.ratings_path(matchday, cfg.label)),
+            (f"remaining_fixtures_{cfg.label}{suffix}.csv",
+             paths.remaining_fixtures_path(matchday, cfg.label))):
+        source = OUTPUTS_DIR / source_name
+        if source.exists():
+            artefacts.append(update.publish(source, destination).name)
+        else:
+            log(f"  NOTE: {source_name} was not written")
     for played_matchday in scored:
         source = OUTPUTS_DIR / f"matchday_{played_matchday}_evaluation_{cfg.label}.csv"
         if source.exists():

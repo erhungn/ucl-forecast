@@ -25,12 +25,15 @@ import numpy as np
 from scipy.stats import poisson, skellam
 
 __all__ = [
-    "MAX_GOALS", "joint_matrix", "modal_scoreline", "probability_over",
-    "probability_margin_at_least", "summarise_fixture",
+    "MAX_GOALS", "BANDS", "joint_matrix", "folded_matrix", "modal_scoreline",
+    "probability_over", "probability_margin_at_least", "summarise_fixture",
 ]
 
 #: The grid the forecast has always used for scorelines.
 MAX_GOALS = 10
+
+#: Goals shown individually before the tail is gathered: 0-4, then "5 or more".
+BANDS = 5
 
 
 def _rates(rate_home, rate_away) -> tuple[np.ndarray, np.ndarray]:
@@ -45,6 +48,26 @@ def joint_matrix(rate_home, rate_away, *, max_goals: int = MAX_GOALS) -> np.ndar
     home_pmf = poisson.pmf(goals[None, :], home[:, None])
     away_pmf = poisson.pmf(goals[None, :], away[:, None])
     return home_pmf[:, :, None] * away_pmf[:, None, :]
+
+
+def folded_matrix(rate_home, rate_away, *, bands: int = BANDS) -> np.ndarray:
+    """``(n, bands + 1, bands + 1)`` of scoreline probabilities summing to 1.
+
+    Goals 0..bands-1 keep a row and column of their own and everything above
+    is gathered into the last one, whose mass is the exact Poisson survival
+    function rather than a truncated sum. That matters for display: a bare
+    0-4 x 0-4 grid holds only about 85% of the mass on a one-sided fixture, and
+    a grid of absolute percentages that does not add up is worse than one that
+    says "5 or more".
+    """
+    home, away = _rates(rate_home, rate_away)
+    goals = np.arange(bands)
+    home_pmf = poisson.pmf(goals[None, :], home[:, None])
+    away_pmf = poisson.pmf(goals[None, :], away[:, None])
+    # The tail, exactly: P(X >= bands) = sf(bands - 1).
+    home_full = np.concatenate([home_pmf, poisson.sf(bands - 1, home)[:, None]], axis=1)
+    away_full = np.concatenate([away_pmf, poisson.sf(bands - 1, away)[:, None]], axis=1)
+    return home_full[:, :, None] * away_full[:, None, :]
 
 
 def modal_scoreline(rate_home, rate_away, *, max_goals: int = MAX_GOALS):

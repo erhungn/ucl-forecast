@@ -20,7 +20,11 @@ from ucl.models.poisson import PoissonModel
 from ucl.sim.bracket import Bracket, Tie
 from ucl.sim.league_phase import simulate_match
 
-__all__ = ["TieResult", "play_tie", "play_final", "run_knockout"]
+__all__ = ["ROUNDS", "TieResult", "play_tie", "play_final", "run_knockout"]
+
+#: The five two-sided rounds, in order. ``champion`` is not a round: it is the
+#: winner of the final, so it has no opponent and never appears in ``ties``.
+ROUNDS = ("play_off", "round_of_16", "quarter_finals", "semi_finals", "final")
 
 
 @dataclass(frozen=True)
@@ -127,12 +131,22 @@ def run_knockout(
     ratings: dict[str, float],
     model: PoissonModel,
     rng: np.random.Generator,
-) -> dict[str, list[str] | str]:
-    """Play the whole knockout phase and report who reached each round."""
+) -> dict[str, list[str] | str | list[tuple[str, str, str, str]]]:
+    """Play the whole knockout phase and report who reached each round.
+
+    Besides the five flat lists, the result carries ``ties``: one
+    ``(round, team_high, team_low, winner, decided_by)`` per tie played, in the
+    order they were played. Nothing in the simulation depends on it - it is the
+    pairings that the flat lists throw away, kept so the bracket can be
+    reported as well as counted.
+    """
+    ties: list[tuple[str, str, str, str, str]] = []
     play_off_winner: dict[int, str] = {}
     for tie in bracket.play_offs:
         result = play_tie(tie, ratings, model, rng)
         play_off_winner[tie.seed_high] = result.winner
+        ties.append(("play_off", tie.team_high, tie.team_low,
+                     result.winner, result.decided_by))
 
     # Fill each round-of-16 slot with the qualifier the draw sent there.
     slots: list[tuple[str, int, str, int]] = []
@@ -148,6 +162,8 @@ def run_knockout(
         )
         # The eliminator inherits the beaten seed's position (Article 19.04).
         survivors.append((result.winner, seed_high))
+        ties.append(("round_of_16", team_high, team_low,
+                     result.winner, result.decided_by))
 
     quarter_finalists = [team for team, _ in survivors]
     semi: list[tuple[str, int]] = []
@@ -157,6 +173,8 @@ def run_knockout(
             (team_b, seed_b), (team_a, seed_a))
         result = play_tie(Tie(high[0], low[0], high[1], low[1]), ratings, model, rng)
         semi.append((result.winner, min(seed_a, seed_b)))
+        ties.append(("quarter_finals", high[0], low[0],
+                     result.winner, result.decided_by))
 
     semi_finalists = [team for team, _ in semi]
     finalists: list[tuple[str, int]] = []
@@ -166,15 +184,23 @@ def run_knockout(
             (team_b, seed_b), (team_a, seed_a))
         result = play_tie(Tie(high[0], low[0], high[1], low[1]), ratings, model, rng)
         finalists.append((result.winner, min(seed_a, seed_b)))
+        ties.append(("semi_finals", high[0], low[0],
+                     result.winner, result.decided_by))
 
     champion = play_final(
         finalists[0][0], finalists[0][1], finalists[1][0], finalists[1][1],
         ratings, model, rng,
     )
+    # The final is at a neutral venue, so there is no host; the pair is still
+    # recorded in seeding order, as every other round is.
+    first, second = sorted(finalists, key=lambda pair: pair[1])
+    ties.append(("final", first[0], second[0],
+                 champion.winner, champion.decided_by))
     return {
         "round_of_16": round_of_16,
         "quarter_finals": quarter_finalists,
         "semi_finals": semi_finalists,
         "final": [team for team, _ in finalists],
         "champion": champion.winner,
+        "ties": ties,
     }

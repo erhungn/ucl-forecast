@@ -11,6 +11,9 @@ The app is a **reader**. The only writer of ``live/`` is
 
 from __future__ import annotations
 
-from ucl.webapp import loaders, movement, paths, scoring, staleness, update
+from ucl.webapp import (
+    loaders, movement, nav, opponents, paths, scoring, staleness, update,
+)
 
-__all__ = ["loaders", "movement", "paths", "scoring", "staleness", "update"]
+__all__ = ["loaders", "movement", "nav", "opponents", "paths", "scoring",
+           "staleness", "update"]

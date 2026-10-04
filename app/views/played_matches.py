@@ -83,7 +83,7 @@ if pieces:
                                       default="log_loss",
                                       label_visibility="collapsed")
         st.altair_chart(charts.running_score(running, metric or "log_loss"),
-                        use_container_width=True)
+                        width="stretch")
         st_helpers.note("Cumulative, so each point includes every matchday up "
                         "to it.")
 

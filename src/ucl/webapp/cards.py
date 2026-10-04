@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from html import escape
 
-from ucl.webapp import clubs
+from ucl.webapp import clubs, nav
 from ucl.webapp.palette import (
     AWAY, BORDER, DOWN, DRAW, FAINT, FLAT, HOME, MUTED, SURFACE,
     SURFACE_RAISED, TEXT, UP,
@@ -28,9 +28,10 @@ from ucl.webapp.palette import (
 
 __all__ = [
     "LABEL_MINIMUM", "FONT", "badge_html", "badge_pair_html", "delta_html",
-    "goal_chips_html",
-    "stacked_bar_html", "narrow_outcomes", "bar_row_html", "fixture_cards_html",
-    "club_cards_html", "compact_rows_html", "mover_rows_html", "card",
+    "goal_chips_html", "club_link", "scoreline_grid_html",
+    "stacked_bar_html", "narrow_outcomes", "bar_row_html", "fixture_card_html",
+    "fixture_cards_html", "club_cards_html", "compact_rows_html",
+    "mover_rows_html", "card",
 ]
 
 #: A label only fits inside a segment from about this share upwards; below it
@@ -40,6 +41,24 @@ LABEL_MINIMUM = 0.12
 FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif"
 
 _OUTCOMES = (("home", HOME, "H"), ("draw", DRAW, "D"), ("away", AWAY, "A"))
+
+
+def club_link(team: str, body: str, *, pin: str | None = None) -> str:
+    """Wrap a row or card body in the link to that club's page.
+
+    ``color:inherit`` and ``text-decoration:none`` are not optional: without
+    them Streamlit's link colour bleeds through every club name on the card.
+    The wrapper carries no border radius of its own, so the card count the
+    tests rely on is unchanged.
+    """
+    return (f'<a href="{escape(nav.club_href(team, pin=pin))}" '
+            f'style="display:block;text-decoration:none;color:inherit;'
+            f'-webkit-tap-highlight-color:rgba(45,212,191,0.18)">{body}</a>')
+
+
+def _maybe_link(team: str, link: bool, pin: str | None, body: str) -> str:
+    """``body``, wrapped in the club's link when linking is on."""
+    return club_link(team, body, pin=pin) if link else body
 
 
 def card(body: str, *, raised: bool = False) -> str:
@@ -192,50 +211,62 @@ def _title_line(home: str, away: str, *, date: str = "") -> str:
     )
 
 
-def fixture_cards_html(rows, *, show_result: bool = False) -> str:
-    """One card per fixture: the bar, the pick, the modal scoreline.
+def fixture_card_html(row, *, show_result: bool = False) -> str:
+    """One fixture's card: the bar, the pick, the modal scoreline.
 
-    ``rows`` are mappings with ``home``, ``away``, ``p_home``, ``p_draw``,
+    ``row`` is a mapping with ``home``, ``away``, ``p_home``, ``p_draw``,
     ``p_away`` and optionally ``date``, ``pick``, ``modal_score``, ``p_modal``,
     ``score`` and ``result``.
     """
-    out = []
-    for row in rows:
-        home, away = row["home"], row["away"]
-        probabilities = (float(row["p_home"]), float(row["p_draw"]),
-                         float(row["p_away"]))
-        footer = []
-        if show_result and row.get("score"):
-            outcome = str(row.get("result", ""))
-            colour = {"home": HOME, "draw": DRAW, "away": AWAY}.get(outcome, MUTED)
-            actual = {"home": home, "draw": "draw", "away": away}.get(outcome, outcome)
-            footer.append(
-                f'<span style="color:{colour};font:700 12px/1.3 {FONT}">'
-                f'{escape(str(row["score"]))} {escape(actual)}</span>')
-            if row.get("p_actual") is not None:
-                footer.append(f'forecast {float(row["p_actual"]) * 100:.1f}%')
-        if row.get("pick"):
-            footer.append(f'pick {escape(str(row["pick"]))}')
-        if row.get("modal_score"):
-            footer.append(
-                f'likely {escape(str(row["modal_score"]))} '
-                f'({float(row.get("p_modal", 0)) * 100:.1f}%)')
-        narrow = narrow_outcomes(*probabilities)
-        if narrow:
-            footer.append(narrow)
-        body = (
-            _title_line(home, away, date=str(row.get("date", "")))
-            + stacked_bar_html(*probabilities)
-            + (f'<div style="color:{MUTED};font:500 11.5px/1.45 {FONT};'
-               f'margin-top:8px">{" · ".join(footer)}</div>' if footer else "")
-            + goal_chips_html(row)
-        )
-        out.append(card(body))
+    home, away = row["home"], row["away"]
+    probabilities = (float(row["p_home"]), float(row["p_draw"]),
+                     float(row["p_away"]))
+    footer = []
+    if show_result and row.get("score"):
+        outcome = str(row.get("result", ""))
+        colour = {"home": HOME, "draw": DRAW, "away": AWAY}.get(outcome, MUTED)
+        actual = {"home": home, "draw": "draw", "away": away}.get(outcome, outcome)
+        footer.append(
+            f'<span style="color:{colour};font:700 12px/1.3 {FONT}">'
+            f'{escape(str(row["score"]))} {escape(actual)}</span>')
+        if row.get("p_actual") is not None:
+            footer.append(f'forecast {float(row["p_actual"]) * 100:.1f}%')
+    if row.get("pick"):
+        footer.append(f'pick {escape(str(row["pick"]))}')
+    if row.get("modal_score"):
+        footer.append(
+            f'likely {escape(str(row["modal_score"]))} '
+            f'({float(row.get("p_modal", 0)) * 100:.1f}%)')
+    narrow = narrow_outcomes(*probabilities)
+    if narrow:
+        footer.append(narrow)
+    body = (
+        _title_line(home, away, date=str(row.get("date", "")))
+        + stacked_bar_html(*probabilities)
+        + (f'<div style="color:{MUTED};font:500 11.5px/1.45 {FONT};'
+           f'margin-top:8px">{" · ".join(footer)}</div>' if footer else "")
+        + goal_chips_html(row)
+    )
+    return card(body)
+
+
+def fixture_cards_html(rows, *, show_result: bool = False) -> str:
+    """Every fixture's card, in one string - the blob a view hands ``st.html``.
+
+    Exactly the concatenation of :func:`fixture_card_html`, which a test pins,
+    so a view can render the cards one at a time (to put a detail panel under
+    each) without the markup drifting from the blob the other views use.
+    """
+    out = [fixture_card_html(row, show_result=show_result) for row in rows]
     return "".join(out) or _empty("No fixtures to show.")
 
 
-def club_cards_html(rows) -> str:
-    """One card per club: three bars with their change since last matchday."""
+def club_cards_html(rows, *, pin: str | None = None, link: bool = True) -> str:
+    """One card per club: three bars with their change since last matchday.
+
+    The whole card is a link to the club's page unless ``link`` is false; the
+    link carries ``pin`` through the page load it causes.
+    """
     out = []
     for row in rows:
         team = row["team"]
@@ -257,17 +288,21 @@ def club_cards_html(rows) -> str:
             + bar_row_html("out", float(row["p_eliminated"]), AWAY,
                            delta=row.get("d_p_eliminated"))
         )
-        out.append(card(head + bars))
+        body = head + bars
+        out.append(card(club_link(team, body, pin=pin) if link else body))
     return "".join(out) or _empty("No clubs to show.")
 
 
-def compact_rows_html(rows) -> str:
-    """The home screen's favourites: one tight line each, no wasted height."""
+def compact_rows_html(rows, *, pin: str | None = None, link: bool = True) -> str:
+    """The home screen's favourites: one tight line each, no wasted height.
+
+    Each line is a link to that club's page unless ``link`` is false.
+    """
     out = []
     for index, row in enumerate(rows, 1):
         team = row["team"]
         value = float(row["value"])
-        out.append(
+        out.append(_maybe_link(team, link, pin,
             f'<div style="display:flex;align-items:center;gap:8px;'
             f'padding:7px 0;border-bottom:1px solid {BORDER}">'
             f'<span style="color:{FAINT};font:700 12px/1.3 {FONT};'
@@ -286,16 +321,16 @@ def compact_rows_html(rows) -> str:
             f'width:46px;text-align:right">{value * 100:.1f}%</span>'
             f'<span style="width:62px;text-align:right">'
             f'{delta_html(row.get("delta"))}</span></div>'
-        )
+        ))
     return "".join(out) or _empty("Nothing published yet.")
 
 
-def mover_rows_html(rows) -> str:
+def mover_rows_html(rows, *, pin: str | None = None, link: bool = True) -> str:
     """Biggest movers: from, to, and the change, on one line each."""
     out = []
     for row in rows:
         team = row["team"]
-        out.append(
+        out.append(_maybe_link(team, link, pin,
             f'<div style="display:flex;align-items:center;gap:8px;'
             f'padding:7px 0;border-bottom:1px solid {BORDER}">'
             f'{badge_html(team)}'
@@ -308,8 +343,46 @@ def mover_rows_html(rows) -> str:
             f'</span>'
             f'<span style="width:62px;text-align:right">'
             f'{delta_html(row.get("delta"))}</span></div>'
-        )
+        ))
     return "".join(out) or _empty("No movement to show yet.")
+
+
+def scoreline_grid_html(matrix, home: str, away: str, *,
+                        labels=("0", "1", "2", "3", "4", "5+")) -> str:
+    """The scoreline distribution as a grid, home goals down, away goals across.
+
+    ``matrix`` is square and must sum to 1: the caller folds the tail into the
+    last row and column, so the grid is a complete distribution rather than a
+    truncation that quietly loses a sixth of the mass on a one-sided fixture.
+    Cell shading is the square root of the probability - the mass concentrates
+    on three or four cells, and a linear ramp leaves everything else looking
+    identically empty.
+    """
+    size = len(labels)
+    peak = max((float(value) for row in matrix for value in row), default=0.0)
+    head = "".join(
+        f'<div style="color:{FAINT};font:600 10px/1 {FONT};text-align:center">'
+        f'{escape(label)}</div>' for label in labels)
+    cells = []
+    for i in range(size):
+        cells.append(f'<div style="color:{FAINT};font:600 10px/1 {FONT};'
+                     f'text-align:right;padding-right:3px">{escape(labels[i])}</div>')
+        for j in range(size):
+            value = float(matrix[i][j])
+            weight = (value / peak) ** 0.5 if peak > 0 else 0.0
+            colour = TEXT if weight > 0.55 else MUTED
+            cells.append(
+                f'<div style="background:rgba(45,212,191,{weight * 0.82:.3f});'
+                f'border-radius:3px;padding:5px 0;text-align:center;'
+                f'color:{colour};font:600 10.5px/1 {FONT}">'
+                f'{value * 100:.0f}</div>')
+    return (
+        f'<div style="color:{FAINT};font:500 11px/1.4 {FONT};margin:2px 0 6px 0">'
+        f'{badge_html(home)} down, {badge_html(away)} across. Percentages.</div>'
+        f'<div style="display:grid;grid-template-columns:repeat({size + 1},1fr);'
+        f'gap:2px;align-items:center">'
+        f'<div></div>{head}{"".join(cells)}</div>'
+    )
 
 
 def _empty(message: str) -> str:

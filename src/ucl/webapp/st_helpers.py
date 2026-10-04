@@ -20,20 +20,22 @@ from __future__ import annotations
 
 import os
 import subprocess
+from collections.abc import Sequence
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 from ucl import config
-from ucl.webapp import freshness, loaders, paths, staleness
+from ucl.webapp import clubs, freshness, loaders, nav, paths, staleness
 from ucl.webapp.cards import FONT, card
 from ucl.webapp.palette import FAINT, MUTED, TEXT
 
 __all__ = [
-    "SEASON", "update_argv", "is_running", "start_update", "sidebar",
-    "section", "freshness_badge", "note", "missing", "probability_table",
-    "log_pane", "update_controls",
+    "SEASON", "NO_PIN", "update_argv", "is_running", "start_update", "sidebar",
+    "banner", "section", "freshness_badge", "note", "missing",
+    "probability_table", "log_pane", "update_controls", "pinned",
+    "pin_control",
 ]
 
 SEASON = paths.SEASON
@@ -112,36 +114,79 @@ def note(text: str) -> None:
             f'margin:4px 0 10px 0">{text}</div>')
 
 
-def sidebar(season: str = SEASON) -> dict:
-    """The run banner and any staleness warnings, on every page."""
+def banner(season: str = SEASON) -> dict:
+    """The run banner and any staleness warnings, on every page.
+
+    Written into the main column rather than the sidebar: navigation moved to
+    the top bar, and on a phone the sidebar is behind a hamburger, so anything
+    in it is effectively unread. One line, because it is on every page.
+    """
     status = loaders.load_status(season)
     try:
         information = loaders.load_information(season)
     except FileNotFoundError:
         information = None
 
-    with st.sidebar:
-        st.markdown(f"### {season}")
-        if not status:
-            st.warning("No update has run yet; showing the frozen archive.")
-            return status
-        freshness_badge(status, information)
-        st.markdown(
-            f"**through matchday {status.get('through_matchday', 0)}**  \n"
-            f"as of {status.get('as_of', '?')}  \n"
-            f"{status.get('iterations', 0):,} iterations, model "
-            f"{status.get('model', '?')}"
-        )
-        if is_running(status):
-            st.info("An update is running.", icon=":material/sync:")
-        elif status.get("state") == "refused":
-            st.error(f"Last run refused: {status.get('message', '')}")
-        elif status.get("state") == "failed":
-            st.error(f"Last run failed: {status.get('message', '')}")
-        if information is not None:
-            for line in staleness.warnings(information, status):
-                st.warning(line, icon=":material/schedule:")
+    if not status:
+        st.warning(f"{season}: no update has run yet; showing the frozen archive.")
+        return status
+    freshness_badge(status, information)
+    st.html(
+        f'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:baseline;'
+        f'color:{MUTED};font:500 11.5px/1.5 {FONT};margin:0 0 6px 0">'
+        f'<span style="color:{TEXT};font-weight:700">{season}</span>'
+        f'<span>through matchday {status.get("through_matchday", 0)}</span>'
+        f'<span>· as of {status.get("as_of", "?")}</span>'
+        f'<span>· {status.get("iterations", 0):,} iterations</span>'
+        f'<span>· model {status.get("model", "?")}</span></div>'
+    )
+    if is_running(status):
+        st.info("An update is running.", icon=":material/sync:")
+    elif status.get("state") == "refused":
+        st.error(f"Last run refused: {status.get('message', '')}")
+    elif status.get("state") == "failed":
+        st.error(f"Last run failed: {status.get('message', '')}")
+    if information is not None:
+        for line in staleness.warnings(information, status):
+            st.warning(line, icon=":material/schedule:")
     return status
+
+
+#: The old name, kept so nothing that imported it breaks mid-refactor.
+sidebar = banner
+
+#: What the "no club pinned" option is worth in the URL. An empty string would
+#: be dropped from the query string, which a bound widget reads as "cleared".
+NO_PIN = "none"
+
+
+def pinned(season: str = SEASON) -> str | None:
+    """The pinned club's name, from the URL, or ``None``.
+
+    Read from the query parameter rather than from session state, because every
+    club link is a full page load: the parameter is the only thing that
+    survives it. Safe to call on a page that does not render the pin control.
+    """
+    return nav.resolve_club(st.query_params.get(nav.PIN_PARAM))
+
+
+def pin_control(options: Sequence[str], *, label: str = "Pinned club") -> str | None:
+    """The pin selector, bound to the URL. Returns the club's name or ``None``.
+
+    The widget's value is the three-letter code, so the URL reads ``?pin=ARS``
+    rather than a percent-encoded club name. ``bind="query-params"`` keeps it
+    in the URL across page switches, and saving the page to a phone's home
+    screen is then what makes the pin outlive the browser session - the app
+    writes nothing, and there are no accounts.
+    """
+    codes = [NO_PIN, *(clubs.CODES[name] for name in options if name in clubs.CODES)]
+    st.selectbox(
+        label, codes, key=nav.PIN_PARAM, bind="query-params",
+        persist_state="session", label_visibility="collapsed",
+        format_func=lambda value: ("No club pinned" if value == NO_PIN
+                                   else f"{clubs.from_code(value)} ({value})"),
+    )
+    return nav.resolve_club(st.session_state.get(nav.PIN_PARAM))
 
 
 def probability_table(frame: pd.DataFrame, *, percent=(), decimals=(),

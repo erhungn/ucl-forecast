@@ -23,8 +23,8 @@ from ucl.webapp.palette import (
 )
 
 __all__ = [
-    "CODES", "COLOURS", "code", "badge", "outline", "badge_pair_styles",
-    "unknown", "MIN_DISTANCE",
+    "CODES", "COLOURS", "code", "from_code", "badge", "outline",
+    "badge_pair_styles", "unknown", "MIN_DISTANCE",
 ]
 
 #: Below this CIE76 distance two badge grounds are treated as the same colour.
@@ -113,6 +113,10 @@ COLOURS: dict[str, tuple[str, str]] = {
 #: For a club the app has never heard of - a schedule change, a renamed club.
 unknown = ("#243041", "#e5e7eb")
 
+#: code -> club, for reading a club out of a URL. Built from CODES, so the two
+#: cannot drift; the codes are asserted distinct in the tests.
+_BY_CODE: dict[str, str] = {value: key for key, value in CODES.items()}
+
 
 def code(team: str) -> str:
     """The club's three-letter code, or the first three letters upper-cased."""
@@ -121,6 +125,16 @@ def code(team: str) -> str:
         return known
     letters = "".join(character for character in team if character.isalpha())
     return (letters[:3] or "???").upper()
+
+
+def from_code(value: str) -> str | None:
+    """The club a three-letter code names, or ``None`` if it names none.
+
+    The inverse of :func:`code` over the 36 declared clubs only - never over
+    its fallback, which is lossy by construction. ``None`` rather than an
+    exception, because the code arrives from a URL the user can edit.
+    """
+    return _BY_CODE.get((value or "").strip().upper())
 
 
 def badge(team: str) -> tuple[str, str]:

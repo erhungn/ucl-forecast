@@ -42,7 +42,8 @@ ordered["position"] = ordered.index + 1
 show_all = st.toggle(f"Show all {len(ordered)} clubs", value=False)
 shown = ordered if show_all else ordered.head(DEFAULT_SHOWN)
 
-st.html(cards.club_cards_html(shown.to_dict("records")))
+st.html(cards.club_cards_html(shown.to_dict("records"),
+                             pin=st_helpers.pinned(SEASON)))
 
 if not show_all:
     st_helpers.note(f"Showing the top {DEFAULT_SHOWN} of {len(ordered)}.")

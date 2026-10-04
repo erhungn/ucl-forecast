@@ -13,7 +13,9 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from ucl.webapp import loaders, movement, paths, scoring, staleness
+from ucl.webapp import (
+    loaders, movement, opponents, paths, scoring, staleness,
+)
 
 ARCHIVE = paths.ARCHIVE_DIR
 SEASON = "2026-27"
@@ -28,6 +30,14 @@ def live(tmp_path):
     shutil.copyfile(ARCHIVE / f"forecast_{SEASON}_md1.csv", season / "forecast_md1.csv")
     shutil.copyfile(ARCHIVE / f"matchday_1_evaluation_{SEASON}.csv",
                     season / "matchday_1_evaluation.csv")
+    # The detail artefacts, archived at matchday 0 because the weekly run can
+    # only ever produce the latest matchday's.
+    for stem in ("positions", "knockout_paths", "ratings", "remaining_fixtures"):
+        source = ARCHIVE / f"{stem}_{SEASON}.csv"
+        if source.exists():
+            shutil.copyfile(source, season / f"{stem}_md0.csv")
+    if (ARCHIVE / "club_inputs.csv").exists():
+        shutil.copyfile(ARCHIVE / "club_inputs.csv", season / "club_inputs.csv")
     return tmp_path
 
 
@@ -179,3 +189,122 @@ def test_the_loaders_do_not_write(live):
     loaders.load_forecast(1, SEASON, live_dir=live)
     after = {path: path.stat().st_mtime_ns for path in (live / SEASON).iterdir()}
     assert before == after
+
+
+# --- the detail artefacts, against the forecast they shipped beside ---------
+# These are the tests that matter most in this round: they prove the new tables
+# came out of the same 50,000-iteration run as the published forecast, which is
+# the only thing about them that could silently go wrong.
+
+
+def test_the_position_matrix_is_complete_and_doubly_stochastic(live):
+    """36 clubs fill 36 positions in every iteration, both ways round."""
+    frame = loaders.load_positions(0, SEASON, live_dir=live)
+    iterations = frame.attrs["iterations"]
+    assert len(frame) == 36 * 36
+    assert iterations == 50_000
+    # Every club finishes somewhere, and every position is filled by someone.
+    assert (frame.groupby("team")["count"].sum() == iterations).all()
+    assert (frame.groupby("position")["count"].sum() == iterations).all()
+    assert frame.probability.between(0, 1).all()
+
+
+def test_the_position_matrix_reproduces_the_published_mean_position(live):
+    """The distribution must average to the number already published from it."""
+    frame = loaders.load_positions(0, SEASON, live_dir=live)
+    forecast = loaders.load_forecast(0, SEASON, live_dir=live).set_index("team")
+    for team, group in frame.groupby("team"):
+        mean = float((group.position * group.probability).sum())
+        assert mean == pytest.approx(forecast.mean_position[team], abs=5e-7)
+
+
+def test_the_position_bands_reproduce_the_published_band_probabilities(live):
+    """Summing 1-8, 9-24 and 25-36 must give the three published columns."""
+    frame = loaders.load_positions(0, SEASON, live_dir=live)
+    forecast = loaders.load_forecast(0, SEASON, live_dir=live).set_index("team")
+    for team, group in frame.groupby("team"):
+        mass = group.set_index("position").probability
+        assert mass.loc[1:8].sum() == pytest.approx(forecast.p_top8[team], abs=5e-7)
+        assert mass.loc[9:24].sum() == pytest.approx(forecast.p_play_off[team],
+                                                     abs=5e-7)
+        assert mass.loc[25:36].sum() == pytest.approx(forecast.p_eliminated[team],
+                                                      abs=5e-7)
+
+
+def test_the_knockout_pairings_reproduce_every_published_stage_probability(live):
+    """A club plays one tie per round it reaches, so the two must agree."""
+    frame = loaders.load_knockout_paths(0, SEASON, live_dir=live)
+    forecast = loaders.load_forecast(0, SEASON, live_dir=live).set_index("team")
+    assert opponents.iterations(frame) == 50_000
+    for team in forecast.index:
+        reached = opponents.reach(frame, team).set_index("round").probability
+        for round_name in opponents.ROUNDS:
+            assert reached[round_name] == pytest.approx(
+                forecast[f"p_{round_name}"][team], abs=5e-7)
+
+
+def test_the_iteration_count_is_agreed_by_every_round(live):
+    """Each round's counts imply the same n, or the file is inconsistent."""
+    frame = loaders.load_knockout_paths(0, SEASON, live_dir=live)
+    assert opponents.iterations(frame) == 50_000
+    # A doctored round must be refused rather than averaged over.
+    broken = frame.copy()
+    broken.loc[broken["round"] == "final", "count"] *= 2
+    with pytest.raises(ValueError, match="disagree about the iteration count"):
+        opponents.iterations(broken)
+
+
+def test_each_tie_is_stored_both_ways_round(live):
+    """Both directions, so one club's rows are its own opponent distribution."""
+    frame = loaders.load_knockout_paths(0, SEASON, live_dir=live)
+    mirrored = frame.rename(columns={"club": "opponent", "opponent": "club"})
+    merged = frame.merge(mirrored, on=["round", "club", "opponent"],
+                         suffixes=("", "_mirror"))
+    assert len(merged) == len(frame)
+    assert (merged["count"] == merged["count_mirror"]).all()
+
+
+def test_the_likeliest_ties_are_listed_once_each(live):
+    frame = loaders.load_knockout_paths(0, SEASON, live_dir=live)
+    top = opponents.likeliest(frame, "round_of_16", count=8)
+    assert len(top) == 8
+    assert top.tie.is_unique
+    assert top.probability.is_monotonic_decreasing
+
+
+def test_an_opponent_distribution_sums_to_the_chance_of_playing(live):
+    frame = loaders.load_knockout_paths(0, SEASON, live_dir=live)
+    forecast = loaders.load_forecast(0, SEASON, live_dir=live).set_index("team")
+    team = str(forecast.p_champion.idxmax())
+    everyone = opponents.per_round(frame, team, "round_of_16", count=40)
+    assert everyone.probability.sum() == pytest.approx(
+        forecast.p_round_of_16[team], abs=5e-7)
+
+
+def test_the_remaining_fixtures_cover_every_unplayed_match(live):
+    frame = loaders.load_remaining_fixtures(0, SEASON, live_dir=live)
+    assert len(frame) == 144
+    assert sorted(frame.matchday.unique()) == list(range(1, 9))
+    probabilities = frame[["p_home", "p_draw", "p_away"]].sum(axis=1)
+    assert probabilities.sub(1.0).abs().max() < 1e-5
+
+
+def test_the_published_ratings_are_the_cutoff_ratings_at_matchday_zero(live):
+    """Matchday 0 is the cutoff, so the two must agree there and only there."""
+    ratings = loaders.load_ratings(0, SEASON, live_dir=live).set_index("team")
+    inputs = loaders.load_club_inputs(SEASON, live_dir=live).set_index("team")
+    assert len(ratings) == 36
+    for team in ratings.index:
+        assert ratings.elo[team] == pytest.approx(inputs.elo_at_cutoff[team],
+                                                  abs=1e-3)
+
+
+def test_the_club_inputs_carry_the_documented_coverage(live):
+    """32 of 36 valued, 29 rated for shots - the model's accepted coverage."""
+    inputs = loaders.load_club_inputs(SEASON, live_dir=live)
+    assert len(inputs) == 36
+    assert int(inputs.value_covered.sum()) == 32
+    assert int(inputs.shots_covered.sum()) == 29
+    # An uncovered club must be blank, not zero: zero is a real residual.
+    assert inputs.loc[~inputs.shots_covered, "sot_attack"].isna().all()
+    assert inputs.loc[~inputs.value_covered, "squad_value_eur_m"].isna().all()
