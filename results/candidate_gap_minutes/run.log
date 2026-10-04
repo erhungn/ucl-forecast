@@ -1,0 +1,31 @@
+=== candidate 'gap_minutes' [milestone 8 candidate B, binding]: forward chaining, primary test = pooled ===
+  measured against: gap
+  covariate coverage (both clubs known), by test season:
+    2022-23: European 43.2%, domestic 70.4%  (291 clubs)
+    2023-24: European 47.4%, domestic 70.0%  (301 clubs)
+    2024-25: European 43.5%, domestic 69.8%  (310 clubs)
+    2025-26: European 45.8%, domestic 70.2%  (318 clubs)
+  fold 2022-23: train 2021-22                       half-life    365d        training 1.00134 delta -0.00007 (42s)
+  fold 2023-24: train 2021-22+2022-23               half-life    365d        training 0.99166 delta -0.00034 (43s)
+  fold 2024-25: train 2021-22+2022-23+2023-24       half-life    365d        training 0.98838 delta +0.00122 (49s)
+  fold 2025-26: train 2021-22+2022-23+2023-24+2024-25 half-life    365d        training 0.98876 delta -0.00091 (46s)
+
+=== per fold, pooled scope ===
+  2022-23: n= 4728 delta -0.00007 cluster [-0.00103, +0.00077] per-match [-0.00078, +0.00064]
+  2023-24: n= 4770 delta -0.00034 cluster [-0.00141, +0.00075] per-match [-0.00130, +0.00060]
+  2024-25: n= 4881 delta +0.00122 cluster [+0.00045, +0.00207] per-match [+0.00048, +0.00194]
+  2025-26: n= 4809 delta -0.00091 cluster [-0.00172, -0.00017] per-match [-0.00155, -0.00023]
+
+=== POOLED, primary test (pooled) ===
+  matches 19188, clusters 1309
+  weighted mean delta log-loss: -0.00001 (negative = the candidate is better)
+  cluster   95% CI [-0.00047, +0.00044]  excludes zero: False
+  per-match 95% CI [-0.00039, +0.00037]  excludes zero: False
+
+  DECISION: KEEP the baseline
+
+=== sensitivities (not the decision) ===
+  European only: +0.00107 [+0.00002, +0.00214] over 1832 matches
+  all matches pooled: -0.00001 [-0.00047, +0.00044]
+
+total 351s

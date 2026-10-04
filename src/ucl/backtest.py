@@ -624,7 +624,7 @@ GAP_COLUMNS = tuple(f"d_gap_{measure}" for measure in ("sot", "shots_off", "corn
 
 
 @lru_cache(maxsize=16)
-def _fitted_gap(cutoff: date, season_label: str):
+def _fitted_gap(cutoff: date, season_label: str, weighting: str = "total"):
     """Model v1 plus the three GAP residual covariates.
 
     The tuned side of candidate A is v1 *and* the shot ratings, so the
@@ -635,6 +635,10 @@ def _fitted_gap(cutoff: date, season_label: str):
     alone, by least squares against observed attacking output - an objective
     that never sees a match result. The ratings are then regressed on Elo
     within each league and only the residual is kept.
+
+    ``weighting`` chooses the squad-value measure: ``"total"`` is v1's sum over
+    the squad, ``"minutes"`` is candidate B's minutes-weighted mean. Everything
+    else is identical, so a test between the two isolates the weighting.
     """
     from ucl.data import transfermarkt
     from ucl.models import gap
@@ -652,7 +656,9 @@ def _fitted_gap(cutoff: date, season_label: str):
         state = gap.replay(shots, measure, parameters[measure])
         residuals[measure] = gap.residual_ratings(state, ratings.ratings)
 
-    values = transfermarkt.squad_values(transfermarkt.as_of_for_season(season_label))
+    as_of = transfermarkt.as_of_for_season(season_label)
+    values = (transfermarkt.squad_values_minutes_weighted(as_of)
+              if weighting == "minutes" else transfermarkt.squad_values(as_of))
     frame = ratings.pre_match.copy()
     frame["d_value"] = transfermarkt.value_difference(
         values, frame.home_id.to_numpy(), frame.away_id.to_numpy())
@@ -691,12 +697,13 @@ def score_season_covariate(
         from ucl.data import transfermarkt
 
         ratings, values, model = _fitted_squad_value(cfg.cutoff_date, season_label)
-    elif candidate == "gap":
+    elif candidate in ("gap", "gap_minutes"):
         from ucl.data import transfermarkt
         from ucl.models import gap as gap_model
 
         ratings, values, residuals, _, model = _fitted_gap(
-            cfg.cutoff_date, season_label)
+            cfg.cutoff_date, season_label,
+            "minutes" if candidate == "gap_minutes" else "total")
     elif candidate == "congestion":
         ratings, model = _fitted_congestion(cfg.cutoff_date)
         history = _training_frame(cfg.cutoff_date)[["date", "home_id", "away_id"]]
@@ -722,7 +729,7 @@ def score_season_covariate(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())
                 rate_home, rate_away = model.rates(
                     elo_home, elo_away, symmetric={"d_value": difference})
-            elif candidate == "gap":
+            elif candidate in ("gap", "gap_minutes"):
                 symmetric = {"d_value": transfermarkt.value_difference(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())}
                 for measure, column in zip(gap_model.MEASURES, GAP_COLUMNS):

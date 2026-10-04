@@ -16,6 +16,9 @@ The primary test differs by candidate, and is pre-declared here:
   v1** rather than against Elo, because v1 is what is accepted. Pairing a
   candidate that contains the squad-value term against Elo alone would credit
   it with that term's gain as well as its own.
+* ``gap_minutes`` - the same, measured against **v1 + A**: it replaces the
+  squad-value total with a minutes-weighted mean and changes nothing else, so
+  the comparison isolates the weighting.
 
 ``--label`` marks a re-run whose only change is an implementation fix, so the
 output says which run it is. For ``squad_value`` the covariate's coverage is
@@ -41,10 +44,10 @@ from ucl.config import BACKTEST_SEASONS, OUTPUTS_DIR
 # actually exists; the degenerate region is reported, not searched.
 HALF_LIVES = [61.0, 91.0, 183.0, 365.0, 548.0, 730.0, 1096.0]
 PRIMARY = {"market": "european", "market_elo": "european", "congestion": "pooled",
-           "squad_value": "pooled", "gap": "pooled"}
+           "squad_value": "pooled", "gap": "pooled", "gap_minutes": "pooled"}
 #: What each candidate is measured against. Absent means the Elo baseline,
 #: which is what was accepted when the earlier candidates were tested.
-BASELINE = {"gap": "squad_value"}
+BASELINE = {"gap": "squad_value", "gap_minutes": "gap"}
 #: market_elo is candidate 1b, declared after candidate 1 failed: the same
 #: market strengths mapped into Elo units per league instead of standardised.
 POST_HOC = {"market_elo"}
@@ -77,16 +80,17 @@ def _coverage_by_season(candidate: str, seasons: list[str]) -> dict:
             }
         return out
 
-    if candidate == "gap":
+    if candidate in ("gap", "gap_minutes"):
         import numpy as np
 
         from ucl.backtest import _fitted_gap
         from ucl.models import gap as gap_model
 
+        weighting = "minutes" if candidate == "gap_minutes" else "total"
         out = {}
         for season in seasons:
             *_, residuals, _, _ = (None, *_fitted_gap(
-                SEASONS[season].cutoff_date, season))
+                SEASONS[season].cutoff_date, season, weighting))
             domestic, euro = _evaluation_frames(season)
             rated = residuals["sot"]
             shares = {}

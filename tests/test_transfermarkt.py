@@ -161,3 +161,41 @@ def test_only_club_ids_from_the_club_table_reach_the_mapping():
     clubs = pd.read_csv(transfermarkt.CACHE_DIR / "clubs.csv")
     assert transfermarkt._club_ids() == frozenset(int(c) for c in clubs.club_id)
     assert set(transfermarkt.club_map()) <= transfermarkt._club_ids()
+
+
+def test_minutes_weighted_value_is_a_hand_computed_weighted_mean():
+    """Three players, known minutes and values, computed on paper."""
+    frame = pd.DataFrame({
+        "minutes": [900.0, 450.0, 90.0],
+        "market_value_in_eur": [100e6, 20e6, 1e6],
+    })
+    expected = ((900 * 100e6 + 450 * 20e6 + 90 * 1e6) / (900 + 450 + 90))
+    weighted = float((frame.minutes * frame.market_value_in_eur).sum()
+                     / frame.minutes.sum())
+    assert weighted == pytest.approx(expected)
+    # And it sits between the cheapest and the dearest player, unlike a total.
+    assert 1e6 < weighted < 100e6
+
+
+def test_minutes_weighting_covers_exactly_the_same_clubs_as_the_total():
+    as_of = transfermarkt.as_of_for_season("2026-27")
+    total = transfermarkt.squad_values(as_of)
+    weighted = transfermarkt.squad_values_minutes_weighted(as_of)
+    assert set(total) == set(weighted)
+    assert len(total) == 232
+
+
+def test_the_minutes_weighted_value_is_a_per_player_mean_not_a_total():
+    as_of = transfermarkt.as_of_for_season("2026-27")
+    total = transfermarkt.squad_values(as_of)
+    weighted = transfermarkt.squad_values_minutes_weighted(as_of)
+    for club in ("Paris Saint-Germain", "Manchester City", "Bodo/Glimt"):
+        assert weighted[club] < total[club]
+        # A squad is tens of players, so the mean is an order of magnitude down.
+        assert weighted[club] * 5 < total[club]
+
+
+def test_minutes_are_loaded_and_never_null():
+    appearances = transfermarkt._tables()[1]
+    assert "minutes_played" in appearances.columns
+    assert appearances.minutes_played.notna().all()

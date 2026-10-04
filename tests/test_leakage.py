@@ -133,3 +133,79 @@ def test_group_stage_seasons_are_flagged_and_have_no_fixtures():
         cfg = SEASONS[season_label]
         assert cfg.tournament_format == "league_phase"
         assert cfg.fixtures_path.exists()
+
+
+# --- the covariates, which this file did not cover before -----------------
+
+@pytest.mark.parametrize("season_label", BACKTEST_SEASONS)
+def test_the_gap_replay_sees_nothing_from_the_cutoff_onwards(season_label):
+    """Shot ratings are replayed over matches; the cutoff binds them too."""
+    from ucl.models import gap
+
+    cfg = SEASONS[season_label]
+    frame = gap.domestic_frame(cfg.cutoff_date)
+    assert frame.date.max().date() < cfg.cutoff_date
+    state = gap.replay(frame, "sot")
+    assert state.matches > 10_000      # not vacuous
+
+
+@pytest.mark.parametrize("season_label", BACKTEST_SEASONS)
+def test_the_gap_parameter_fit_sees_nothing_from_the_cutoff_onwards(season_label):
+    """The least-squares fit of lambda and the phis is bounded by the cutoff.
+
+    It is fitted against observed attacking output rather than results, so it
+    could not leak an outcome even in principle - but it must still not see a
+    match the forecast has not reached.
+    """
+    from ucl.models import gap
+
+    cfg = SEASONS[season_label]
+    frame = gap.domestic_frame(cfg.cutoff_date)
+    assert frame.date.max().date() < cfg.cutoff_date
+    params = gap.fit_params(frame, "sot")
+    assert 1e-4 <= params.learning_rate <= 0.5
+
+
+def test_the_gap_elo_regression_is_refitted_per_cutoff():
+    """Residuals must move between cutoffs, or one is being reused."""
+    from ucl.backtest import _fitted_gap
+
+    early = _fitted_gap(SEASONS["2022-23"].cutoff_date, "2022-23")[2]["sot"]
+    late = _fitted_gap(SEASONS["2025-26"].cutoff_date, "2025-26")[2]["sot"]
+    shared = set(early) & set(late)
+    assert len(shared) > 100
+    moved = sum(abs(early[club]["home_attack"] - late[club]["home_attack"]) > 0.05
+                for club in shared)
+    assert moved > len(shared) / 2
+
+
+@pytest.mark.parametrize("season_label", BACKTEST_SEASONS)
+def test_each_covariate_snapshot_predates_its_seasons_cutoff(season_label):
+    """The as-of date of a point-in-time feature is itself a leakage surface.
+
+    The match dates were already asserted; the snapshot date was not. Squad
+    value is frozen at 6 July of the season's starting year, which must fall
+    before that season's September cutoff.
+    """
+    from ucl.data import transfermarkt
+
+    cfg = SEASONS[season_label]
+    as_of = transfermarkt.as_of_for_season(season_label)
+    assert as_of < cfg.cutoff_date
+    valuations, appearances = transfermarkt._tables()
+    limit = pd.Timestamp(as_of)
+    assert valuations[valuations.date < limit].date.max() < limit
+    assert (valuations.date >= limit).any()    # the filter does something
+
+
+@pytest.mark.parametrize("season_label", BACKTEST_SEASONS)
+def test_the_minutes_weighted_values_respect_the_same_as_of(season_label):
+    from ucl.data import transfermarkt
+
+    as_of = transfermarkt.as_of_for_season(season_label)
+    total = transfermarkt.squad_values(as_of)
+    weighted = transfermarkt.squad_values_minutes_weighted(as_of)
+    # Same membership rule, so the same clubs: the weighting changes values
+    # only, which is what makes candidate B's null interpretable.
+    assert set(total) == set(weighted)
+    assert all(value > 0 for value in weighted.values())

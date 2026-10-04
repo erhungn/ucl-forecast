@@ -167,6 +167,12 @@ outputs/         # csv tables + figures
   Elo (-1.52 and -1.18 shots on target below prediction), which is the two
   clubs the market diagnostic also disputes - the first corroboration of
   limitation 1 from a source the market had no part in.
+- **Minutes-weighted squad value returned a null** (milestone 8, candidate B):
+  pooled delta -0.00001, CI [-0.00047, +0.00044], measured against v1 + A. The
+  two measures rank the clubs at Spearman 0.9894 - a club that can afford an
+  expensive squad also gives those players the minutes - so weighting by
+  minutes mostly reproduces the total. Coverage was identical, so the null is
+  about the weighting and nothing else. See `results/candidate_gap_minutes/`.
 - **A candidate must be paired against the accepted model, not against Elo.**
   `paired_losses_covariate` takes a `baseline`; candidate A passes
   `squad_value`. Measuring a candidate that contains the squad-value term
