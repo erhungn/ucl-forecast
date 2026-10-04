@@ -31,9 +31,11 @@ GAP_COLUMNS = tuple(f"d_gap_{measure}" for measure in gap.MEASURES)
 
 
 def gap_covariates(residuals: dict[str, dict]) -> tuple[ClubCovariate, ...]:
-    """One covariate per attacking measure, from residual ratings."""
+    """One covariate per attacking measure present in ``residuals``."""
     out = []
     for measure, column in zip(gap.MEASURES, GAP_COLUMNS):
+        if measure not in residuals:
+            continue
         rated = residuals[measure]
         out.append(ClubCovariate(
             column,
@@ -44,7 +46,8 @@ def gap_covariates(residuals: dict[str, dict]) -> tuple[ClubCovariate, ...]:
     return tuple(out)
 
 
-def gap_residuals(as_of: date, elo_ratings: dict[str, float]) -> tuple[dict, dict]:
+def gap_residuals(as_of: date, elo_ratings: dict[str, float],
+                  measures: tuple[str, ...] | None = None) -> tuple[dict, dict]:
     """GAP residual ratings per measure, and the parameters they were built on.
 
     Everything is fitted at ``as_of``: the shot ratings are replayed over
@@ -54,7 +57,7 @@ def gap_residuals(as_of: date, elo_ratings: dict[str, float]) -> tuple[dict, dic
     """
     shots = gap.domestic_frame(as_of)
     residuals, parameters = {}, {}
-    for measure in gap.MEASURES:
+    for measure in (measures or tuple(gap.MEASURES)):
         parameters[measure] = gap.fit_params(shots, measure)
         state = gap.replay(shots, measure, parameters[measure])
         residuals[measure] = gap.residual_ratings(state, elo_ratings)
@@ -70,9 +73,15 @@ def fit_v1(pre_match: pd.DataFrame, values: dict[str, float], *,
 
 def fit_v2(pre_match: pd.DataFrame, values: dict[str, float],
            elo_ratings: dict[str, float], *, as_of: date,
-           value_as_of=None) -> ForecastModel:
-    """Elo, the squad-value prior, and the three GAP shot-rating residuals."""
-    residuals, parameters = gap_residuals(as_of, elo_ratings)
+           value_as_of=None, measures: tuple[str, ...] | None = None
+           ) -> ForecastModel:
+    """Elo, the squad-value prior, and the GAP shot-rating residuals.
+
+    ``measures`` restricts which attacking measures are used; the default is
+    all three, which is the published model. Anything else is an ablation and
+    is not promoted by running it.
+    """
+    residuals, parameters = gap_residuals(as_of, elo_ratings, measures)
     covariates = (value_covariate(values), *gap_covariates(residuals))
     return fit_model(pre_match, covariates, label="v2", as_of=value_as_of,
                      details={"values": values, "residuals": residuals,

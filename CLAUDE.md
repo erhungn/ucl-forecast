@@ -122,8 +122,39 @@ outputs/         # csv tables + figures
    squad value - DONE. The benchmark showed favourite-longshot bias accounts
    for part of the market gap; GAP ratings accepted and promoted to
    `model-v2`; minutes-weighting rejected.
+9. Significance of the accepted improvements - DONE. Two-way clustering shows
+   neither acceptance is robustly significant; the decisions stand as made and
+   the claims are restated. **Model development is closed.**
 
 ## What the backtests established (do not relitigate without new evidence)
+- **Acceptance rule, standing, from milestone 8 onward: the primary bootstrap
+  is TWO-WAY clustered** - (season, home club) and (season, away club) by
+  pigeonhole resampling, `ucl.significance.two_way_bootstrap`. The one-way
+  cluster used up to and including candidate A treats a club's away matches as
+  independent of its home matches, which the frozen ratings make false: the
+  same rating error travels with the club at both ends of a fixture. The
+  two-way interval is 35-60% wider. Any future candidate must clear zero under
+  it.
+- **Past decisions were not revisited.** v1 and candidate A were accepted under
+  the pre-declared one-way rule; under two-way clustering neither interval
+  excludes zero (v1 - elo [-0.00239, +0.00046], v2 - v1 [-0.00101, +0.00016]).
+  The point estimates are unchanged and favour the newer model in all four
+  folds (sign test p = 1/16). Reversing an acceptance because a stricter test
+  disagrees afterwards would be choosing the rule to suit the result, so v2
+  stays published and the claim is restated instead: **small, consistent in
+  sign, not robustly significant.** See `results/significance/report.md`.
+- **Open lead, not promoted: v2 using shots on target alone.** Dropping shots
+  off target and corners beats full v2 by 0.00047 and clears zero under all
+  three resampling schemes, gaining on domestic matches in all four folds while
+  losing slightly in Europe in three. It was chosen after inspecting which
+  coefficients were small, so it is post hoc and needs a **fresh holdout**.
+- **Do not add an older season as that holdout.** 2016-17 to 2020-21 have data,
+  but one season's two-way standard error is ~0.00059, about 1.4 times the
+  effect in question; roughly eight comparable seasons would be needed. Those
+  seasons also carry a third of the European matches (no UECL before 2021-22),
+  half the burn-in, and a COVID home-advantage shift (home win rate 0.4009 in
+  2020-21 against 0.4469-0.4725 before). Extending `BACKTEST_SEASONS` would
+  also redefine the folds that accepted v1, A and B.
 - **Protocol.** Forward chaining: for each test season, tune on the seasons
   before it and score it once. The pre-declared primary test is x3-weighted
   pooled log-loss, frozen mode, with a **cluster bootstrap over (season, home

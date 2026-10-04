@@ -104,6 +104,35 @@ In aggregate the market gap barely moves: mean |model - market| goes from
 fix for limitation 1.** It is a small, independently-measured improvement in
 out-of-sample log-loss that happens to move four named clubs the right way.
 
+## How strong is this result? Restated after the significance analysis
+
+Measured in `results/significance/` after the fact, with the per-match
+out-of-sample losses reproducing this delta exactly:
+
+| resampling | 95% CI for v2 - v1 | excludes zero |
+|---|---|---|
+| weekly blocks (155) | [-0.000736, -0.000123] | yes |
+| one-way clusters, (season, home club) (1,309) | [-0.000765, -0.000086] | yes |
+| **two-way, (season, home club) x (season, away club)** | **[-0.001006, +0.000163]** | **no** |
+
+**This acceptance was made under the one-way rule, which was pre-declared.
+Under two-way clustering the interval includes zero.** The one-way scheme
+treats a club's away matches as independent of its home matches, which the
+frozen ratings make false: the same rating error travels with the club at both
+ends of a fixture. The two-way interval is the honest one, and it is about 40%
+wider.
+
+The point estimate does not move. It favours v2 in **all four folds**
+(-0.000712, -0.000200, -0.000383, -0.000406), a one-sided sign test p of 1/16 =
+0.0625. A Diebold-Mariano test on daily means does not reject (p = 0.50),
+though it tests a smaller quantity with much less precision.
+
+**The honest summary: small, consistent in sign, not robustly significant.**
+The decision not to revisit it is deliberate - the rule was fixed before the
+result - and v2 stays published because the point estimates favour it and the
+cost of being wrong either way is small. **Two-way clustering is the acceptance
+rule for any future candidate.**
+
 ## Coverage
 
 | covariate | clubs | both clubs, of the 144 fixtures |

@@ -89,6 +89,24 @@ The baseline side of the comparison is **bit-identical** to the original
 candidate-2 run (`loss_default`, maximum absolute difference exactly 0.0 over
 all 19,188 rows), so nothing but the covariate moved.
 
+## How strong is this result? Restated after the significance analysis
+
+| resampling | 95% CI for v1 - elo | excludes zero |
+|---|---|---|
+| weekly blocks (155) | [-0.001775, -0.000179] | yes |
+| one-way clusters, (season, home club) (1,309) | [-0.001877, -0.000089] | yes |
+| **two-way, home x away clusters** | **[-0.002394, +0.000455]** | **no** |
+
+**This acceptance was made under the one-way rule, which was pre-declared.
+Under two-way clustering the interval includes zero** - the one-way scheme
+treats a club's away matches as independent of its home matches, which the
+frozen ratings make false. The point estimate is unchanged at -0.000991.
+
+Small, consistent in sign, **not robustly significant**. The decision stands as
+made: the rule was fixed before the result was seen. See
+`results/significance/report.md`, and note that two-way clustering is the
+acceptance rule from here on.
+
 ## An unrelated defect found after the run, affecting 2026-27 only
 
 Squad membership is "the club he last appeared for in the 180 days before the

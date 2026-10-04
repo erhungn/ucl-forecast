@@ -624,7 +624,8 @@ from ucl.models.forecast import GAP_COLUMNS  # noqa: E402
 
 
 @lru_cache(maxsize=16)
-def _fitted_gap(cutoff: date, season_label: str, weighting: str = "total"):
+def _fitted_gap(cutoff: date, season_label: str, weighting: str = "total",
+                measures: tuple[str, ...] | None = None):
     """Model v1 plus the three GAP residual covariates.
 
     The tuned side of candidate A is v1 *and* the shot ratings, so the
@@ -651,7 +652,7 @@ def _fitted_gap(cutoff: date, season_label: str, weighting: str = "total"):
     values = (transfermarkt.squad_values_minutes_weighted(as_of)
               if weighting == "minutes" else transfermarkt.squad_values(as_of))
     fitted = fit_v2(ratings.pre_match, values, ratings.ratings,
-                    as_of=cutoff, value_as_of=as_of)
+                    as_of=cutoff, value_as_of=as_of, measures=measures)
     return (ratings, values, fitted.details["residuals"],
             fitted.details["gap_params"], fitted.model)
 
@@ -684,13 +685,14 @@ def score_season_covariate(
         from ucl.data import transfermarkt
 
         ratings, values, model = _fitted_squad_value(cfg.cutoff_date, season_label)
-    elif candidate in ("gap", "gap_minutes"):
+    elif candidate in ("gap", "gap_minutes", "gap_sot"):
         from ucl.data import transfermarkt
         from ucl.models import gap as gap_model
 
         ratings, values, residuals, _, model = _fitted_gap(
             cfg.cutoff_date, season_label,
-            "minutes" if candidate == "gap_minutes" else "total")
+            "minutes" if candidate == "gap_minutes" else "total",
+            ("sot",) if candidate == "gap_sot" else None)
     elif candidate == "congestion":
         ratings, model = _fitted_congestion(cfg.cutoff_date)
         history = _training_frame(cfg.cutoff_date)[["date", "home_id", "away_id"]]
@@ -716,10 +718,12 @@ def score_season_covariate(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())
                 rate_home, rate_away = model.rates(
                     elo_home, elo_away, symmetric={"d_value": difference})
-            elif candidate in ("gap", "gap_minutes"):
+            elif candidate in ("gap", "gap_minutes", "gap_sot"):
                 symmetric = {"d_value": transfermarkt.value_difference(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())}
                 for measure, column in zip(gap_model.MEASURES, GAP_COLUMNS):
+                    if measure not in residuals:
+                        continue
                     symmetric[column] = gap_model.match_difference(
                         residuals[measure], usable.home_id.to_numpy(),
                         usable.away_id.to_numpy())

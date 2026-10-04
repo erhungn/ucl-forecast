@@ -55,7 +55,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 551 tests, ~60s
+.venv/bin/python -m pytest                                       # 569 tests, ~60s
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -220,9 +220,53 @@ bit-identical to the original run, so that only the covariate could have moved.
 | 4 | fixture congestion (rest days, short-rest flag) | weighted pooled | +0.00005 | [-0.00001, +0.00010] | **null** |
 | 2 | squad market value, 22-25% coverage | weighted pooled | -0.00031 | [-0.00069, +0.00008] | **null** |
 | 2' | squad market value, ~50% coverage (binding re-run) | weighted pooled | **-0.00099** | **[-0.00187, -0.00008]** | **accepted -> v1** |
+| A | GAP shot ratings, as the Elo residual | weighted pooled | **-0.00042** | **[-0.00076, -0.00008]** | **accepted -> v2** |
+| B | minutes-weighted squad value | weighted pooled | -0.00001 | [-0.00047, +0.00044] | **null** |
 
 Negative is better. Each row is archived under `results/` with its folds, paired
-losses, decision JSON and a README - including the rejections.
+losses, decision JSON and a README - including the rejections. Candidates A and B were
+measured against the accepted model of the day (v1, then v1+A), not against
+Elo: pairing a candidate that already contains an accepted term against Elo
+would credit it with that term's gain as well as its own.
+
+### How strong are the two acceptances? Not as strong as those intervals suggest
+
+The intervals above are **one-way** cluster bootstraps over (season, home
+club), the rule that was pre-declared and under which both acceptances were
+made. A later analysis (`results/significance/`) re-exported the per-match
+out-of-sample losses - reproducing every archived delta exactly - and resampled
+them clustering on the **away** club as well. The one-way scheme treats a
+club's away matches as independent of its home matches, which the frozen
+ratings make false: the same rating error travels with the club at both ends of
+a fixture.
+
+| comparison | weekly blocks | one-way clusters | **two-way clusters** |
+|---|---|---|---|
+| v1 - elo | [-0.00178, -0.00018] yes | [-0.00188, -0.00009] yes | **[-0.00239, +0.00046] no** |
+| v2 - v1 | [-0.00074, -0.00012] yes | [-0.00077, -0.00009] yes | **[-0.00101, +0.00016] no** |
+| B - v2 | [-0.00045, +0.00041] no | [-0.00046, +0.00045] no | [-0.00076, +0.00074] no |
+
+**Under two-way clustering neither acceptance excludes zero.** The point
+estimates do not change, and both favour the newer model in **all four folds**
+(a one-sided sign test p of 1/16 = 0.0625). A Diebold-Mariano test on daily
+means does not reject either, though it tests a smaller quantity with much less
+precision.
+
+The honest claim for both v1 and v2 is therefore: **a small improvement,
+consistent in sign across every fold, not robustly significant.** Neither
+decision has been revisited - the rule was fixed before the result was seen,
+and reversing it afterwards would be choosing the rule to suit the answer - and
+v2 stays published because the point estimates favour it and the cost of being
+wrong either way is small. **Two-way clustering is the acceptance rule for any
+future candidate.**
+
+One lead is left open and deliberately unpromoted: a variant using only shots
+on target, dropping the two measures whose coefficients are small and negative,
+beats full v2 by 0.00047 and clears zero under all three schemes. It was chosen
+after inspecting those coefficients, so it is post hoc and would need a fresh
+holdout. A single extra season cannot provide one - its two-way standard error
+is about 0.00059, roughly 1.4 times the effect in question, and about eight
+comparable seasons would be needed.
 
 Three things in that table are worth more than the accepted row:
 
@@ -273,6 +317,13 @@ european/wikipedia             present                 2026-09-10   2026-09-10
 squad_value/transfermarkt      frozen (source paused)  2026-06-28   2026-07-06
 ```
 
+Both v1 and v2 are scored prospectively on this season's matches from the same
+frozen cutoff information set (`live/<season>/model_tracking.csv`, shown on the
+app's Played matches page) as **monitoring, not a gate**: the paired standard
+error between them is 0.004 after matchday 1 and will be roughly 0.0014 over
+all 144 league-phase matches, still about three times the effect the backtest
+resolved. This season cannot choose between them.
+
 Results refresh weekly (UCL from the Wikipedia league-phase page; domestic
 through the Colab fetch). **Squad value cannot be refreshed** - its `used_to`
 stays at 2026-07-06 while the others advance, visibly, in every run.
@@ -316,7 +367,7 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 578 tests in all.
+`.venv-app/bin/python -m pytest` - 596 tests in all.
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 five pages give nothing away, but the update button starts a five-minute job
@@ -389,7 +440,7 @@ scripts/             16 entry points: fetch, fit, simulate, backtest, tune_*, bu
                      check_*, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
 app/                 Streamlit entry point and the six views
-tests/               578 tests (551 in .venv, all of them in .venv-app)
+tests/               596 tests (569 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)
