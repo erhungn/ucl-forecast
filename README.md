@@ -314,19 +314,31 @@ in `.streamlit/secrets.toml` (gitignored) and the button goes behind it; omit
 
 ## Known limitations
 
-1. **The model sits well above the market on four clubs, for two different
-   reasons.** Sporting CP (2.49x the market's P(champion)) and Porto (1.96x) fit
-   a known Elo pathology: a club that dominates a weak league accumulates rating
-   against weak opposition, and the association offset corrects the league's
-   level but not the within-league inflation. Arsenal (2.10x) and Bayern Munich
-   (1.65x) do **not** fit that explanation - both play strong domestic leagues -
-   and the cause there **is not established**. Part of it may be limitation 2.
-2. **The outright benchmark is weak, and biased in a known direction.** It is one
-   bookmaker's pre-season snapshot with a 30.8% overround, de-vigged
-   proportionally. Proportional de-vig ignores **favourite-longshot bias**, so it
-   overstates longshots and understates favourites: some of the gap in (1) is the
-   benchmark's, not the model's. Only 27 of 36 clubs are priced, and the 9
-   unpriced hold ~1% of model probability, so every market number reads ~1% high.
+1. **The model sits above the market on four clubs, for two different
+   reasons.** Sporting CP (2.49x the bookmaker's de-vigged P(champion)) and
+   Porto (1.96x) fit a known Elo pathology: a club that dominates a weak league
+   accumulates rating against weak opposition, and the association offset
+   corrects the league's level but not the within-league inflation. Arsenal and
+   Bayern Munich do **not** fit that explanation - both play strong domestic
+   leagues - and the cause there **is not established**, though part of it was
+   the benchmark: see (2).
+2. **Favourite-longshot bias in the benchmark is now measured, not assumed.** A
+   second market - Kalshi prices observed 2026-08-13, read from a public article
+   (`scripts/compare_markets.py`) - lets the two be compared where both quote a
+   club. They agree within a few percent on the favourites (PSG 0.99, Real
+   Madrid 1.00, Manchester City 0.98 as a ratio of raw implied probabilities)
+   and diverge sharply on the longshots, where the bookmaker's raw prices are
+   roughly twice the exchange's (Aston Villa 0.51, Napoli 0.51, Dortmund 0.61).
+   The bookmaker's 30.8% margin is concentrated in the longshots, so
+   **proportional de-vigging - which assumes it is spread evenly - removes too
+   little from the favourites.** Against raw prices rather than de-vigged ones,
+   Arsenal reads 1.83x the exchange and 1.61x the bookmaker, not 2.10x. Some of
+   gap (1) was the de-vig method.
+   The exchange is **too thin to replace the benchmark**: of 29 clubs listed, 16
+   are quoted only as "under 1 cent" and 7 of the 36 are absent, leaving 13
+   usable prices against a pre-declared minimum of 15. The maltafootball
+   snapshot stays the headline benchmark, with its 9 unpriced clubs holding ~1%
+   of model probability, so every de-vigged number there reads ~1% high.
 3. **Squad values are frozen at 2026-07-06** and cannot be refreshed while the
    source is paused. For 2026-27 the feature describes end-of-2025-26 squads: it
    knows nothing about the summer window.
