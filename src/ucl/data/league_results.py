@@ -12,6 +12,7 @@ raised rather than absorbed.
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -43,7 +44,8 @@ def live_page(season_label: str) -> wikipedia.Page:
 
 
 def load_played(
-    season_label: str = "2026-27", *, cache_dir: Path | None = None, refresh: bool = False
+    season_label: str = "2026-27", *, cache_dir: Path | None = None,
+    refresh: bool = False, today: date | None = None,
 ) -> pd.DataFrame:
     """Played league-phase matches, mapped onto the fixture list.
 
@@ -51,6 +53,16 @@ def load_played(
     awarded score counts in the standings but carries no footballing
     information, so the caller can fix it in the table while leaving it out of
     anything that learns from scorelines.
+
+    A fixture already played whose score the parser cannot read raises rather
+    than being counted as unplayed. This is the path that detects which
+    matchdays are complete, so a dropped result does not merely go missing from
+    the forecast - it makes a finished round look partial, and the weekly update
+    then refuses for a reason that has nothing to do with the real cause. When
+    the page has just been fetched an **empty** score for a past fixture is a
+    failure too; on a deliberately stale read it is only the unreadable ones
+    that raise, so the suite does not start failing because a matchday was
+    played and the cache has not been refreshed yet.
     """
     page = live_page(season_label)
     path, reason = wikipedia.fetch_page(page, cache_dir=cache_dir, refresh=refresh)
@@ -60,6 +72,8 @@ def load_played(
     parsed = wikipedia.parse_matches(
         path.read_text(encoding="utf-8"), season=season_label,
         competition="UCL", source_file=path.name,
+        require_scores_before=today or date.today(),
+        tolerate_missing=not refresh,
     )
     decided = parsed[parsed.played | parsed.awarded].copy()
 

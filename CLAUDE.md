@@ -142,6 +142,34 @@ outputs/         # scratch: csv tables + figures, and what tests clobber
    `scripts/export_club_inputs.py` replaces two hand-written CSVs and
    reproduces them exactly.
 
+## Rules the Wikipedia parser established
+- **Normalise dashes before matching a score, never enumerate them in the
+  pattern.** `ucl.data.wikipedia.normalise_dashes` maps 32 characters to a
+  plain hyphen. Matchday 2 of 2026-27 was written with MINUS SIGN (U+2212)
+  where matchday 1 used an EN DASH (U+2013); a pattern accepting only the en
+  dash and the hyphen read all nine played matches as **unplayed**, and nothing
+  complained. MINUS SIGN is Unicode category Sm, not Pd, so "all the dash
+  characters" is not enough either - the set is written out literally for
+  import speed and a test scans all of Unicode to keep it complete.
+- **A past fixture with an unreadable score raises; an empty one is only a
+  failure on a page just fetched.** Those are different faults: an unreadable
+  score is a parser bug at any age, while an empty one usually means the cached
+  copy predates the result, which is legitimate and is the staleness report's
+  job. So `parse_matches` takes `require_scores_before` plus
+  `tolerate_missing`, `load_played` is strict exactly when `refresh=True`, and
+  `wikipedia.load_results` tolerates empties because it cannot tell a lagging
+  cache from a missing result. Making the empty case fatal everywhere would
+  break every historical load and the whole suite the moment a matchday is
+  played before the cache is refreshed - worse than the bug it guards.
+- **The bar is `min(cutoff, today)`, not `today`.** A fixture after the cutoff
+  is filtered out anyway, so requiring a score for it would fail a 2022 backtest
+  because of a 2026 result.
+- **This bug class is invisible in aggregates.** Nine missing results did not
+  change any total enough to notice; it was found by counting matches by hand
+  against the page. The forecast would not have been wrong, but
+  `completed_matchdays` would have seen a finished round as partial and the
+  weekly update would have refused with a reason unconnected to the cause.
+
 ## Rules the app work established
 - **Any new simulator output is additive, and the gate is byte-identity** of
   every existing output at the archived seed. Accumulating inside the Monte

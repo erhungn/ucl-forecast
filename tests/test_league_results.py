@@ -7,7 +7,7 @@ import pytest
 
 from ucl.config import SEASONS
 from ucl.data import fixtures as fx
-from ucl.data import league_results
+from ucl.data import league_results, wikipedia
 from ucl.models.elo import elo_as_of
 
 SEASON = "2026-27"
@@ -107,3 +107,27 @@ def test_the_information_report_separates_what_is_cached_from_what_is_used():
     domestic = info[info.source == "domestic/football_data"].iloc[0]
     assert domestic.cached_to > datetime.date(2026, 9, 7)
     assert domestic.used_to < datetime.date(2026, 9, 7)
+
+
+def test_a_refreshed_page_must_parse_every_past_fixture(tmp_path, monkeypatch):
+    """The matchday-detection path is where a dropped result does most harm.
+
+    A finished round with one unreadable score looks partial, and the weekly
+    update then refuses for a reason unconnected to the real cause.
+    """
+    from datetime import date
+
+    page = league_results.live_page(SEASON)
+    source = wikipedia.CACHE_DIR / page.file_name
+    text = source.read_text(encoding="utf-8")
+    # Make matchday 1 unreadable the way matchday 2 of 2026-27 was.
+    broken = text.replace("|score      = 2–1", "|score      = 2¬1", 1)
+    assert broken != text, "expected at least one en-dash score to mangle"
+    (tmp_path / page.file_name).write_text(broken, encoding="utf-8")
+    manifest = wikipedia.CACHE_DIR / "manifest.json"
+    (tmp_path / "manifest.json").write_text(manifest.read_text(encoding="utf-8"),
+                                            encoding="utf-8")
+
+    with pytest.raises(ValueError, match="parsed no score"):
+        league_results.load_played(SEASON, cache_dir=tmp_path, refresh=False,
+                                   today=date(2026, 10, 14))

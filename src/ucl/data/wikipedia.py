@@ -37,6 +37,7 @@ from ucl.data.manifest import entry_for, read_manifest, verify_cache, write_mani
 __all__ = [
     "CACHE_DIR", "PAGES", "Page", "USER_AGENT",
     "fetch_page", "fetch_all", "parse_matches", "load_results", "COLUMNS",
+    "normalise_dashes", "find_score",
 ]
 
 CACHE_DIR = DATA_RAW / "wikipedia"
@@ -189,13 +190,80 @@ _WIKI_LINK = re.compile(r"\[\[(?:[^|\]]+\|)?([^\]]+)\]\]")
 # both spellings appear in the 2025-26 Europa League semi-finals.
 _FBAICON = re.compile(r"(?:fba|flag)icon\|([A-Z]{3})\b")
 _START_DATE = re.compile(r"\{\{Start date\|(\d{4})\|(\d{1,2})\|(\d{1,2})")
-_SCORE = re.compile(r"(\d+)\s*[–\-]\s*(\d+)")
+#: Every hyphen, dash and minus a score field might be written with, each
+#: normalised to a plain hyphen before matching.
+#:
+#: Unicode category Pd covers the hyphens and dashes, but MINUS SIGN is
+#: category **Sm** and so is not in Pd - and that is exactly the character an
+#: editor used for matchday 2 of 2026-27, where a pattern accepting only the en
+#: dash and the hyphen read all nine played matches as unplayed.
+#:
+#: Written out rather than derived at import because scanning Unicode for Pd
+#: costs ~80ms on every import of this module, and the model pipeline imports
+#: it. ``test_the_dash_table_covers_every_unicode_dash`` does that scan
+#: instead, so a character added by a future Unicode release fails a test
+#: rather than a season.
+_DASHES = (
+    "-"      # HYPHEN-MINUS (Pd)
+    "֊"      # ARMENIAN HYPHEN (Pd)
+    "־"      # HEBREW PUNCTUATION MAQAF (Pd)
+    "᐀"      # CANADIAN SYLLABICS HYPHEN (Pd)
+    "᠆"      # MONGOLIAN TODO SOFT HYPHEN (Pd)
+    "‐"      # HYPHEN (Pd)
+    "‑"      # NON-BREAKING HYPHEN (Pd)
+    "‒"      # FIGURE DASH (Pd)
+    "–"      # EN DASH (Pd)
+    "—"      # EM DASH (Pd)
+    "―"      # HORIZONTAL BAR (Pd)
+    "⸗"      # DOUBLE OBLIQUE HYPHEN (Pd)
+    "⸚"      # HYPHEN WITH DIAERESIS (Pd)
+    "⸺"      # TWO-EM DASH (Pd)
+    "⸻"      # THREE-EM DASH (Pd)
+    "⹀"      # DOUBLE HYPHEN (Pd)
+    "⹝"      # OBLIQUE HYPHEN (Pd)
+    "〜"      # WAVE DASH (Pd)
+    "〰"      # WAVY DASH (Pd)
+    "゠"      # KATAKANA-HIRAGANA DOUBLE HYPHEN (Pd)
+    "︱"      # PRESENTATION FORM FOR VERTICAL EM DASH (Pd)
+    "︲"      # PRESENTATION FORM FOR VERTICAL EN DASH (Pd)
+    "﹘"      # SMALL EM DASH (Pd)
+    "﹣"      # SMALL HYPHEN-MINUS (Pd)
+    "－"      # FULLWIDTH HYPHEN-MINUS (Pd)
+    "\U00010ead"  # YEZIDI HYPHENATION MARK (Pd)
+    "−"      # MINUS SIGN (Sm) - the 2026-27 matchday 2 character
+    "⁻"      # SUPERSCRIPT MINUS (Sm)
+    "₋"      # SUBSCRIPT MINUS (Sm)
+    "˗"      # MODIFIER LETTER MINUS SIGN (Sk)
+    "➖"      # HEAVY MINUS SIGN (So)
+    "⧿"      # MINY (Sm)
+)
+
+_DASH_TABLE = {ord(character): "-" for character in _DASHES}
+
+# Applied to the already-normalised string, so one spelling covers all 32.
+_SCORE = re.compile(r"(\d+)\s*-\s*(\d+)")
 # The same box appears in three spellings: "{{#invoke:Football box|main" on the
 # league-phase pages, "{{Football box" on the knockout pages and
 # "{{#invoke:football box|main" on the qualifying pages.
 _BOX = re.compile(r"\{\{(?:#invoke:)?\s*football box(?:\s*\|\s*main)?", re.IGNORECASE)
 _GOAL = re.compile(r"\{\{goal\|([^}]*)\}\}")
 _MINUTE = re.compile(r"(\d{1,3})(?:\+\d+)?")
+
+
+def normalise_dashes(text: str) -> str:
+    """Every dash, hyphen and minus variant as a plain hyphen.
+
+    Score fields are written with whichever dash the editor's keyboard or
+    copy-paste produced; normalising first means the score pattern has one
+    spelling to match instead of a character class that someone has to
+    remember to extend.
+    """
+    return text.translate(_DASH_TABLE)
+
+
+def find_score(field: str) -> re.Match[str] | None:
+    """The ``h-a`` score in a field, whatever dash it was written with."""
+    return _SCORE.search(normalise_dashes(field))
 
 
 def _strip_markup(text: str) -> str:
@@ -278,9 +346,27 @@ def _fields(block: str) -> dict[str, str]:
 
 
 def parse_matches(
-    text: str, *, season: str, competition: str, source_file: str = ""
+    text: str, *, season: str, competition: str, source_file: str = "",
+    require_scores_before: date | None = None,
+    tolerate_missing: bool = False,
 ) -> pd.DataFrame:
-    """Parse every Football box in an article into match rows."""
+    """Parse every Football box in an article into match rows.
+
+    ``require_scores_before`` turns the quiet failure into a loud one. A box
+    dated before it that yields no score is a parse failure, not an unplayed
+    fixture - the match has happened - so it raises with the raw score text
+    rather than returning ``played=False``. That is the guard the 2026-27
+    matchday 2 dash change needed: nine played matches were silently dropped
+    and only a hand-count noticed. Awarded matches are exempt, having no
+    numeric score by definition.
+
+    ``tolerate_missing`` splits the two ways that can happen. A score field the
+    parser **could not read** is always a bug in the parser, whatever the age
+    of the page. A field that is simply **empty** means the cached copy predates
+    the result, which is a legitimate state for a deliberately stale read and a
+    failure only when the page was just fetched. Set it when reading a cache
+    that is allowed to lag.
+    """
     headings = [(m.start(), len(m.group(1)), m.group(2)) for m in _HEADING.finditer(text)]
 
     def stage_at(position: int) -> str:
@@ -295,6 +381,7 @@ def parse_matches(
         return ", ".join(p for p in parts if p not in {"Matches", "Summary"})
 
     rows = []
+    unscored: list[str] = []
     for match in _BOX.finditer(text):
         fields = _fields(_block_at(text, match.start()))
         when = _START_DATE.search(fields.get("date", ""))
@@ -302,10 +389,20 @@ def parse_matches(
         away = parse_team(fields.get("team2", ""))
         if not (when and home and away):
             continue
-        score = _SCORE.search(fields.get("score", ""))
+        raw_score = fields.get("score", "")
+        score = find_score(raw_score)
         aet = fields.get("aet", "").strip().lower() in {"y", "yes", "true", "1"}
-        pens = _SCORE.search(fields.get("penaltyscore", ""))
-        awarded = "awarded" in fields.get("score", "").lower()
+        pens = find_score(fields.get("penaltyscore", ""))
+        awarded = "awarded" in raw_score.lower()
+
+        played_on = date(int(when.group(1)), int(when.group(2)), int(when.group(3)))
+        if (require_scores_before is not None and score is None and not awarded
+                and played_on < require_scores_before
+                and (raw_score.strip() or not tolerate_missing)):
+            unscored.append(
+                f"{played_on} {home[0]} v {away[0]} "
+                f"[{stage_at(match.start()) or competition}] "
+                f"raw score {raw_score.strip()!r}")
 
         hg = ag = et_hg = et_ag = None
         if score:
@@ -335,6 +432,18 @@ def parse_matches(
             }
         )
 
+    if unscored:
+        raise ValueError(
+            f"{len(unscored)} match(es) in {source_file or competition} are dated "
+            f"before {require_scores_before} but parsed no score, so they would "
+            f"have been treated as unplayed:\n  "
+            + "\n  ".join(unscored)
+            + "\n\nAn empty raw score means the cached page predates the result: "
+              "re-fetch it with refresh=True. A non-empty one the parser could "
+              "not read means the page's score format changed: widen "
+              "ucl.data.wikipedia._DASHES or _SCORE."
+        )
+
     frame = pd.DataFrame(rows, columns=COLUMNS)
     for column in ("hg", "ag", "ht_hg", "ht_ag", "et_hg", "et_ag", "pens_h", "pens_a"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
@@ -352,11 +461,28 @@ def load_results(
     role: str | None = "gap",
     played_only: bool = True,
     verify: bool = True,
+    require_scores: bool = True,
+    tolerate_missing: bool = True,
+    today: date | None = None,
 ) -> pd.DataFrame:
     """Load cached Wikipedia European results dated strictly before ``cutoff``.
 
     By default only the gap pages are returned: the validation pages duplicate
     matches openfootball already provides, and loading both would double-count.
+
+    ``require_scores`` refuses to return a frame in which a match this load
+    would have used has happened but carries a score the parser could not
+    read. The bar is ``min(cutoff, today)``, not ``today`` alone: a fixture
+    dated after the cutoff is filtered out anyway, so demanding a score for it
+    would make every historical load fail on a cache that merely predates the
+    current matchday.
+
+    ``tolerate_missing`` defaults to true here, unlike on a freshly fetched
+    page: this function reads a cache that is **allowed** to lag, and it cannot
+    tell a page that predates a result from one that is missing it. An empty
+    score is therefore left to the staleness report, while a score that is
+    present and unreadable still raises, because that is a parser bug at any
+    age.
     """
     cache_dir = Path(cache_dir or CACHE_DIR)
     candidates = [p for p in (pages or PAGES) if role is None or p.role == role]
@@ -365,10 +491,12 @@ def load_results(
         raise FileNotFoundError(f"no cached Wikipedia pages in {cache_dir}")
     if verify:
         verify_cache(cache_dir, files=[p.file_name for p in chosen])
+    limit = min(cutoff, today or date.today()) if require_scores else None
     frames = [
         parse_matches(
             (cache_dir / page.file_name).read_text(encoding="utf-8"),
             season=page.season, competition=page.competition, source_file=page.file_name,
+            require_scores_before=limit, tolerate_missing=tolerate_missing,
         ).assign(phase="qualifying" if page.kind == "qualifying" else "main")
         for page in chosen
     ]
