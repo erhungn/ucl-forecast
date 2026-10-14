@@ -11,6 +11,14 @@ shot-based GAP ratings - giving the current model, `model-v2`.
 
 Cutoff: **2026-09-07**, the day before Matchday 1.
 
+**[docs/METHODOLOGY.md](docs/METHODOLOGY.md)** is the full mathematical
+specification: the Elo update and the Davidson association offsets, the Poisson
+GLM and its fitted coefficients, the scoreline matrix with the Poisson-sum and
+Skellam closed forms, the GAP shot ratings and the Elo-residual step, the
+simulator, the evaluation metrics, the bootstrap inference, de-vigging, and the
+rejected methods with their formulas. Every formula cites the function that
+implements it.
+
 Outputs, for all 36 clubs and all 144 league-phase fixtures:
 
 - match level - home/draw/away probabilities and the scoreline distribution;
