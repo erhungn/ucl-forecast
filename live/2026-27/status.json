@@ -2,47 +2,48 @@
   "season": "2026-27",
   "state": "ok",
   "message": "",
-  "pid": 31373,
+  "pid": 5110,
   "model": "v2",
   "iterations": 50000,
   "seed": 20260907,
-  "git_commit": "343173e54d108cf0dfa725ffdee07c99c9022f1f",
-  "started_at_utc": "2026-10-04T14:36:33+00:00",
+  "git_commit": "e1b3f1c7525958976bf1a592b7967b1391dc6b5f",
+  "started_at_utc": "2026-10-20T13:23:56+00:00",
   "collisions": [],
   "pruned": [],
-  "wikipedia_refreshed": false,
-  "through_matchday": 1,
-  "as_of": "2026-10-12",
-  "played_matches": 18,
+  "wikipedia_refreshed": true,
+  "through_matchday": 2,
+  "as_of": "2026-10-19",
+  "played_matches": 36,
   "completed_matchdays": [
-    1
+    1,
+    2
   ],
   "partial_matchdays": {},
-  "next_matchday": 2,
-  "next_matchday_first_date": "2026-10-13",
-  "inputs_hash": "sha256:c89f56639d52deccf1a6d3d5aafe9fe52d024c85d02ab7be68921e5034eb0c58",
+  "next_matchday": 3,
+  "next_matchday_first_date": "2026-10-20",
+  "inputs_hash": "sha256:27a4016118738b3499d65d0b55822b4d91e2cdfe2d163567c7578567abb08c34",
   "simulate_returncode": 0,
   "verification_passed": true,
   "sources": {
     "domestic/football_data": {
-      "cached_to": "2026-09-21",
-      "used_to": "2026-09-21"
+      "cached_to": "2026-05-24",
+      "used_to": "2026-05-24"
     },
     "domestic/football_data_history": {
       "cached_to": "2021-05-23",
       "used_to": "2021-05-23"
     },
     "domestic/football_data_current": {
-      "cached_to": "None",
-      "used_to": "None"
+      "cached_to": "2026-10-19",
+      "used_to": "2026-10-18"
     },
     "european/openfootball": {
       "cached_to": "2026-05-30",
       "used_to": "2026-05-30"
     },
     "european/wikipedia": {
-      "cached_to": "2026-09-10",
-      "used_to": "2026-09-10"
+      "cached_to": "2026-10-14",
+      "used_to": "2026-10-14"
     },
     "squad_value/transfermarkt": {
       "cached_to": "2026-06-28",
@@ -55,12 +56,17 @@
     "v2+B",
     "uniform"
   ],
-  "finished_at_utc": "2026-10-04T14:45:23+00:00",
-  "duration_seconds": 530.0,
+  "finished_at_utc": "2026-10-20T13:32:46+00:00",
+  "duration_seconds": 530.1,
   "artefacts": [
-    "forecast_md1.csv",
-    "next_matchday_2.csv",
+    "forecast_md2.csv",
+    "next_matchday_3.csv",
+    "positions_md2.csv",
+    "knockout_paths_md2.csv",
+    "ratings_md2.csv",
+    "remaining_fixtures_md2.csv",
     "matchday_1_evaluation.csv",
+    "matchday_2_evaluation.csv",
     "information_set.csv",
     "model_tracking.csv"
   ]
