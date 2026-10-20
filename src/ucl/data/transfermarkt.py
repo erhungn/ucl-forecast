@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 
 from ucl.config import DATA_RAW
+from ucl.data.manifest import require_exact_cache_names
 
 __all__ = ["CACHE_DIR", "MAP_PATH", "as_of_for_season", "squad_values",
            "squad_values_minutes_weighted", "club_map"]
@@ -65,6 +66,7 @@ def club_map() -> dict[int, str]:
 
 @lru_cache(maxsize=1)
 def _tables():
+    require_exact_cache_names(CACHE_DIR)
     valuations = pd.read_csv(
         CACHE_DIR / "player_valuations.csv",
         usecols=["player_id", "date", "market_value_in_eur"], parse_dates=["date"])

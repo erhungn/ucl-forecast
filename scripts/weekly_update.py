@@ -4,19 +4,21 @@ One command for the weekly cycle. It refuses rather than guesses, and the order
 is deliberate: everything that can refuse does so before the five-minute
 simulation, not after it.
 
-    1. cache collisions      - a file in two caches, which the loader refuses
-    2. cache integrity       - every manifest hash re-checked
-    3. seed live/            - matchday 0 from the frozen archive
-    4. refresh Wikipedia     - exactly once, here and nowhere else
-    5. detect the matchday   - the contiguous complete prefix
-    6. idempotence gate      - unchanged inputs do no work
-    7. restore the anchor    - the delta chain reads live/, not scratch
-    8. forecast              - scripts/simulate.py
-    9. score                 - scripts/evaluate_matchday.py per played matchday
-   10. information set       - what each source knew
-   11. model tracking        - every candidate scored on the played matches
-   12. publish               - atomically, into live/<season>/
-   13. status.json           - provenance for the run
+    1. cache names           - a folder a loader would read as absent
+    2. cache collisions      - a file in two caches, which the loader refuses
+    3. cache integrity       - every manifest hash re-checked
+    4. seed live/            - matchday 0 from the frozen archive
+    5. refresh Wikipedia     - exactly once, here and nowhere else
+    6. detect the matchday   - the contiguous complete prefix
+    7. domestic coverage     - every main league, close enough to the as-of date
+    8. idempotence gate      - unchanged inputs do no work
+    9. restore the anchor    - the delta chain reads live/, not scratch
+   10. forecast              - scripts/simulate.py
+   11. score                 - scripts/evaluate_matchday.py per played matchday
+   12. information set       - what each source knew
+   13. model tracking        - every candidate scored on the played matches
+   14. publish               - atomically, into live/<season>/
+   15. status.json           - provenance for the run
 
 Artefacts go to ``live/<season>/``, which only this script writes. ``outputs/``
 stays scratch: the test suite runs the simulator into it with a handful of
@@ -40,7 +42,7 @@ from ucl.config import OUTPUTS_DIR, season as season_config
 from ucl.data import fixtures as fx
 from ucl.data import football_data, league_results
 from ucl.data.cutoff import as_of_for_matchday
-from ucl.data.manifest import CacheIntegrityError, verify_cache
+from ucl.data.manifest import CacheIntegrityError, CacheNameError, verify_cache
 from ucl.webapp import paths, update
 
 #: The forecast is always produced by the pinned environment that
@@ -111,6 +113,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-partial", action="store_true",
                         help="forecast through the last complete matchday even "
                              "while the next one is half played")
+    parser.add_argument("--allow-stale", action="store_true",
+                        help="publish even though a main league has no "
+                             "current-season results, or the domestic cache "
+                             "ends more than "
+                             f"{league_results.DOMESTIC_PUBLISH_DAYS} days "
+                             "before the as-of date")
     parser.add_argument("--force", action="store_true",
                         help="re-run even when the inputs are unchanged")
     parser.add_argument("--rescore", action="store_true",
@@ -161,7 +169,19 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
         f"{args.iterations} iterations, seed {args.seed} ===")
     log(f"  interpreter {python}")
 
-    # --- 1. cache collisions, before anything expensive ---------------------
+    # --- 1. cache names, before anything reads a cache ----------------------
+    # A folder whose name is a near miss reads as absent, and absent is a
+    # legitimate state for football_data_current, so nothing downstream can
+    # tell the two apart. This can.
+    log("\n=== cache names ===")
+    try:
+        update.check_cache_names()
+    except CacheNameError as error:
+        raise SystemExit(f"{error}")
+    log(f"  {len(update.cache_directories())} expected cache director(ies), "
+        f"no near-miss names")
+
+    # --- 2. cache collisions, before anything expensive ---------------------
     found = update.collisions()
     status["collisions"] = [str(c) for c in found]
     status["pruned"] = []
@@ -180,7 +200,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
         status["pruned"] = [str(p) for p in removed]
         log(f"  pruned {len(removed)} superseded file(s) and their manifest entries")
 
-    # --- 2. cache integrity --------------------------------------------------
+    # --- 3. cache integrity --------------------------------------------------
     log("\n=== cache integrity ===")
     for directory in football_data.CACHE_DIRS:
         if not Path(directory).is_dir():
@@ -192,7 +212,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
             raise SystemExit(f"{error}")
         log(f"  {directory.name}: {len(verified)} file(s) verified")
 
-    # --- 3. seed live/ from the frozen archive ------------------------------
+    # --- 4. seed live/ from the frozen archive ------------------------------
     # The matchday-0 snapshot anchors every later matchday's d_p_* columns, so
     # it has to come from the model being published. After a model switch the
     # old snapshot is still on disk, and leaving it there would compute a
@@ -235,7 +255,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
                 update.publish(archived_detail, destination)
                 log(f"  seeded {destination.name}")
 
-    # --- 4. refresh the played matches, exactly once ------------------------
+    # --- 5. refresh the played matches, exactly once ------------------------
     log("\n=== results ===")
     try:
         played = league_results.load_played(cfg.label, refresh=not args.no_refresh)
@@ -249,7 +269,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
     log(f"  {len(played)} played match(es) across "
         f"matchday(s) {sorted(set(played.matchday.tolist()))}")
 
-    # --- 5. which matchday the forecast can run through ---------------------
+    # --- 6. which matchday the forecast can run through ---------------------
     matchday = update.latest_complete_prefix(played, fixtures)
     partial = update.partial_matchdays(played, fixtures)
     beyond = update.missing_before(played, fixtures, matchday)
@@ -285,7 +305,48 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
         next_matchday_first_date=(str(later.date.min().date()) if len(later) else None),
     )
 
-    # --- 6. idempotence: unchanged inputs do no work ------------------------
+    # --- 7. domestic coverage, before the five-minute simulation ------------
+    # The ratings are replayed from domestic results, so a hole here is a hole
+    # in every club's rating, and a forecast published from one looks entirely
+    # normal: 36 clubs, 144 fixtures, every check green. The two faults below
+    # both happened on 2026-10-20 and neither refused anything.
+    log("\n=== domestic coverage ===")
+    domestic = football_data.load_results(as_of)
+    coverage = league_results.domestic_coverage(domestic, cfg.label)
+    log(coverage.to_string(index=False))
+    behind = [r for r in coverage.itertuples()
+              if r.last_result is not None
+              and (as_of - r.last_result).days > league_results.DOMESTIC_PUBLISH_DAYS]
+    for row in behind:
+        # Not a refusal: the bar is on the cache as a whole, as declared. One
+        # league alone this far back is still worth seeing in the log.
+        log(f"  NOTE: {row.code} ({row.league}) ends {row.last_result}, "
+            f"{(as_of - row.last_result).days} days before the as-of date")
+    gaps = league_results.domestic_publication_gaps(
+        domestic, season_label=cfg.label, as_of=as_of)
+    status["domestic_gaps"] = gaps
+    status["allow_stale"] = bool(args.allow_stale)
+    status["domestic_last_result"] = (
+        str(domestic.date.max().date()) if len(domestic) else None)
+    if gaps:
+        for reason in gaps:
+            log(f"  {reason}")
+        if not args.allow_stale:
+            raise SystemExit(
+                "the domestic cache is not fit to publish from: "
+                + " ".join(gaps)
+                + " Fetch a current copy into "
+                  f"{football_data.CURRENT_CACHE_DIR.relative_to(config.PROJECT_ROOT)}/"
+                  " and re-run, or pass --allow-stale to publish anyway."
+            )
+        log("  publishing anyway: --allow-stale")
+    else:
+        log(f"  every main league has {cfg.label} results, and domestic "
+            f"results end {domestic.date.max().date()}, "
+            f"{(as_of - domestic.date.max().date()).days} day(s) before the "
+            f"as-of date")
+
+    # --- 8. idempotence: unchanged inputs do no work ------------------------
     digest = update.inputs_hash(played)
     status["inputs_hash"] = digest
     unchanged = (previous.get("state") == "ok"
@@ -301,7 +362,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
                verification_passed=previous.get("verification_passed"))
         return 0
 
-    # --- 7. restore the delta anchor ----------------------------------------
+    # --- 9. restore the delta anchor ----------------------------------------
     # simulate.py computes d_p_* against the previous matchday's file in
     # outputs/, which the test suite overwrites with smoke runs. Copying the
     # published snapshot back makes live/ the anchor of the chain.
@@ -316,7 +377,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
             log(f"  NOTE: {anchor.name} is not published, so the d_p_* columns "
                 f"will be computed against whatever outputs/{anchor_name} holds")
 
-    # --- 8. the forecast -----------------------------------------------------
+    # --- 10. the forecast -----------------------------------------------------
     log(f"\n=== forecast through matchday {matchday} ===")
     code = run_step(log, [
         python, str(SCRIPTS / "simulate.py"), "--season", cfg.label,
@@ -333,7 +394,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
             f"so nothing was published. See the log above."
         )
 
-    # --- 9. score the played matchdays --------------------------------------
+    # --- 11. score the played matchdays --------------------------------------
     log("\n=== scoring ===")
     scored = []
     for played_matchday in range(1, matchday + 1):
@@ -352,7 +413,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
                 f"{played_matchday}; nothing was published")
         scored.append(played_matchday)
 
-    # --- 10. the information set --------------------------------------------
+    # --- 12. the information set --------------------------------------------
     log("\n=== information set ===")
     information = league_results.information(cfg.label, as_of=as_of)
     log(information.to_string(index=False))
@@ -364,7 +425,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
         for row in information.itertuples()
     }
 
-    # --- 11. prospective model tracking --------------------------------------
+    # --- 13. prospective model tracking --------------------------------------
     # Every candidate's probabilities for the played matches, all from the same
     # frozen cutoff information set. Nothing here changes the forecast; it
     # accumulates evidence on this season, which 144 matches cannot settle.
@@ -390,7 +451,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
     else:
         log("  no played matches yet")
 
-    # --- 12. publish ---------------------------------------------------------
+    # --- 14. publish ---------------------------------------------------------
     log("\n=== published ===")
     artefacts = []
     suffix = f"_md{matchday}" if matchday > 0 else ""
@@ -431,7 +492,7 @@ def _run(args, cfg, log: Log, status: dict, finish, previous: dict) -> int:
     for name in artefacts:
         log(f"  live/{cfg.label}/{name}")
 
-    # --- 13. status ----------------------------------------------------------
+    # --- 15. status ----------------------------------------------------------
     finish("ok", artefacts=artefacts)
     log(f"\ndone in {status['duration_seconds']}s, "
         f"through matchday {matchday}, as of {as_of}")

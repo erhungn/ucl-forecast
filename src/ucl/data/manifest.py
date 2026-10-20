@@ -11,11 +11,17 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-__all__ = ["CacheIntegrityError", "ManifestEntry", "read_manifest", "verify_cache", "sha256_of", "write_manifest"]
+__all__ = [
+    "CacheIntegrityError", "CacheNameError", "ManifestEntry", "canonical_cache_name",
+    "difference_from", "near_misses", "read_manifest", "require_exact_cache_names",
+    "verify_cache", "sha256_of", "write_manifest",
+]
 
 MANIFEST_NAME = "manifest.json"
 
@@ -137,3 +143,114 @@ def untracked_files(cache_dir: Path, suffixes: tuple[str, ...] = (".csv", ".txt"
         for p in cache_dir.iterdir()
         if p.is_file() and p.suffix in suffixes and p.name not in manifest
     )
+
+
+#: Characters that can sit in a folder name without showing in a listing: the
+#: zero-width family, the soft hyphen and the byte-order mark. Every Unicode
+#: space is handled separately, by :meth:`str.isspace`.
+#: Written as escapes on purpose: a source line about characters that
+#: cannot be seen must not itself contain any.
+_INVISIBLE = {ord(ch): None for ch in (
+    "\u200b"      # zero-width space
+    "\u200c"      # zero-width non-joiner
+    "\u200d"      # zero-width joiner
+    "\u2060"      # word joiner
+    "\ufeff"      # byte-order mark
+    "\u00ad"      # soft hyphen
+)}
+
+#: A trailing duplicate marker, as a zip tool or a Finder copy leaves it: " 2",
+#: " (2)", " copy", "_copy", " copy 2", " Kopie". Deliberately **not**
+#: ``_2025``: an underscore and digits are how a legitimately separate cache
+#: would be named, and flagging ``football_data_2025`` as a misspelling of
+#: ``football_data`` would block every load for no reason.
+_DUPLICATE = re.compile(
+    r"(?:\s*\(\s*\d+\s*\)|\s+\d+|[\s_-]*cop(?:y|ie)(?:\s*\d+)?|[\s_-]*kopie(?:\s*\d+)?)$",
+    re.IGNORECASE,
+)
+
+
+class CacheNameError(RuntimeError):
+    """Raised when a cache directory is on disk under a near-miss name.
+
+    This is the loud end of a failure that was silent once: a fetch unzipped
+    into ``football_data_current `` - one trailing space, from the zip's own
+    file name - so the loader saw no such directory, reported the cache as
+    absent, and published a forecast with no current-season domestic results
+    at all. Nothing in a terminal listing shows a trailing space.
+    """
+
+
+def canonical_cache_name(name: str) -> str:
+    """A cache directory's name reduced to what the user meant by it.
+
+    Case, every kind of whitespace, the invisible characters above, a trailing
+    dot, a duplicate marker, and ``-``/space where ``_`` belongs all collapse,
+    so two names that differ only in those ways compare equal.
+    """
+    text = unicodedata.normalize("NFC", str(name)).translate(_INVISIBLE)
+    text = "".join(" " if ch.isspace() else ch for ch in text)
+    text = re.sub(r"\s+", " ", text).strip(" .").casefold()
+    while True:                             # " copy 2" needs two passes
+        shorter = _DUPLICATE.sub("", text).strip(" .")
+        if shorter == text or not shorter:
+            break
+        text = shorter
+    return re.sub(r"[ \-]+", "_", text)
+
+
+def difference_from(found: str, expected: str) -> str:
+    """Why two near-miss names differ, in words, for the error message."""
+    if found.strip() != found:
+        where = ("leading and trailing" if found[:1].isspace() and found[-1:].isspace()
+                 else "leading" if found[:1].isspace() else "trailing")
+        return f"{where} whitespace"
+    if found.casefold() == expected.casefold():
+        return "letter case"
+    if _DUPLICATE.search(found.strip(" .")):
+        return "a duplicate suffix"
+    separators = found.strip(" .").casefold().replace("-", "_").replace(" ", "_")
+    if separators == expected.casefold():
+        return "a separator"
+    return "characters that do not show in a listing"
+
+
+def near_misses(expected: Path) -> list[Path]:
+    """Sibling directories whose name is a near miss of ``expected``'s."""
+    expected = Path(expected)
+    if not expected.parent.is_dir():
+        return []
+    target = canonical_cache_name(expected.name)
+    return sorted(
+        child for child in expected.parent.iterdir()
+        if child.is_dir() and child.name != expected.name
+        and canonical_cache_name(child.name) == target
+    )
+
+
+def require_exact_cache_names(*expected: Path) -> None:
+    """Raise :class:`CacheNameError` for every near-miss cache directory found.
+
+    Checked whether or not the real directory exists. Both cases are faults:
+    without it the cache reads as absent, and beside it the loaders silently
+    read one copy and ignore the other.
+    """
+    problems: list[str] = []
+    for directory in expected:
+        directory = Path(directory)
+        for found in near_misses(directory):
+            problems.append(
+                f"{found.parent}/{found.name!r} differs from "
+                f"{directory.name!r} only by {difference_from(found.name, directory.name)}"
+                + (f", and {directory.name!r} also exists, so the loaders read "
+                   f"that one and ignore this. Compare the two and delete the "
+                   f"stray copy" if directory.is_dir()
+                   else f", so the loaders report that cache as absent. Rename "
+                        f'it:  mv "{found}" "{directory}"')
+                + "."
+            )
+    if problems:
+        raise CacheNameError(
+            f"{len(problems)} cache directory name(s) are a near miss:\n  "
+            + "\n  ".join(problems)
+        )

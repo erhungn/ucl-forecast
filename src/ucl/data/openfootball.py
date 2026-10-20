@@ -32,7 +32,9 @@ import pandas as pd
 
 from ucl.config import DATA_RAW
 from ucl.data.cutoff import filter_to_cutoff
-from ucl.data.manifest import ManifestEntry, entry_for, verify_cache, write_manifest
+from ucl.data.manifest import (
+    ManifestEntry, entry_for, require_exact_cache_names, verify_cache, write_manifest,
+)
 
 __all__ = ["CACHE_DIR", "SOURCES", "MISSING", "fetch", "load_results", "parse_file"]
 
@@ -299,6 +301,7 @@ def load_results(
     footballing information about scoring rates.
     """
     cache_dir = Path(cache_dir or CACHE_DIR)
+    require_exact_cache_names(cache_dir)
     chosen = [s for s in SOURCES if competitions is None or s.competition in competitions]
     present = [s for s in chosen if (cache_dir / s.file_name).exists()]
     if not present:

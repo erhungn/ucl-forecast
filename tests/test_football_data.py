@@ -2,14 +2,33 @@
 
 from datetime import date
 
+import pytest
+
 from ucl.config import season
-from ucl.data.football_data import available_files, load_results
+from ucl.data.football_data import (
+    EXTRA_LEAGUES, MAIN_LEAGUES, cached_files, load_results,
+)
+from ucl.data.manifest import CacheNameError
 
 
 def test_cache_has_both_schemas():
-    files = available_files()
-    assert len(files["main"]) == 66
-    assert len(files["extra"]) == 7
+    """Both football-data schemas are cached, wherever the prune left them.
+
+    Counted across the caches rather than inside one: the weekly refresh fetches
+    the current season into ``football_data_current`` and the prune then deletes
+    the superseded copies from ``football_data``, so which directory holds a
+    season moves over time. What must hold is that all 11 main divisions and
+    all 7 extra-league files are present exactly once between them - which is
+    what ``cached_files`` enforces by raising on a name in two caches.
+    """
+    names = [name for _, name in cached_files()]
+    main = [n for n in names if not n.endswith("_all.csv")]
+    extra = [n for n in names if n.endswith("_all.csv")]
+    assert len(names) == len(set(names))
+    assert {n.split("_")[0] for n in main} == set(MAIN_LEAGUES)
+    assert {n.split("_")[0] for n in extra} == set(EXTRA_LEAGUES)
+    # One file per division per season, so main grows by 11 a season.
+    assert len(main) >= 66 and len(extra) == 7
 
 
 def test_october_rows_of_the_current_season_are_filtered_out():
@@ -54,7 +73,8 @@ def test_the_shot_columns_are_kept_for_the_main_leagues_only():
     assert all(column in frame.columns for column in columns)
 
     complete = frame[columns].notna().all(axis=1)
-    assert complete.sum() == 33930
+    # A floor, not an equality: the in-season refresh adds rows every week.
+    assert complete.sum() >= 33930
 
     main = frame.source_file.str.match(r"^[A-Z]+\d_")
     assert complete[~main].sum() == 0, "extra leagues have no shot data"
@@ -62,7 +82,7 @@ def test_the_shot_columns_are_kept_for_the_main_leagues_only():
 
     # All six are non-null on the same rows, so one coverage figure covers them.
     for column in columns:
-        assert frame[column].notna().sum() == 33930
+        assert frame[column].notna().sum() == complete.sum()
 
 
 def test_the_two_schemas_produce_the_same_columns():
@@ -95,3 +115,27 @@ def test_the_shot_counts_are_plausible():
         assert (values >= 0).all()
         assert values.max() < 60, column
         assert (values == values.round()).all(), f"{column} should be whole"
+
+
+# --- a cache under a near-miss name ----------------------------------------
+
+def test_a_near_miss_folder_raises_instead_of_reading_as_absent(tmp_path):
+    """``football_data_current`` is optional, so absent must mean absent.
+
+    On 2026-10-20 a fetch unzipped into ``football_data_current `` and the
+    loader read the cache as absent - which it is allowed to be - so the run
+    went on with domestic results that stopped in May.
+    """
+    (tmp_path / "football_data").mkdir()
+    (tmp_path / "football_data_current ").mkdir()
+    with pytest.raises(CacheNameError) as error:
+        cached_files((tmp_path / "football_data", tmp_path / "football_data_current"))
+    assert "'football_data_current '" in str(error.value)
+
+
+def test_a_cache_that_is_simply_absent_still_loads(tmp_path):
+    """The guard must not turn the optional cache into a required one."""
+    cache = tmp_path / "football_data"
+    cache.mkdir()
+    assert cached_files((cache, tmp_path / "football_data_current")) == []
+

@@ -16,11 +16,14 @@ from pathlib import Path
 
 import pandas as pd
 
-from ucl.data import football_data
-from ucl.data.manifest import MANIFEST_NAME, read_manifest, write_manifest
+from ucl.data import clubelo, football_data, openfootball, transfermarkt, wikipedia
+from ucl.data.manifest import (
+    MANIFEST_NAME, read_manifest, require_exact_cache_names, write_manifest,
+)
 
 __all__ = [
-    "Collision", "cache_precedence", "collisions", "prune_superseded",
+    "Collision", "cache_directories", "cache_precedence", "check_cache_names",
+    "collisions", "prune_superseded",
     "latest_complete_prefix", "partial_matchdays", "missing_before",
     "inputs_hash", "publish", "read_status", "write_status",
 ]
@@ -49,6 +52,30 @@ def cache_precedence() -> tuple[Path, ...]:
         football_data.CACHE_DIR,
         football_data.HISTORY_CACHE_DIR,
     )
+
+
+def cache_directories() -> tuple[Path, ...]:
+    """Every directory under ``data/raw/`` that a loader expects by name.
+
+    The list the name check sweeps. A source whose cache is optional belongs on
+    it too: an optional cache is exactly the one whose absence raises nothing.
+    """
+    return (
+        *football_data.CACHE_DIRS,
+        openfootball.CACHE_DIR,
+        wikipedia.CACHE_DIR,
+        transfermarkt.CACHE_DIR,
+        clubelo.CACHE_DIR,
+    )
+
+
+def check_cache_names(cache_dirs: tuple[Path, ...] | None = None) -> None:
+    """Raise if any expected cache is on disk under a near-miss name.
+
+    One sweep over every source, up front, so a run that is about to read a
+    cache as absent says which folder it should have been reading instead.
+    """
+    require_exact_cache_names(*(cache_dirs or cache_directories()))
 
 
 def collisions(cache_dirs: tuple[Path, ...] | None = None) -> list[Collision]:

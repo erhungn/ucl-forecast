@@ -139,20 +139,53 @@ def test_movement_draws_a_chart_and_the_movers():
     assert app.multiselect[0].value, "clubs should be preselected"
 
 
-def test_played_matches_reports_the_archived_matchday_one_score():
+def test_played_matches_reports_the_score_of_every_published_matchday():
+    """Against ``scoring``, not against a hard-coded pair of figures.
+
+    This asserted matchday 1's 0.6943/0.1377 and so passed only while matchday
+    1 was the only one scored; publishing matchday 2 moved the aggregate and
+    the page was right, not wrong.
+    """
+    from ucl.webapp import scoring
+
+    scored = paths.scored_matchdays(paths.SEASON)
+    if not scored:
+        pytest.skip("no matchday has been scored yet")
     app = run("played_matches")
     html = bodies(app)
-    assert "0.6943" in html and "0.1377" in html      # v2's matchday 1
+    summary = scoring.summarise(scoring.frozen_series(paths.SEASON))
+    assert summary["n"] == 18 * len(scored)
+    assert f'{summary["log_loss"]:.4f}' in html
+    assert f'{summary["rps"]:.4f}' in html
+    assert summary["log_loss"] < summary["uniform_log_loss"]
     assert len(app.warning) == 1
     assert "anecdote" in app.warning[0].value
 
 
-def test_the_information_set_keeps_the_update_button_and_its_warning():
+def test_the_information_set_keeps_the_update_button_and_shows_what_is_stale():
+    """The page must show exactly the staleness contract's warnings.
+
+    Which is none at all once every cache is current. This asserted the
+    "football_data_current is absent" warning, so it passed only while the
+    weekly domestic refresh had never been run - and failed the week it was.
+    """
+    from ucl.webapp import staleness
+
     app = run("information_set")
     assert len(app.dataframe) == 1
     labels = [button.label for button in app.button]
     assert "Run the weekly update" in labels
-    assert any("football_data_current" in warning.value for warning in app.warning)
+
+    expected = staleness.warnings(loaders.load_information(paths.SEASON),
+                                  loaders.load_status(paths.SEASON))
+    shown = [warning.value for warning in app.warning]
+    assert len(shown) == len(expected)
+    for line in expected:
+        assert any(line in rendered for rendered in shown)
+    # The frozen squad-value caveat is a standing note, not a warning, and is
+    # never absent: no refresh can move it.
+    assert any("frozen at" in info.value for info in app.info)
+
     # Pruning must never be on by default.
     prune = [box for box in app.checkbox if "prun" in box.label.lower()]
     assert prune and prune[0].value is False

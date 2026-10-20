@@ -170,6 +170,48 @@ outputs/         # scratch: csv tables + figures, and what tests clobber
   `completed_matchdays` would have seen a finished round as partial and the
   weekly update would have refused with a reason unconnected to the cause.
 
+## Rules the cache guards established
+- **A folder name is data, and a near miss is not absence.** A fetch unzipped
+  into `football_data_current ` - one trailing space, from the zip's own file
+  name - and `football_data.cached_files` skipped it, because that cache is
+  **optional** and absent is a legitimate state for it. The previous day's
+  prune had already moved the 2026-27 files out of the main cache, so the run
+  published a 50,000-iteration forecast off domestic results that ended
+  2026-05-24, with every other check green. `manifest.canonical_cache_name`
+  now reduces case, every Unicode space, the zero-width family, a trailing dot,
+  a duplicate suffix (` 2`, `(2)`, `copy`, `Kopie`) and `-`/space-for-`_`, and
+  `require_exact_cache_names` raises naming the folder it found. It does
+  **not** strip `_2025`: an underscore and digits is how a separate cache would
+  legitimately be named, and flagging `football_data_2025` would refuse every
+  load for a directory nobody got wrong.
+- **The optional cache is the dangerous one.** Where absence raises, a
+  misnamed folder is loud already. Where absence is legal, nothing downstream
+  can tell a missing cache from a mistyped one - so that is exactly where the
+  name has to be checked rather than inferred from a thin result set.
+- **A note and a refusal are different thresholds, and both are declared.**
+  `DOMESTIC_STALE_DAYS` 7 warns; `DOMESTIC_PUBLISH_DAYS` 10 refuses, as does a
+  main league with no current-season results at all. A test asserts the warning
+  fires before the refusal: refusing without ever having warned would be a
+  worse interface than either.
+- **The gate runs before the simulation, not after it** - the script's standing
+  order - and `status.json` records `domestic_gaps`, `allow_stale` and
+  `domestic_last_result`, so a run published over a known-thin cache stays
+  identifiable afterwards instead of looking like any other run.
+- **A snapshot assertion in a test becomes a liability the week the data
+  moves.** Monday's fetch-and-prune and the matchday-2 publication broke five
+  assertions between them, none of which was about anything wrong:
+  `available_files()` counts of 66/7, 33,930 complete shot rows,
+  `football_data`'s own `cached_to` running past the cutoff, matchday 1's
+  0.6943/0.1377 on the played-matches page, and the information-set page's
+  "football_data_current is absent" warning - that last one passed only while
+  the weekly refresh had never been run. Each was replaced by the structural
+  claim it stood in for: all 11 divisions and 7 extra-league files present
+  exactly once across the caches, all six shot columns non-null on identical
+  rows, domestic `cached_to` read across the directories, the page's figures
+  recomputed from `webapp.scoring`, and the page's warnings compared with
+  `webapp.staleness`'s own output. **A test that pins a published number must
+  pin it to the artefact, not to a literal.**
+
 ## Rules the app work established
 - **Any new simulator output is additive, and the gate is byte-identity** of
   every existing output at the archived seed. Accumulating inside the Monte

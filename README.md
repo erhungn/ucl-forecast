@@ -63,7 +63,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 598 tests
+.venv/bin/python -m pytest                                       # 679 tests
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -315,8 +315,18 @@ matchday-0 copies of those are seeded from `results/model_v2/`, because the
 weekly run forecasts through the latest *complete* matchday and so can never
 produce a matchday-0 artefact again. It refuses rather
 than guesses - mid-round, on a skipped round, on a cache collision (unless
-`--prune-stale`), or when a verification check fails - and it does no work at
-all when the inputs are unchanged.
+`--prune-stale`), on a cache folder whose name is a near miss, when a main
+league has no current-season results or the domestic cache ends more than 10
+days before the as-of date (unless `--allow-stale`), or when a verification
+check fails - and it does no work at all when the inputs are unchanged.
+
+Those last two guards exist because a run on 2026-10-20 published a
+50,000-iteration forecast whose domestic results stopped on 2026-05-24. The
+refresh had unzipped into `football_data_current ` - one trailing space, from
+the zip's own file name - so the loader read that cache as absent, which is a
+legitimate state for it, and the previous day's prune had already moved the
+2026-27 files out of the main cache. Every other check passed and the only sign
+was the word "absent" in the integrity listing.
 
 The information set is an **as-of date**, not a hard-coded cutoff: all cached
 matches before it are applied, played UCL matches are fixed at their actual
@@ -414,7 +424,7 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 649 tests in all (598 of them in `.venv`).
+`.venv-app/bin/python -m pytest` - 730 tests in all (679 of them in `.venv`).
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 pages give nothing away, but the update button starts a five-minute job
@@ -487,8 +497,8 @@ src/ucl/
 scripts/             17 entry points: fetch, fit, simulate, backtest, tune_*, build_*,
                      check_*, export_club_inputs, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
-app/                 Streamlit entry point and the six views
-tests/               649 tests (598 in .venv, all of them in .venv-app)
+app/                 Streamlit entry point and its nine views
+tests/               730 tests (679 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)

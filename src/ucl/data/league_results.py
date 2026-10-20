@@ -18,11 +18,12 @@ from pathlib import Path
 import pandas as pd
 
 from ucl.data import fixtures as fx
-from ucl.data import names, wikipedia
+from ucl.data import football_data, names, wikipedia
 
 __all__ = [
     "MappingError", "live_page", "load_played", "completed_matchdays",
-    "information", "staleness", "DOMESTIC_STALE_DAYS",
+    "information", "staleness", "domestic_coverage", "domestic_publication_gaps",
+    "DOMESTIC_STALE_DAYS", "DOMESTIC_PUBLISH_DAYS",
 ]
 
 COLUMNS = ["matchday", "date", "home_id", "away_id", "hg", "ag", "status"]
@@ -30,6 +31,14 @@ COLUMNS = ["matchday", "date", "home_id", "away_id", "hg", "ag", "status"]
 #: A domestic cache this many days behind the as-of date is a real hole rather
 #: than the fixture calendar, and every forecast says so.
 DOMESTIC_STALE_DAYS = 7
+
+#: And this far behind it must not be published at all. Deliberately looser
+#: than the note above: between the two a forecast is published with a warning,
+#: beyond it the ratings are missing a full round of domestic form or more and
+#: the run refuses. A European matchday is 7 days apart from the next, so 10
+#: days covers a late-finishing weekend plus a day of fetch lag, and nothing
+#: more.
+DOMESTIC_PUBLISH_DAYS = 10
 
 
 class MappingError(RuntimeError):
@@ -196,3 +205,80 @@ def information(season_label: str = "2026-27", as_of=None) -> pd.DataFrame:
             "fetched": None,
         })
     return pd.DataFrame(rows)
+
+
+def domestic_coverage(results: pd.DataFrame, season_label: str) -> pd.DataFrame:
+    """Per main league, what the domestic cache holds for the forecast season.
+
+    One row per division in :data:`ucl.data.football_data.MAIN_LEAGUES`,
+    including the ones with nothing, because a league with nothing is the whole
+    point of looking. ``results`` is whatever the caller loaded, so the counts
+    are of the matches a forecast would actually use, not of files on disk: a
+    file can be present and hold no result before the as-of date.
+    """
+    # Carried as a column rather than an aligned Series: a caller may hand us a
+    # concatenated frame whose index labels repeat.
+    tagged = results.assign(
+        code=results.source_file.astype(str).str.split("_").str[0])
+    current = tagged[tagged.code.isin(football_data.MAIN_LEAGUES)
+                     & (tagged.season == season_label)]
+    counts = current.groupby("code").agg(
+        matches=("date", "size"), last_result=("date", "max"))
+    rows = []
+    for code, (country, league) in football_data.MAIN_LEAGUES.items():
+        held = counts.loc[code] if code in counts.index else None
+        rows.append({
+            "code": code, "country": country, "league": league,
+            "matches": int(held.matches) if held is not None else 0,
+            "last_result": (held.last_result.date() if held is not None else None),
+        })
+    return pd.DataFrame(rows).sort_values("code").reset_index(drop=True)
+
+
+def domestic_publication_gaps(
+    results: pd.DataFrame, *, season_label: str, as_of,
+    limit_days: int = DOMESTIC_PUBLISH_DAYS,
+) -> list[str]:
+    """Why this domestic cache must not be published from, as reasons.
+
+    Empty means publish. Two faults are looked for, and they are the two that
+    a cache can have while every other check passes:
+
+    * a **main league with no current-season results**. The 36 league-phase
+      clubs come from these divisions, so a missing one means those clubs carry
+      last season's rating into a forecast of this one.
+    * **domestic results ending more than ``limit_days`` before the as-of
+      date**. The note at :data:`DOMESTIC_STALE_DAYS` says so; past this it is
+      not a note.
+
+    Both fired on 2026-10-20 and neither was a refusal: a fetch had unzipped
+    into ``football_data_current `` with a trailing space, the previous day's
+    prune had already removed the 2026-27 files from the main cache, and the
+    run published a 50,000-iteration forecast off domestic results that ended
+    2026-05-24. The only sign was the word "absent" in the integrity listing.
+    """
+    as_of = pd.Timestamp(as_of).date()
+    if not len(results):
+        return [f"the domestic cache holds no results at all before {as_of}"]
+
+    coverage = domestic_coverage(results, season_label)
+    empty = coverage[coverage.matches == 0]
+    reasons = []
+    if len(empty):
+        reasons.append(
+            f"{len(empty)} of {len(coverage)} main leagues have no {season_label} "
+            f"results in the cache: "
+            + ", ".join(f"{r.code} ({r.league})" for r in empty.itertuples())
+            + ". Every club from those leagues would carry a rating with no "
+              "current-season form in it."
+        )
+
+    last = results.date.max()
+    gap = (as_of - last.date()).days
+    if gap > limit_days:
+        reasons.append(
+            f"domestic results end {last.date()}, {gap} days before the as-of "
+            f"date {as_of}, past the {limit_days}-day publishing bar. The "
+            f"ratings are missing at least one full round of domestic form."
+        )
+    return reasons

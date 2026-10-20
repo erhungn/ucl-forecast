@@ -221,3 +221,68 @@ def test_every_published_snapshot_came_from_the_published_model():
     for column in ("p_champion", "mean_position"):
         assert (merged[f"{column}_archive"] - merged[f"{column}_live"]
                 ).abs().max() == pytest.approx(0.0, abs=1e-9)
+
+
+# --- the two guards the 2026-10-20 runs needed ------------------------------
+
+def test_the_sweep_covers_every_cache_directory_a_loader_defines():
+    """A new source must be swept for near-miss names without being added here.
+
+    Any module-level path under ``data/raw/`` with no file extension is a cache
+    directory, and every one of them has to be on the list the name check
+    sweeps - the whole failure was a directory nothing was looking for.
+    """
+    import importlib
+    import pkgutil
+    from pathlib import Path
+
+    import ucl.data
+    from ucl.config import DATA_RAW
+
+    swept = set(update.cache_directories())
+    defined = {}
+    for found in pkgutil.iter_modules(ucl.data.__path__):
+        module = importlib.import_module(f"ucl.data.{found.name}")
+        for name, value in vars(module).items():
+            if (isinstance(value, Path) and value.parent == DATA_RAW
+                    and not value.suffix and not name.startswith("_")):
+                defined[value] = f"ucl.data.{found.name}.{name}"
+    assert defined, "no cache directories found, so this test proves nothing"
+    missing = {path: where for path, where in defined.items() if path not in swept}
+    assert not missing, f"not swept for near-miss names: {missing}"
+
+
+def test_the_sweep_names_a_near_miss_and_passes_on_the_real_caches(tmp_path):
+    from ucl.data.manifest import CacheNameError
+
+    (tmp_path / "football_data_current ").mkdir()
+    with pytest.raises(CacheNameError, match="football_data_current "):
+        update.check_cache_names((tmp_path / "football_data_current",))
+    # And the repository's own data/raw, swept exactly as a run sweeps it.
+    update.check_cache_names()
+
+
+def test_the_script_offers_the_stale_override():
+    """The refusal has a documented way past it, or a legitimate stale run
+    (an off-season re-forecast, say) could not be published at all."""
+    result = subprocess.run(
+        [sys.executable, "scripts/weekly_update.py", "--help"],
+        capture_output=True, text=True)
+    assert result.returncode == 0
+    # argparse wraps the help text at whatever width it likes, so match on it
+    # with the whitespace taken out.
+    flat = "".join(result.stdout.split())
+    assert "--allow-stale" in flat
+    assert "nocurrent-seasonresults" in flat and "10daysbeforetheas-ofdate" in flat
+
+
+def test_the_published_status_records_how_the_guards_went():
+    """A run published with a known-thin cache must be identifiable afterwards."""
+    from ucl.webapp import loaders, paths
+
+    status = loaders.load_status(paths.SEASON)
+    if not status or status.get("state") != "ok":
+        pytest.skip("no successful update has run")
+    if "domestic_gaps" not in status:
+        pytest.skip("published before the domestic-coverage gate existed")
+    assert status["domestic_gaps"] == [] or status["allow_stale"]

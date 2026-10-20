@@ -32,7 +32,9 @@ import pandas as pd
 
 from ucl.config import DATA_RAW
 from ucl.data.cutoff import filter_to_cutoff
-from ucl.data.manifest import entry_for, read_manifest, verify_cache, write_manifest
+from ucl.data.manifest import (
+    entry_for, read_manifest, require_exact_cache_names, verify_cache, write_manifest,
+)
 
 __all__ = [
     "CACHE_DIR", "PAGES", "Page", "USER_AGENT",
@@ -485,6 +487,7 @@ def load_results(
     age.
     """
     cache_dir = Path(cache_dir or CACHE_DIR)
+    require_exact_cache_names(cache_dir)
     candidates = [p for p in (pages or PAGES) if role is None or p.role == role]
     chosen = [p for p in candidates if (cache_dir / p.file_name).exists()]
     if not chosen:

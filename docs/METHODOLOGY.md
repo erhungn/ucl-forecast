@@ -905,8 +905,8 @@ the cutoff, which is useless for a five-season forward chain.
 # The inference of §8
 .venv/bin/python scripts/significance.py
 
-.venv/bin/python -m pytest          # 632 tests
-.venv-app/bin/python -m pytest      # 683, adds the Altair and AppTest modules
+.venv/bin/python -m pytest          # 679 tests
+.venv-app/bin/python -m pytest      # 730, adds the Altair and AppTest modules
 ```
 
 Archived fits and decisions live under `results/`: `elo_baseline_v0/`,

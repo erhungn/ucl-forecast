@@ -22,7 +22,7 @@ import pandas as pd
 
 from ucl.config import DATA_RAW
 from ucl.data.cutoff import filter_to_cutoff
-from ucl.data.manifest import verify_cache
+from ucl.data.manifest import require_exact_cache_names, verify_cache
 
 __all__ = [
     "CACHE_DIR", "HISTORY_CACHE_DIR", "CACHE_DIRS", "MAIN_LEAGUES", "SHOT_COLUMNS",
@@ -120,8 +120,15 @@ def cached_files(cache_dirs: tuple[Path, ...] | None = None) -> list[tuple[Path,
     Each directory is verified against its own manifest, and a file name may
     appear in only one of them: two directories holding the same season would
     double-count every match in it.
+
+    A directory that is **absent** is fine - ``CURRENT_CACHE_DIR`` usually is -
+    but a directory that is absent only because the real one is sitting beside
+    it under a near-miss name is not, and that is checked here rather than
+    inferred later from a thin result set.
     """
-    dirs = [Path(d) for d in (cache_dirs or CACHE_DIRS) if Path(d).is_dir()]
+    requested = [Path(d) for d in (cache_dirs or CACHE_DIRS)]
+    require_exact_cache_names(*requested)
+    dirs = [d for d in requested if d.is_dir()]
     seen: dict[str, Path] = {}
     out: list[tuple[Path, str]] = []
     for directory in dirs:
