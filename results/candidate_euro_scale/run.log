@@ -1,0 +1,54 @@
+=== candidate 'euro_scale' [candidate C, binding]: forward chaining, primary test = european ===
+  measured against: gap
+  primary metric: scoreline  (-log P(exact score); the 1X2 delta is a non-worsening guard)
+  decided by: two_way
+  covariate coverage (both clubs known), by test season:
+    2022-23: European 30.5%, domestic 0.0%  (410 clubs)
+    2023-24: European 30.7%, domestic 0.0%  (407 clubs)
+    2024-25: European 35.6%, domestic 0.0%  (531 clubs)
+    2025-26: European 35.6%, domestic 0.0%  (531 clubs)
+  fold 2022-23: train 2021-22                       half-life    365d        training 0.99379 delta +0.00012 (65s)
+    fitted terms: c_ucl_main +0.10456  c_other_european -0.03050  g_ucl_main -0.03636  g_other_european +0.08176
+  fold 2023-24: train 2021-22+2022-23               half-life    365d        training 0.97237 delta -0.01316 (68s)
+    fitted terms: c_ucl_main +0.10284  c_other_european +0.00179  g_ucl_main -0.03916  g_other_european +0.05546
+  fold 2024-25: train 2021-22+2022-23+2023-24       half-life    365d        training 0.96122 delta -0.01131 (76s)
+    fitted terms: c_ucl_main +0.09282  c_other_european -0.01394  g_ucl_main -0.02402  g_other_european +0.07394
+  fold 2025-26: train 2021-22+2022-23+2023-24+2024-25 half-life    365d        training 0.95658 delta -0.01297 (87s)
+    fitted terms: c_ucl_main +0.09637  c_other_european -0.02299  g_ucl_main -0.00991  g_other_european +0.08626
+
+=== per fold, european scope ===
+  2022-23: n=  410 delta +0.00012 two-way [-0.01870, +0.01826] cluster [-0.01100, +0.01152] per-match [-0.01074, +0.01049]
+  2023-24: n=  407 delta -0.01316 two-way [-0.03075, +0.00339] cluster [-0.02313, -0.00342] per-match [-0.02267, -0.00380]
+  2024-25: n=  523 delta -0.01131 two-way [-0.02675, +0.00314] cluster [-0.02013, -0.00264] per-match [-0.02029, -0.00282]
+  2025-26: n=  492 delta -0.01297 two-way [-0.03343, +0.00529] cluster [-0.02359, -0.00264] per-match [-0.02387, -0.00262]
+
+=== POOLED, primary test (european), decided by two_way ===
+  matches 1832, clusters 405, home clusters 405, away clusters 404
+  weighted mean delta log-loss: -0.00961 (negative = the candidate is better)
+  two-way   95% CI [-0.01892, -0.00087]  excludes zero: True
+  cluster   95% CI [-0.01461, -0.00441]  excludes zero: True
+  per-match 95% CI [-0.01473, -0.00478]  excludes zero: True
+
+  GUARD, 1X2 log-loss on the same matches: -0.00240
+    two-way 95% CI [-0.00622, +0.00138]
+    declared condition: the point estimate must not be positive -> PASS
+
+  DECISION: ACCEPT euro_scale
+
+=== sensitivities (not the decision) ===
+  domestic (circular for this candidate): +0.00002 [-0.00010, +0.00015] over 17356 matches
+  all matches pooled: -0.00229 [-0.00355, -0.00108]
+
+=== calibration diagnostics, European matches, before and after ===
+                           baseline  candidate   observed
+  draw rate                  0.2326     0.2251     0.1943
+  goals per match            2.7798     2.9001     2.9733
+  over 2.5                   0.5245     0.5523     0.5737
+
+  per fold (candidate vs observed):
+    2022-23: draws 0.228/0.215  goals 2.86/2.87  over 2.5 0.543/0.529
+    2023-24: draws 0.225/0.197  goals 2.91/3.09  over 2.5 0.554/0.595
+    2024-25: draws 0.223/0.187  goals 2.91/3.01  over 2.5 0.555/0.591
+    2025-26: draws 0.225/0.183  goals 2.91/2.92  over 2.5 0.556/0.575
+
+total 302s

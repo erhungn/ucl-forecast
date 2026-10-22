@@ -230,12 +230,23 @@ bit-identical to the original run, so that only the covariate could have moved.
 | 2' | squad market value, ~50% coverage (binding re-run) | weighted pooled | **-0.00099** | **[-0.00187, -0.00008]** | **accepted -> v1** |
 | A | GAP shot ratings, as the Elo residual | weighted pooled | **-0.00042** | **[-0.00076, -0.00008]** | **accepted -> v2** |
 | B | minutes-weighted squad value | weighted pooled | -0.00001 | [-0.00047, +0.00044] | **null** |
+| C | European goal scale + home advantage, per competition | European **scoreline**, two-way | **-0.00961** | **two-way [-0.01892, -0.00087]** | **accepted - not yet promoted** |
 
 Negative is better. Each row is archived under `results/` with its folds, paired
-losses, decision JSON and a README - including the rejections. Candidates A and B were
-measured against the accepted model of the day (v1, then v1+A), not against
-Elo: pairing a candidate that already contains an accepted term against Elo
-would credit it with that term's gain as well as its own.
+losses, decision JSON and a README - including the rejections. Candidates A, B
+and C were measured against the accepted model of the day (v1, then v1+A, then
+v2), not against Elo: pairing a candidate that already contains an accepted term
+against Elo would credit it with that term's gain as well as its own.
+
+**Candidate C's row is not comparable with the others' deltas.** It is the only
+one measured on the exact Poisson scoreline loss rather than 1X2 log-loss, and
+on European matches alone, so its magnitude reflects a different and much less
+compressed metric. It is also the first judged by the **two-way** interval that
+has been the declared rule since milestone 8 but had no code path until this
+run. On the 1X2 metric, which the other rows use, candidate C is -0.00240 on the
+same matches with a two-way interval of [-0.00622, +0.00138] that does **not**
+clear zero - which is why the scoreline metric was declared as the primary
+before the run rather than chosen afterwards.
 
 ### How strong are the two acceptances? Not as strong as those intervals suggest
 

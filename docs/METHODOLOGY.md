@@ -343,9 +343,28 @@ criterion (a) resolves a tie. The 1X2 ordering is not in question — this moves
 probability between the three outcomes by one or two points, not the ranking —
 but it is a model limitation, not a presentation one.
 
-**Candidate C** tests the direct fix — a per-competition intercept shift fitted
-on pre-cutoff European matches, declared and scored under the §8 protocol. Its
-verdict, accepted or rejected, is in `results/candidate_euro_scale/`.
+**Candidate C tested the direct fix and was accepted**: a per-competition
+intercept shift fitted on pre-cutoff European matches, with three levels
+(domestic as the baseline, UCL main phase, other European), each European level
+carrying a goal scale $c$ on both log-rates and an extra home advantage $g$ on
+the home side only, switched off at a neutral venue exactly as $h$ is.
+
+$$\log \lambda_h = a + h + b\,d + \sum_m \beta_m x_m + c_{\ell}
++ \big[\text{not neutral}\big]\,g_{\ell}, \qquad
+\log \lambda_a = a - b\,d - \sum_m \beta_m x_m + c_{\ell}$$
+
+Primary test, declared before the run: European-only **exact Poisson scoreline
+log-loss** $-\log P(y_h, y_a)$, two-way clustered — the likelihood the model is
+fitted on, chosen because a 1X2 triple is a coarse functional of the goal
+distribution and could not resolve the candidate at any plausible effect size.
+Pooled $\Delta$ **−0.00961**, CI **[−0.01892, −0.00087]**, over 1,832 European
+matches. $c_{\text{ucl main}}$ is +0.093 to +0.105 at every cutoff, a factor of
+about 1.10 on both rates. The draw rate moves 0.2326 → 0.2251 against 0.1943
+observed, which is the predicted partial effect.
+
+**Not promoted**: the published forecast is still v2. Full result, the declared
+weaknesses and the fitted coefficients per fold are in
+`results/candidate_euro_scale/`.
 
 **An open lead, post hoc and untested.** A pure goal scale cannot close the draw
 gap (above), and candidate C's fitted home-advantage term for the UCL main phase

@@ -133,6 +133,12 @@ outputs/         # scratch: csv tables + figures, and what tests clobber
 9. Significance of the accepted improvements - DONE. Two-way clustering shows
    neither acceptance is robustly significant; the decisions stand as made and
    the claims are restated. **Model development is closed.**
+11. Reopened once, for one pre-declared candidate, then closed again -
+   candidate C, a per-competition European goal scale and home advantage.
+   **Accepted** on European scoreline log-loss, two-way clustered: delta
+   -0.00961, CI [-0.01892, -0.00087]. **Not promoted**: the published forecast
+   is still v2, and promotion to v3 is a separate decision with its own gates.
+   See `results/candidate_euro_scale/`. **Model development is closed again.**
 10. Local app, round 2: club pages, the projected table, paths to the final,
    fixture scoreline grids and a top tab bar - DONE. **No model change.** The
    simulator gained four additive outputs (position matrix, knockout pairings,
@@ -240,6 +246,35 @@ outputs/         # scratch: csv tables + figures, and what tests clobber
   3.3ms for every loader a page uses.
 
 ## What the backtests established (do not relitigate without new evidence)
+- **Candidate C is accepted: a per-competition European goal scale, model
+  v2+C.** Three levels - domestic as the baseline, UCL main phase, other
+  European - each European level carrying a goal scale added to both log-rates
+  and an extra home advantage added to the home side. Primary test declared
+  before the run: **European-only exact Poisson scoreline log-loss**, two-way
+  clustered, delta **-0.00961, CI [-0.01892, -0.00087]**, with the European 1X2
+  delta as a non-worsening guard (-0.00240, passes on the point estimate; its
+  own interval does not clear zero and no claim rests on it). `c_ucl_main` is
+  +0.093 to +0.105 at every cutoff, about a 1.10 factor on both rates.
+  **Not promoted** - the published forecast is v2.
+  - **The scoreline metric was declared, not chosen.** 1X2 log-loss cannot
+    resolve this candidate at any plausible effect size (|z| under 0.9); the
+    scoreline likelihood carries 19x the KL divergence and is what the model is
+    fitted on. The measured 1X2 interval indeed fails to clear zero.
+  - **The motivating evidence overlaps the test seasons.** The 288 league-phase
+    matches that diagnosed the gap are 2024-25 and 2025-26, two of the four
+    folds, so a pass is a weaker confirmation than an independent holdout. The
+    fit is clean per fold; the *choice of what to test* was not independent.
+  - **The home-advantage term landed in the other competition.** `g_ucl_main` is
+    negative in all four folds (-0.036 to -0.010) and `g_other_european` is
+    +0.055 to +0.086. It was declared and kept as declared.
+  - **Goals and over-2.5 improve, the draw rate barely.** European draw rate
+    0.2326 -> 0.2251 against 0.1943 observed; goals 2.78 -> 2.90 against 2.97;
+    over 2.5 0.525 -> 0.552 against 0.574. As predicted: a scale term disperses
+    the Skellam difference only weakly.
+  - **A pre-run power calculation under-predicted the effect 2.3x** - it treated
+    the non-UCL two thirds of the European sample as inert when they supply 21%
+    of the gain, and used the 144 published 2026-27 rates as a stand-in for the
+    backtest's fixture mix. Recorded in the archive as a modelling error.
 - **The fitted intercept is domestic, and it under-scores this competition.**
   6,405 of 65,389 fitted matches are European (9.8%), so `a` lands near the
   domestic 2.775 goals/match. The 36-team UCL league phase scored **3.32** over
