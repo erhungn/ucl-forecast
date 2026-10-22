@@ -26,8 +26,8 @@ from scipy.stats import poisson, skellam
 
 __all__ = [
     "MAX_GOALS", "BANDS", "joint_matrix", "folded_matrix", "modal_scoreline",
-    "probability_over", "probability_margin_at_least", "summarise_fixture",
-]
+    "probability_over", "probability_margin_at_least", "scoreline_log_loss",
+    "summarise_fixture"]
 
 #: The grid the forecast has always used for scorelines.
 MAX_GOALS = 10
@@ -93,6 +93,25 @@ def probability_over(line: float, rate_home, rate_away) -> np.ndarray:
     home, away = _rates(rate_home, rate_away)
     threshold = int(np.floor(line))
     return 1.0 - poisson.cdf(threshold, home + away)
+
+
+def scoreline_log_loss(rate_home, rate_away, hg, ag) -> np.ndarray:
+    """-log P(exact score) under the independent-Poisson model, exactly.
+
+    This is the quantity the model is fitted on, one match at a time, so it is
+    the natural metric for a candidate whose claim is about the goal scale: a
+    1X2 triple is a coarse functional of the same distribution and a scale shift
+    barely moves it.
+
+    Deliberately **not** read off :func:`joint_matrix`, which truncates at
+    ``MAX_GOALS`` and whose 1X2 projection is renormalised. This is the model's
+    own likelihood with no grid and no clipping, so it and the 1X2 loss are not
+    two views of one truncated table - a 12-1 scoreline has a loss here and no
+    cell there.
+    """
+    home, away = _rates(rate_home, rate_away)
+    return -(poisson.logpmf(np.asarray(hg), home)
+             + poisson.logpmf(np.asarray(ag), away))
 
 
 def probability_margin_at_least(margin: int, rate_home, rate_away) -> np.ndarray:

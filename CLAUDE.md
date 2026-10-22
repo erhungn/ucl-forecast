@@ -268,6 +268,16 @@ outputs/         # scratch: csv tables + figures, and what tests clobber
   disagrees afterwards would be choosing the rule to suit the result, so v2
   stays published and the claim is restated instead: **small, consistent in
   sign, not robustly significant.** See `results/significance/report.md`.
+- **Open lead, post hoc and untested: a European-specific slope `b`, not a
+  European intercept.** A goal scale cannot close the draw gap, and candidate
+  C's fitted UCL home-advantage term is ~0 while the draw excess and home-win
+  shortfall persist. A compressed Elo difference in European matches would
+  explain all three at once: a larger `b` lowers P(draw), raises P(home) for the
+  stronger side and leaves the mean goal rate alone. The cross-league scale is
+  carried by the association offsets, and nothing checks the slope they feed.
+  **Generated from candidate C's residuals, so post hoc**; not quantified, not
+  fitted, not tested. It needs its own pre-declaration and a holdout that played
+  no part in generating it - which rules out 2024-25 and 2025-26.
 - **Open lead, not promoted: v2 using shots on target alone.** Dropping shots
   off target and corners beats full v2 by 0.00047 and clears zero under all
   three resampling schemes, gaining on domestic matches in all four folds while

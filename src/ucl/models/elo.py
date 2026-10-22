@@ -87,6 +87,21 @@ def _canonical(frame: pd.DataFrame, source: str, column: str) -> pd.Series:
     return frame[column].map(lookup).fillna(frame[column])
 
 
+def _levels(euro: pd.DataFrame) -> pd.Series:
+    """The competition level each European match is fitted under.
+
+    Three levels, because the three competitions do not score alike: across the
+    cache the UCL main phase runs 3.13 goals a match against 2.83 for everything
+    else European and 2.78 domestic. UCL **qualifying** sits with the others at
+    2.80, so it belongs there rather than with the draw it feeds.
+    """
+    main = european.is_main_phase(euro)
+    return pd.Series(
+        np.where(main & (euro.competition == "UCL"), "ucl_main", "other_european"),
+        index=euro.index,
+    )
+
+
 def match_frame(cutoff: date) -> pd.DataFrame:
     """Every match before ``cutoff``, domestic and European, with club ids."""
     domestic = football_data.load_results(cutoff)
@@ -104,6 +119,7 @@ def match_frame(cutoff: date) -> pd.DataFrame:
             "season": domestic.season,
             "competition": "domestic",
             "is_european": False,
+            "level": "domestic",
         }
     )
 
@@ -127,10 +143,17 @@ def match_frame(cutoff: date) -> pd.DataFrame:
             "season": euro.season,
             "competition": euro.competition,
             "is_european": True,
+            "level": _levels(euro),
         }
     )
 
-    frame = pd.concat([dom[MATCH_COLUMNS], eur[MATCH_COLUMNS]], ignore_index=True)
+    # `level` is carried beside MATCH_COLUMNS rather than inside it: a test
+    # builds a synthetic frame and projects it through MATCH_COLUMNS, so adding
+    # a column there would break callers that have no competition to declare.
+    # `replay` copies the whole frame, so pre_match gets it for free and no
+    # existing fit sees it.
+    columns = MATCH_COLUMNS + ["level"]
+    frame = pd.concat([dom[columns], eur[columns]], ignore_index=True)
     frame = frame.dropna(subset=["home_id", "away_id", "hg", "ag"])
     assert_no_lookahead(frame, cutoff, source="elo match frame")
     return frame.sort_values(["date", "home_id"]).reset_index(drop=True)

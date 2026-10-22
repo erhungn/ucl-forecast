@@ -11,7 +11,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from ucl.backtest import _training_frame, score_season
+from ucl.backtest import _training_frame, evaluation_window, score_season
+from ucl.config import BACKTEST_SEASONS as CONFIG_BACKTEST_SEASONS
 from ucl.config import SEASONS
 from ucl.models.elo import EloParams, elo_as_of, fit_association_offsets, replay
 from ucl.models.poisson import fit_poisson
@@ -66,10 +67,63 @@ def test_scored_matches_all_fall_after_the_cutoff(season_label):
     assert len(scored) > 4000
 
 
+def test_no_fold_scores_a_match_from_the_published_season():
+    """The upper bound of the scoring window, which nothing asserted before.
+
+    ``_evaluation_frames`` loads every result to a 2027-07-01 horizon and then
+    narrows by date arithmetic against ``season_end``, so the top of each fold's
+    window was correct by construction and never checked. For the last fold that
+    arithmetic is the entire guarantee that the season being forecast is not also
+    being scored - and it is close: 2025-26's window runs to 2026-06-30 while the
+    2026-27 competition's preliminary round is played in late June.
+    """
+    cutoff = SEASONS["2026-27"].cutoff_date
+    for season_label in CONFIG_BACKTEST_SEASONS:
+        domestic, euro = evaluation_window(season_label)
+        for frame in (domestic, euro):
+            assert frame.date.max().date() < cutoff, season_label
+        assert "2026-27" not in set(euro.season), season_label
+
+
+def test_a_window_may_hold_next_seasons_qualifiers_and_that_is_not_leakage():
+    """Two folds score a handful of matches labelled as the following season.
+
+    They are UCL preliminary-round ties played in June, before their own
+    season's cutoff, so the fold predicts them from ratings frozen the previous
+    September: stale, which is the point of frozen mode, but not look-ahead.
+    Narrowing ``season_end`` to remove them would change the scored sample and
+    with it every archived candidate's delta, which the reproduction gate in
+    ``test_significance`` pins to 1e-12. So the property is asserted instead of
+    legislated away: anything from a later season must be a qualifier played
+    before that season's own cutoff.
+    """
+    for season_label in CONFIG_BACKTEST_SEASONS:
+        _, euro = evaluation_window(season_label)
+        for row in euro[euro.season > season_label].itertuples():
+            assert row.date < pd.Timestamp(SEASONS[row.season].cutoff_date)
+            assert ("qualifying" in row.stage.lower()
+                    or "preliminary" in row.stage.lower()), row.stage
+
+
 def test_an_earlier_cutoff_gives_strictly_less_training_data():
     early = _training_frame(SEASONS["2024-25"].cutoff_date)
     late = _training_frame(SEASONS["2026-27"].cutoff_date)
     assert len(early) < len(late)
+
+
+def test_the_candidate_c_fit_is_refitted_per_cutoff_not_reused():
+    """Its cache key is the cutoff, like every other fitter's.
+
+    A fit reused across folds would leak a later season's data into an earlier
+    fold without any loader seeing a post-cutoff row.
+    """
+    from ucl.backtest import _fitted_euro_scale
+
+    early = _fitted_euro_scale(SEASONS["2024-25"].cutoff_date, "2024-25")[-1]
+    late = _fitted_euro_scale(SEASONS["2026-27"].cutoff_date, "2026-27")[-1]
+    assert early.matches < late.matches
+    assert early.scale["ucl_main"] != late.scale["ucl_main"]
+    assert set(early.scale) == {"ucl_main", "other_european"}
 
 
 def test_ratings_differ_between_cutoffs():

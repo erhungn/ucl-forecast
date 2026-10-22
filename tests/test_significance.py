@@ -14,6 +14,7 @@ import pandas as pd
 import pytest
 
 from ucl import significance as sig
+from ucl.backtest import bootstrap_difference, paired_losses_covariate
 from ucl.config import BACKTEST_SEASONS, PROJECT_ROOT
 
 SEASONS = tuple(BACKTEST_SEASONS[1:])
@@ -150,6 +151,45 @@ def test_the_two_way_bootstrap_is_wider_than_either_one_way(losses):
     assert (two_way["high"] - two_way["low"]) > (one_way["high"] - one_way["low"])
     assert two_way["home_clusters"] == 1309
     assert two_way["away_clusters"] >= 1300
+
+
+def test_the_candidate_driver_frame_feeds_the_two_way_bootstrap():
+    """The standing acceptance rule, wired to the frame that actually decides.
+
+    Two-way clustering has been the declared rule since milestone 8, but
+    ``tune_candidate.py`` only ever called the one-way ``bootstrap_difference``
+    and ``paired_losses_covariate`` emitted no away-side key, so no candidate
+    could be judged by it. This pins the two together: the paired frame carries
+    both cluster margins, the interval is wider than the one-way on the same
+    data, and the point estimate is the same number either way - a wider
+    interval around a moved mean would mean the adapter changed the statistic
+    rather than its uncertainty.
+    """
+    frame = paired_losses_covariate("2024-25", "squad_value")
+    assert {"home_cluster", "away_cluster", "away", "weight", "difference"} <= set(frame)
+    assert (frame.home_cluster == frame.cluster).all()
+    assert frame.away_cluster.str.startswith("2024-25/").all()
+
+    differences = frame.assign(d=frame.difference)
+    two_way = sig.two_way_bootstrap(differences, draws=400, seed=11)
+    one_way = sig.cluster_bootstrap(differences, draws=400, seed=11)
+    assert two_way["mean"] == pytest.approx(one_way["mean"])
+    assert (two_way["high"] - two_way["low"]) > (one_way["high"] - one_way["low"])
+    assert two_way["away_clusters"] > 1
+
+
+def test_the_added_cluster_keys_do_not_move_the_one_way_statistic():
+    """The columns grew; the numbers did not.
+
+    ``bootstrap_difference``'s point estimate must still be the weight-weighted
+    mean of the paired differences, computed here by hand. That is what makes
+    the six archived candidates safe to re-run against this code.
+    """
+    frame = paired_losses_covariate("2024-25", "squad_value")
+    expected = float((frame.difference * frame.weight).sum() / frame.weight.sum())
+    result = bootstrap_difference(frame, cluster=True, draws=50)
+    assert result["difference"] == pytest.approx(expected, abs=1e-15)
+    assert result["n"] == len(frame)
 
 
 def test_the_two_way_bootstrap_is_deterministic_under_a_fixed_seed(losses):

@@ -37,6 +37,7 @@ MODELS: dict[str, str | None] = {
     "v1": "squad_value",
     "v2": "gap",
     "v2+B": "gap_minutes",
+    "v2+C": "euro_scale",
     "v2_sot_only": "gap_sot",
 }
 EUROPEAN_WEIGHT = 3.0

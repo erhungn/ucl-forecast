@@ -9,6 +9,7 @@ so no match is counted twice.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -16,7 +17,63 @@ import pandas as pd
 
 from ucl.data import openfootball, wikipedia
 
-__all__ = ["load_results", "coverage"]
+__all__ = ["load_results", "coverage", "is_main_phase", "PhaseError"]
+
+
+class PhaseError(ValueError):
+    """A stage string that cannot be sorted into qualifying or main phase."""
+
+
+#: Only the openfootball ``world.more`` files need a stage rule: they carry
+#: ``phase == "mixed"`` because one file holds the qualifying rounds and the main
+#: draw together (2021-22 to 2023-24). Everywhere else ``phase`` is authoritative
+#: and is used instead, which matters because the bare string "Playoffs" means
+#: the qualifying play-off round in one place and the new format's knockout
+#: play-off in another - 2024-25 carries both, so the string alone cannot decide.
+_MIXED_QUALIFYING = re.compile(
+    r"^(?:preliminary\s+round"
+    r"|\d(?:st|nd|rd|th)\s+qualifying\s+round"
+    r"|play-?offs)$",
+    re.IGNORECASE,
+)
+#: The main-phase shapes those same files use. Listed rather than inferred as
+#: "whatever is left": an unrecognised string means the source layout changed,
+#: and silently calling it main phase would move qualifying matches into the
+#: competition's own goal-scale term.
+_MIXED_MAIN = re.compile(
+    r"^(?:group|gruppe|knockout|round\s+of|quarter|semi|final)",
+    re.IGNORECASE,
+)
+
+
+def is_main_phase(frame: pd.DataFrame) -> pd.Series:
+    """True where a match belongs to a competition's main draw.
+
+    The qualifying rounds are a different population from the draw they feed:
+    across the cache the UCL main phase scores 3.13 goals a match against 2.79 in
+    qualifying, so anything fitted per competition has to separate them.
+
+    ``phase`` decides wherever it is "main" or "qualifying". For the "mixed"
+    files the stage string decides, and a string matching neither list **raises**
+    rather than defaulting - the same reasoning as the cache-name guards, where a
+    near miss treated as a legitimate value was the whole failure.
+    """
+    phase = frame.phase.astype(str)
+    stage = frame.stage.fillna("").astype(str).str.strip()
+    mixed = phase == "mixed"
+    qualifying = stage.str.match(_MIXED_QUALIFYING)
+    main = stage.str.match(_MIXED_MAIN)
+    unknown = mixed & ~qualifying & ~main
+    if unknown.any():
+        found = sorted(set(stage[unknown]))
+        raise PhaseError(
+            f"{int(unknown.sum())} match(es) in a mixed-phase file carry a stage "
+            f"this cannot sort into qualifying or main phase: "
+            f"{', '.join(repr(s) for s in found[:5])}"
+            + (f" and {len(found) - 5} more" if len(found) > 5 else "")
+            + ". Add it to european._MIXED_QUALIFYING or european._MIXED_MAIN."
+        )
+    return (~mixed & (phase == "main")) | (mixed & main)
 
 
 def load_results(

@@ -30,6 +30,7 @@ from scipy.stats import poisson
 from ucl import evaluate
 from ucl.config import SEASONS
 from ucl.data import european, football_data, names
+from ucl.models import scorelines
 from ucl.models.elo import (
     DEFAULT_PARAMS, EloParams, fit_association_offsets, goal_difference_multiplier,
     match_frame, replay,
@@ -657,6 +658,50 @@ def _fitted_gap(cutoff: date, season_label: str, weighting: str = "total",
             fitted.details["gap_params"], fitted.model)
 
 
+@lru_cache(maxsize=16)
+def _fitted_euro_scale(cutoff: date, season_label: str):
+    """Candidate C: model v2 plus the per-competition intercepts.
+
+    Identical to :func:`_fitted_gap` in every covariate, so the paired test
+    isolates the four new terms. Keyed on the cutoff like every other fitter,
+    which is what stops a later fold reusing an earlier fold's fit.
+    """
+    from ucl.data import transfermarkt
+    from ucl.models.forecast import fit_euro_scale
+
+    training = _training_frame(cutoff)
+    offsets = _cached_offsets(cutoff, int(round(DEFAULT_PARAMS.home_advantage / 5) * 5))
+    ratings = replay(training, offsets, DEFAULT_PARAMS)
+    as_of = transfermarkt.as_of_for_season(season_label)
+    values = transfermarkt.squad_values(as_of)
+    fitted = fit_euro_scale(ratings.pre_match, values, ratings.ratings,
+                            as_of=cutoff, value_as_of=as_of)
+    return (ratings, values, fitted.details["residuals"],
+            fitted.details["gap_params"], fitted.model)
+
+
+def _evaluation_levels(frame: pd.DataFrame, competition: str
+                       ) -> tuple[dict[str, np.ndarray], np.ndarray]:
+    """One-hot competition levels for an evaluation frame, and their names.
+
+    The domestic frame is one level throughout; the European frame is split by
+    :func:`ucl.data.european.is_main_phase`, so a UCL qualifying tie is scored
+    under the same intercept as a Europa League match rather than under the
+    league phase's - which is where it belongs, at 2.80 goals a match against
+    the main phase's 3.13.
+    """
+    from ucl.data import european as european_data
+    from ucl.models.covariates import LEVELS
+
+    if competition == "domestic":
+        names = np.full(len(frame), "domestic", dtype=object)
+    else:
+        main = european_data.is_main_phase(frame).to_numpy()
+        names = np.where(main & (frame.competition == "UCL").to_numpy(),
+                         "ucl_main", "other_european")
+    return {level: (names == level).astype(float) for level in LEVELS}, names
+
+
 @lru_cache(maxsize=8)
 def _fitted_congestion(cutoff: date):
     """Elo ratings plus the rest-day model."""
@@ -693,6 +738,12 @@ def score_season_covariate(
             cfg.cutoff_date, season_label,
             "minutes" if candidate == "gap_minutes" else "total",
             ("sot",) if candidate == "gap_sot" else None)
+    elif candidate == "euro_scale":
+        from ucl.data import transfermarkt
+        from ucl.models import gap as gap_model
+
+        ratings, values, residuals, _, model = _fitted_euro_scale(
+            cfg.cutoff_date, season_label)
     elif candidate == "congestion":
         ratings, model = _fitted_congestion(cfg.cutoff_date)
         history = _training_frame(cfg.cutoff_date)[["date", "home_id", "away_id"]]
@@ -707,6 +758,10 @@ def score_season_covariate(
             usable = frame[frame.home_id.isin(known) & frame.away_id.isin(known)].copy()
             elo_home = usable.home_id.map(ratings.ratings).to_numpy(dtype=float)
             elo_away = usable.away_id.map(ratings.ratings).to_numpy(dtype=float)
+            # Reported for every candidate so the diagnostics can be split the
+            # same way regardless of which model produced them; only
+            # euro_scale replaces it with the three fitted levels.
+            level_names = np.full(len(usable), competition, dtype=object)
 
             if candidate in ("market", "market_elo"):
                 difference = market.difference(
@@ -718,7 +773,7 @@ def score_season_covariate(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())
                 rate_home, rate_away = model.rates(
                     elo_home, elo_away, symmetric={"d_value": difference})
-            elif candidate in ("gap", "gap_minutes", "gap_sot"):
+            elif candidate in ("gap", "gap_minutes", "gap_sot", "euro_scale"):
                 symmetric = {"d_value": transfermarkt.value_difference(
                     values, usable.home_id.to_numpy(), usable.away_id.to_numpy())}
                 for measure, column in zip(gap_model.MEASURES, GAP_COLUMNS):
@@ -727,8 +782,13 @@ def score_season_covariate(
                     symmetric[column] = gap_model.match_difference(
                         residuals[measure], usable.home_id.to_numpy(),
                         usable.away_id.to_numpy())
-                rate_home, rate_away = model.rates(
-                    elo_home, elo_away, symmetric=symmetric)
+                if candidate == "euro_scale":
+                    indicators, level_names = _evaluation_levels(usable, competition)
+                    rate_home, rate_away = model.rates(
+                        elo_home, elo_away, symmetric=symmetric, levels=indicators)
+                else:
+                    rate_home, rate_away = model.rates(
+                        elo_home, elo_away, symmetric=symmetric)
             else:
                 combined = pd.concat(
                     [history, usable[["date", "home_id", "away_id"]]], ignore_index=True)
@@ -750,11 +810,20 @@ def score_season_covariate(
                 [(joint * upper.T).sum(axis=(1, 2)), (joint * draw).sum(axis=(1, 2)),
                  (joint * upper).sum(axis=(1, 2))], axis=1)
             probabilities = probabilities / probabilities.sum(axis=1, keepdims=True)
+            # Observed goals and the fitted rates are carried through so the
+            # scoreline metric and the goals / over-2.5 diagnostics can be
+            # computed downstream. Each is taken as a numpy array on purpose:
+            # `usable` keeps the evaluation frame's original index, and a Series
+            # among these arrays would align on it and come out NaN.
             pieces.append(pd.DataFrame({
                 "date": usable.date.to_numpy(), "competition": competition, "mode": mode,
                 "home": usable.home_id.to_numpy(), "away": usable.away_id.to_numpy(),
                 "p_home": probabilities[:, 0], "p_draw": probabilities[:, 1],
                 "p_away": probabilities[:, 2], "outcome": _outcomes(usable),
+                "hg": usable.hg.to_numpy(), "ag": usable.ag.to_numpy(),
+                "rate_home": np.asarray(rate_home, dtype=float),
+                "rate_away": np.asarray(rate_away, dtype=float),
+                "level": np.asarray(level_names, dtype=object),
             }))
     return pd.concat(pieces, ignore_index=True)
 
@@ -762,7 +831,7 @@ def score_season_covariate(
 def paired_losses_covariate(
     season_label: str, candidate: str, *, half_life_days: float = 365.0,
     mode: str = "frozen", european_weight: float = 3.0,
-    baseline: str | None = None,
+    baseline: str | None = None, scoreline: bool = False,
 ) -> pd.DataFrame:
     """A candidate against the accepted baseline on the same matches, paired.
 
@@ -772,7 +841,19 @@ def paired_losses_covariate(
     against **model v1** must pass ``"squad_value"`` instead - pairing it
     against Elo alone would credit it with the squad-value term's gain as well
     as its own, and accept it for someone else's work.
+
+    ``scoreline`` adds the exact Poisson scoreline loss, -log P(hg, ag), beside
+    the 1X2 loss. It is the right primary for a candidate about the goal scale:
+    a 1X2 triple is a coarse functional of the same distribution, and a scale
+    shift moves it by a point or two while leaving the ordering intact. It
+    requires a covariate baseline, because the Elo baseline path publishes no
+    fitted rates.
     """
+    if scoreline and baseline is None:
+        raise ValueError(
+            "a scoreline comparison needs a covariate baseline: score_season's "
+            "Elo path publishes 1X2 probabilities and no fitted rates, so there "
+            "is nothing to take -log P(exact score) from")
     rows = score_season_covariate(
         season_label, candidate, half_life_days=half_life_days, modes=(mode,))
     rows = rows[rows["mode"] == mode].reset_index(drop=True)
@@ -789,12 +870,41 @@ def paired_losses_covariate(
     if len(rows) != len(base_losses) or not (rows.home.to_numpy() == base_home).all():
         raise ValueError(f"{season_label}: {candidate} and the baseline do not align")
     losses = _losses_from_rows(rows)
+    extra = {}
+    if scoreline:
+        tuned_scoreline = scorelines.scoreline_log_loss(
+            rows.rate_home.to_numpy(), rows.rate_away.to_numpy(),
+            rows.hg.to_numpy(), rows.ag.to_numpy())
+        base_scoreline = scorelines.scoreline_log_loss(
+            base_rows.rate_home.to_numpy(), base_rows.rate_away.to_numpy(),
+            base_rows.hg.to_numpy(), base_rows.ag.to_numpy())
+        extra = {
+            "scoreline_tuned": tuned_scoreline,
+            "scoreline_default": base_scoreline,
+            "scoreline_difference": tuned_scoreline - base_scoreline,
+            "level": rows.level,
+            "hg": rows.hg, "ag": rows.ag,
+            "rate_home": rows.rate_home, "rate_away": rows.rate_away,
+            "p_draw": rows.p_draw, "outcome": rows.outcome,
+            "base_rate_home": base_rows.rate_home,
+            "base_rate_away": base_rows.rate_away,
+            "base_p_draw": base_rows.p_draw,
+        }
+    # `cluster` is kept as the one-way key the archived candidates were judged
+    # by; `home_cluster`/`away_cluster` are what two_way_bootstrap needs, named
+    # and built exactly as significance.paired_differences builds them so the
+    # two paths cannot drift apart. Columns only grow - every existing value is
+    # unchanged, so an archived candidate re-runs to the same numbers.
     return pd.DataFrame({
         "season": season_label, "competition": rows.competition, "home": rows.home,
+        "away": rows.away,
         "cluster": season_label + "/" + rows.home.astype(str),
+        "home_cluster": season_label + "/" + rows.home.astype(str),
+        "away_cluster": season_label + "/" + rows.away.astype(str),
         "loss_tuned": losses, "loss_default": base_losses,
         "difference": losses - base_losses,
         "weight": np.where(rows.competition != "domestic", european_weight, 1.0),
+        **extra,
     })
 
 

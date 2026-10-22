@@ -180,3 +180,126 @@ def test_the_elo_update_ignores_the_covariate():
     hg2, ag2 = simulate_match("rich", "poor", plain_ratings, plain, rng2)
     assert (hg, ag) == (hg2, ag2)
     assert plain_ratings["rich"] - 1800.0 == pytest.approx(moved)
+
+
+# --- candidate C: per-competition intercepts -------------------------------
+#
+# Four new parameters, two of which must behave differently at a neutral venue
+# from the two others. The goal scale sits on both log-rates and is a property
+# of the competition, so it applies at the final; the extra home advantage is a
+# property of playing at home and must vanish there, exactly as `h` does.
+
+LEVELLED = dict(a=0.16, h=0.23, b=0.70,
+                scale={"ucl_main": 0.10, "other_european": -0.03},
+                home_extra={"ucl_main": 0.05, "other_european": 0.09})
+UCL = {"domestic": 0.0, "ucl_main": 1.0, "other_european": 0.0}
+
+
+def test_the_goal_scale_lands_on_both_sides_and_the_home_extra_on_one():
+    fitted = CovariateModel(**LEVELLED)
+    home, away = fitted.rates(1800.0, 1800.0, levels=UCL)
+    assert home == pytest.approx(np.exp(0.16 + 0.23 + 0.10 + 0.05))
+    assert away == pytest.approx(np.exp(0.16 + 0.10))
+
+
+def test_the_neutral_venue_final_keeps_the_scale_and_loses_the_home_extra():
+    """The trap this design exists to avoid.
+
+    `neutral=True` zeroes `h`. A home-only per-side covariate would NOT have
+    been zeroed by it, so the final - the one match of the tournament played at
+    a neutral ground - would have carried European home advantage for the club
+    nominally listed first.
+    """
+    fitted = CovariateModel(**LEVELLED)
+    home, away = fitted.rates(1800.0, 1800.0, neutral=True, levels=UCL)
+    assert home == pytest.approx(np.exp(0.16 + 0.10)), "h and g must both be gone"
+    assert away == pytest.approx(np.exp(0.16 + 0.10)), "the scale must remain"
+    assert home == pytest.approx(away), "a neutral venue is symmetric"
+
+
+def test_a_domestic_match_gets_neither_term():
+    fitted = CovariateModel(**LEVELLED)
+    domestic = {"domestic": 1.0, "ucl_main": 0.0, "other_european": 0.0}
+    plain = CovariateModel(a=0.16, h=0.23, b=0.70)
+    assert fitted.rates(1800.0, 1700.0, levels=domestic) == pytest.approx(
+        plain.rates(1800.0, 1700.0))
+
+
+def test_a_levelled_model_refuses_to_guess_the_competition():
+    """Defaulting to zero would forecast the league phase at the domestic scale.
+
+    Nothing downstream would look wrong: the probabilities would still sum to
+    one and the band counts would still be 8/16/12.
+    """
+    with pytest.raises(TypeError, match="cannot produce rates"):
+        CovariateModel(**LEVELLED).rates(1800.0, 1700.0)
+
+
+def test_a_forecast_model_carrying_levels_must_declare_one():
+    with pytest.raises(TypeError, match="no level was declared"):
+        ForecastModel(CovariateModel(**LEVELLED), (value_covariate(VALUES),))
+
+
+def test_an_unknown_level_is_refused_rather_than_silently_baselined():
+    with pytest.raises(ValueError, match="unknown competition level"):
+        ForecastModel(CovariateModel(**LEVELLED), (value_covariate(VALUES),),
+                      level="ucl-main")
+
+
+def test_a_model_without_levels_is_unchanged_by_any_of_this():
+    """The reproduction gate, at the arithmetic level.
+
+    v1 and v2 carry empty scale and home_extra dicts, so neither new loop runs
+    and `levels` is never consulted - the published code path is the same
+    operations in the same order, not merely the same answer.
+    """
+    plain = CovariateModel(a=0.16, h=0.23, b=0.70, symmetric={"d_value": 0.04})
+    assert plain.scale == {} and plain.home_extra == {}
+    assert plain.rates(1900.0, 1700.0, symmetric={"d_value": 0.5}) == pytest.approx(
+        plain.rates(1900.0, 1700.0, symmetric={"d_value": 0.5}, levels=UCL))
+
+
+def test_zero_coefficients_reproduce_the_model_without_the_terms():
+    zeroed = CovariateModel(a=0.16, h=0.23, b=0.70,
+                            scale={"ucl_main": 0.0}, home_extra={"ucl_main": 0.0})
+    plain = CovariateModel(a=0.16, h=0.23, b=0.70)
+    assert zeroed.rates(1800.0, 1700.0, levels=UCL) == pytest.approx(
+        plain.rates(1800.0, 1700.0))
+
+
+def test_the_published_keys_cannot_collide():
+    """`c_` is shared by per-side covariates and competition scales."""
+    clash = CovariateModel(a=0.1, h=0.2, b=0.7, per_side={"ucl_main": 0.01},
+                           scale={"ucl_main": 0.10})
+    with pytest.raises(ValueError, match="same key"):
+        clash.as_dict()
+
+
+def test_the_levelled_model_publishes_c_and_g_keys():
+    published = CovariateModel(**LEVELLED).as_dict()
+    assert published["c_ucl_main"] == pytest.approx(0.10)
+    assert published["g_ucl_main"] == pytest.approx(0.05)
+    assert published["c_other_european"] == pytest.approx(-0.03)
+    assert published["g_other_european"] == pytest.approx(0.09)
+
+
+def test_fitting_levels_recovers_a_planted_goal_scale():
+    """End to end through the fitter, including the new gradient blocks."""
+    rng = np.random.default_rng(3)
+    n = 20000
+    level = rng.choice(["domestic", "ucl_main"], size=n, p=[0.6, 0.4])
+    frame = pd.DataFrame({
+        "elo_home": 1700.0, "elo_away": 1700.0, "level": level,
+        "ucl_main": (level == "ucl_main").astype(float),
+    })
+    # log lambda = a + h (+ 0.20 and + 0.10 on the home side for ucl_main)
+    rate_home = np.exp(0.16 + 0.23 + 0.20 * frame.ucl_main + 0.10 * frame.ucl_main)
+    rate_away = np.exp(0.16 + 0.20 * frame.ucl_main)
+    frame["hg"] = rng.poisson(rate_home)
+    frame["ag"] = rng.poisson(rate_away)
+    fitted = fit_covariate_model(frame, levels=("ucl_main",))
+    assert fitted.converged
+    assert fitted.scale["ucl_main"] == pytest.approx(0.20, abs=0.03)
+    assert fitted.home_extra["ucl_main"] == pytest.approx(0.10, abs=0.04)
+    assert fitted.a == pytest.approx(0.16, abs=0.03)
+    assert fitted.h == pytest.approx(0.23, abs=0.04)

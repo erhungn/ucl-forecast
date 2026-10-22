@@ -21,10 +21,16 @@ from ucl.models.covariates import (
     ClubCovariate, ForecastModel, fit_model, value_covariate,
 )
 
-__all__ = ["MODELS", "GAP_COLUMNS", "gap_covariates", "fit_v1", "fit_v2", "fit"]
+__all__ = ["MODELS", "CANDIDATE_LEVELS", "GAP_COLUMNS", "gap_covariates",
+           "fit_v1", "fit_v2", "fit_euro_scale", "fit"]
 
 #: The published models, newest last.
 MODELS = ("elo", "v1", "v2")
+
+#: Candidate C's competition levels. Domestic is the baseline and gets no
+#: intercept of its own, so naming it here would make the three indicators
+#: collinear with `a` and the fit unidentified.
+CANDIDATE_LEVELS = ("ucl_main", "other_european")
 
 #: The GAP covariate columns, fixed so the fitted coefficients read back by name.
 GAP_COLUMNS = tuple(f"d_gap_{measure}" for measure in gap.MEASURES)
@@ -88,6 +94,29 @@ def fit_v2(pre_match: pd.DataFrame, values: dict[str, float],
                               "gap_params": parameters, "gap_as_of": as_of})
 
 
+def fit_euro_scale(pre_match: pd.DataFrame, values: dict[str, float],
+                   elo_ratings: dict[str, float], *, as_of: date,
+                   value_as_of=None, measures: tuple[str, ...] | None = None
+                   ) -> ForecastModel:
+    """Candidate C: model v2 plus a per-competition goal scale and home advantage.
+
+    Identical to :func:`fit_v2` in every covariate, so the comparison isolates
+    the four new intercept terms. Each level contributes a scale added to both
+    log-rates and an extra home advantage added to the home side only; domestic
+    is the baseline and carries neither.
+
+    The motivation is in `docs/METHODOLOGY.md` section 3: 9.8% of the fitting
+    sample is European, so `a` is set by domestic football at 2.78 goals a
+    match while the UCL main phase scores 3.13.
+    """
+    residuals, parameters = gap_residuals(as_of, elo_ratings, measures)
+    covariates = (value_covariate(values), *gap_covariates(residuals))
+    return fit_model(pre_match, covariates, label="v2+C", as_of=value_as_of,
+                     levels=CANDIDATE_LEVELS, level="ucl_main",
+                     details={"values": values, "residuals": residuals,
+                              "gap_params": parameters, "gap_as_of": as_of})
+
+
 def fit(label: str, pre_match: pd.DataFrame, values: dict[str, float],
         elo_ratings: dict[str, float], *, as_of: date,
         value_as_of=None) -> ForecastModel:
@@ -97,4 +126,7 @@ def fit(label: str, pre_match: pd.DataFrame, values: dict[str, float],
     if label == "v2":
         return fit_v2(pre_match, values, elo_ratings, as_of=as_of,
                       value_as_of=value_as_of)
+    if label == "v2+C":
+        return fit_euro_scale(pre_match, values, elo_ratings, as_of=as_of,
+                              value_as_of=value_as_of)
     raise ValueError(f"unknown model {label!r}; have {MODELS}")

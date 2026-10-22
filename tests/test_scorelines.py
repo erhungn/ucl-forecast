@@ -212,3 +212,36 @@ def test_the_tail_band_is_the_exact_survival_function():
     matrix = scorelines.folded_matrix([rate_home], [rate_away])[0]
     assert matrix[5, :].sum() == pytest.approx(poisson.sf(4, rate_home), abs=1e-12)
     assert matrix[:, 5].sum() == pytest.approx(poisson.sf(4, rate_away), abs=1e-12)
+
+
+def test_the_scoreline_loss_is_the_models_own_likelihood():
+    """-log P(exact score), by hand."""
+    from scipy.stats import poisson as poisson_dist
+
+    expected = -(np.log(poisson_dist.pmf(2, 1.5)) + np.log(poisson_dist.pmf(1, 1.2)))
+    assert scorelines.scoreline_log_loss(1.5, 1.2, 2, 1) == pytest.approx(expected)
+
+
+def test_the_scoreline_loss_is_not_read_off_the_truncated_grid():
+    """A scoreline past MAX_GOALS has a loss, where the grid has no cell.
+
+    The 1X2 path renormalises an 11x11 joint; this does not, so the two are not
+    two views of one table. Reading the metric off the grid would quietly give
+    an impossible scoreline infinite loss or, worse, a renormalised one.
+    """
+    beyond = scorelines.MAX_GOALS + 2
+    loss = scorelines.scoreline_log_loss(1.5, 1.2, beyond, 0)
+    assert np.isfinite(loss).all()
+    grid = scorelines.joint_matrix(1.5, 1.2)
+    assert grid.shape[-1] == scorelines.MAX_GOALS + 1 < beyond
+
+
+def test_the_scoreline_loss_is_minimised_at_the_true_rates():
+    """A proper scoring rule, which is why it can be the primary metric."""
+    rng = np.random.default_rng(5)
+    hg = rng.poisson(1.6, 40000)
+    ag = rng.poisson(1.1, 40000)
+    truth = scorelines.scoreline_log_loss(1.6, 1.1, hg, ag).mean()
+    for wrong in (1.3, 1.9):
+        assert scorelines.scoreline_log_loss(wrong, 1.1, hg, ag).mean() > truth
+        assert scorelines.scoreline_log_loss(1.6, wrong, hg, ag).mean() > truth
