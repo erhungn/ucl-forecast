@@ -240,6 +240,18 @@ outputs/         # scratch: csv tables + figures, and what tests clobber
   3.3ms for every loader a page uses.
 
 ## What the backtests established (do not relitigate without new evidence)
+- **The fitted intercept is domestic, and it under-scores this competition.**
+  6,405 of 65,389 fitted matches are European (9.8%), so `a` lands near the
+  domestic 2.775 goals/match. The 36-team UCL league phase scored **3.32** over
+  the 288 matches of 2024-25 and 2025-26 (64.6% over 2.5, 14.9% draws) against
+  the model's 2.82 / 53.5% / 22.6%. **This reaches the team-level numbers**, not
+  just the scoreline grid: the simulator draws from these rates, so an excess
+  draw rate compresses the spread of points and goal difference, which P(top 8)
+  and the 9-24 band are integrals over. A 1.165 scale fixes goals and over-2.5
+  and closes about a third of the draw gap; the remainder belongs to the
+  independent-Poisson form, whose Dixon-Coles correction returned a null **on
+  the pooled sample and was never tested on European matches alone**. Measured,
+  not inferred - see `docs/METHODOLOGY.md` §3.
 - **Acceptance rule, standing, from milestone 8 onward: the primary bootstrap
   is TWO-WAY clustered** - (season, home club) and (season, away club) by
   pigeonhole resampling, `ucl.significance.two_way_bootstrap`. The one-way

@@ -480,6 +480,18 @@ in `.streamlit/secrets.toml` (gitignored) and the button goes behind it; omit
 8. **No xG.** No maintained free source covers the backtest window;
    football-data has begun shipping xG columns, but only 353 matches carry them
    at the cutoff.
+9. **The goal scale is domestic, and the draw rate is too high.** Only 9.8% of
+   the 65,389 fitted matches are European, so the intercept is set by domestic
+   football at 2.775 goals a match. The 36-team UCL league phase scored **3.32**
+   over the 288 matches of 2024-25 and 2025-26, with 64.6% over 2.5 and 14.9%
+   draws, against the model's 2.82, 53.5% and 22.6%. This is not only a
+   scoreline-display issue: the simulator draws from these rates, so excess
+   draws compress points and goal difference and that feeds P(top 8) and the
+   play-off band. A single 1.165 scale would fix goals and over-2.5 and close
+   about a third of the draw gap; the rest is the independent-Poisson form, and
+   the Dixon-Coles null that would have caught it was measured on the pooled
+   sample, never on European matches alone. See `docs/METHODOLOGY.md` §3 and
+   candidate C in `results/candidate_euro_scale/`.
 
 ## Layout
 

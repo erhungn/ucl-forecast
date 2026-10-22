@@ -292,6 +292,61 @@ euros, the others are differences in shots. `significance.standardised_coefficie
 multiplies each by its covariate's standard deviation on the fitting sample,
 giving the change in $\log\lambda$ per one-standard-deviation move.
 
+### A known limitation: the intercept is domestic
+
+The model is fitted on one pooled sample, so $a$ and $h$ are set by whatever
+scores most of the matches. At the 2026-27 cutoff that sample is **65,389
+matches, of which only 6,405 (9.8%) are European**:
+
+| sample | matches | goals/match | draws | home wins | over 2.5 |
+|---|---|---|---|---|---|
+| domestic | 58,984 | 2.775 | 0.253 | 0.440 | 0.527 |
+| European, all | 6,405 | 2.897 | 0.215 | 0.477 | 0.548 |
+| UCL main phase | 1,372 | 3.132 | 0.196 | — | — |
+| other European | 5,033 | 2.833 | — | — | — |
+
+So the intercept lands near 2.78 goals a match, and the competition being
+forecast does not score at that rate. Over the **288 league-phase matches of
+2024-25 and 2025-26** — the 36-team format, the same tournament as 2026-27 —
+the observed rates were **3.32 goals/match, 64.6% over 2.5, 14.9% draws** and
+roughly 51% home wins. What the published model says across the 144 league-phase
+fixtures at the cutoff:
+
+| | model | 36-team league phase |
+|---|---|---|
+| goals per match | 2.82 | **3.32** |
+| P(over 2.5) | 0.535 | **0.646** |
+| P(draw) | 0.226 | **0.149** |
+| P(home) | 0.452 | **0.514** |
+
+The goal scale is low by about 15% and the draw rate high by about 7 points,
+measured on two completed seasons with no 2026-27 data involved.
+
+**One parameter would fix most, but not all, of it.** Scaling every
+$\lambda$ by 1.165 moves the published forecast to 3.29 goals/match, 0.636 over
+2.5 and 0.468 home wins — essentially onto the 288-match targets — while P(draw)
+only falls 0.226 → 0.203 against a target of 0.149. A multiplicative scale
+raises the total rate, which disperses the Skellam difference and so reduces
+P(0), but not by enough: **roughly a third of the draw gap is attributable to
+the intercept and the rest is not.** The residual is a property of the
+independent-Poisson form itself — exactly what the Dixon-Coles $\tau$ of §10
+corrects — and that null was measured on the **pooled** sample, never on
+European matches alone. It is the open question this limitation leaves behind.
+
+**What it affects.** Directly, every goal-scale output: the displayed scoreline
+grid, `p_over_2_5`, `modal_score` and `p_modal`. Indirectly and more
+importantly, the **team-level probabilities**: the simulator draws scorelines
+from these same rates, so an excess draw rate compresses the spread of points
+and goal difference, and P(top 8), P(9-24) and P(25-36) are integrals over that
+spread. A compressed goal difference also changes how often Article 18's
+criterion (a) resolves a tie. The 1X2 ordering is not in question — this moves
+probability between the three outcomes by one or two points, not the ranking —
+but it is a model limitation, not a presentation one.
+
+**Candidate C** tests the direct fix — a per-competition intercept shift fitted
+on pre-cutoff European matches, declared and scored under the §8 protocol. Its
+verdict, accepted or rejected, is in `results/candidate_euro_scale/`.
+
 ---
 
 ## 4. Scorelines and the closed forms
