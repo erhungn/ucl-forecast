@@ -4,10 +4,14 @@ A pre-tournament forecast of the 2026-27 UEFA Champions League from a frozen
 information set: an Elo rating system with cross-league calibration, a Poisson
 match model, and 50,000 Monte Carlo tournaments played through the actual UEFA
 rules. Candidate improvements were evaluated by forward chaining over five
-seasons against a pre-declared primary test with a cluster bootstrap. Nine
+seasons against a pre-declared primary test with a cluster bootstrap. Ten
 candidates were tried: six returned nulls, one was significantly worse than the
-baseline, and two were accepted - a pre-season squad-value covariate, then
-shot-based GAP ratings - giving the current model, `model-v2`.
+baseline, and three were accepted - a pre-season squad-value covariate, then
+shot-based GAP ratings, which give the published model `model-v2`, and then a
+per-competition European goal scale (candidate C). Candidate C is accepted on
+its pre-declared European **scoreline** metric under the two-way cluster rule
+and is **not promoted**: the published forecast is still v2, and v3 is a
+separate decision with its own gates.
 
 Cutoff: **2026-09-07**, the day before Matchday 1.
 
@@ -25,20 +29,30 @@ Outputs, for all 36 clubs and all 144 league-phase fixtures:
 - team level - P(top 8), P(play-off, 9-24), P(eliminated, 25-36), and
   P(reach R16 / QF / SF / final / champion).
 
-Headline numbers (`results/model_v1/forecast_2026-27.csv`):
+Headline numbers as published, **through matchday 2** - 36 of the 144
+league-phase matches played, 50,000 iterations at the 2026-10-19 as-of date
+(`live/2026-27/forecast_md2.csv`, model v2):
 
 | club | P(top 8) | P(champion) | market |
 |---|---|---|---|
-| Arsenal | 0.786 | 0.220 | 0.109 |
-| Bayern Munich | 0.747 | 0.200 | 0.109 |
-| Barcelona | 0.577 | 0.104 | 0.102 |
-| Manchester City | 0.497 | 0.090 | 0.090 |
-| Real Madrid | 0.483 | 0.073 | 0.096 |
-| Paris Saint-Germain | 0.424 | 0.061 | 0.127 |
+| Arsenal | 0.871 | 0.198 | 0.109 |
+| Bayern Munich | 0.701 | 0.179 | 0.109 |
+| Barcelona | 0.761 | 0.150 | 0.102 |
+| Paris Saint-Germain | 0.720 | 0.093 | 0.127 |
+| Real Madrid | 0.812 | 0.090 | 0.096 |
+| Manchester City | 0.432 | 0.086 | 0.090 |
+
+Matchday 3 was played on 20-21 October and is not in this forecast; the next
+weekly update publishes through it. The frozen pre-tournament forecast, from the
+2026-09-07 information set and before a ball was kicked, is
+`results/model_v2/forecast_2026-27.csv` - Arsenal 0.786 / 0.220, Bayern Munich
+0.747 / 0.200, Barcelona 0.577 / 0.104 - and is what the archived candidate
+tests and the model-tracking arms are scored from.
 
 The market column is a de-vigged pre-season outright snapshot, used **only** as a
-diagnostic - it never enters any objective. See
-[Known limitations](#known-limitations) before reading anything into the gaps.
+diagnostic - it never enters any objective, and it does not move with the season,
+so an in-season gap mixes the model's prior with results the snapshot predates.
+See [Known limitations](#known-limitations) before reading anything into it.
 
 ## Reproduce
 
@@ -63,7 +77,7 @@ Then:
 
 ```bash
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt -e .
-.venv/bin/python -m pytest                                       # 679 tests
+.venv/bin/python -m pytest                                       # 706 tests
 
 .venv/bin/python scripts/fit.py --season 2026-27                 # ratings + match model
 .venv/bin/python scripts/simulate.py --season 2026-27 -n 50000   # the forecast, ~5 min
@@ -435,7 +449,7 @@ the hand-drawn cards cannot drift apart.
 
 The suite runs in both environments: `.venv` covers everything but the Altair
 and AppTest modules, which skip there and run under
-`.venv-app/bin/python -m pytest` - 730 tests in all (679 of them in `.venv`).
+`.venv-app/bin/python -m pytest` - 757 tests in all (706 of them in `.venv`).
 
 **`--lan` serves the app unauthenticated to every device on the network.** The
 pages give nothing away, but the update button starts a five-minute job
@@ -501,8 +515,14 @@ in `.streamlit/secrets.toml` (gitignored) and the button goes behind it; omit
    play-off band. A single 1.165 scale would fix goals and over-2.5 and close
    about a third of the draw gap; the rest is the independent-Poisson form, and
    the Dixon-Coles null that would have caught it was measured on the pooled
-   sample, never on European matches alone. See `docs/METHODOLOGY.md` §3 and
-   candidate C in `results/candidate_euro_scale/`.
+   sample, never on European matches alone. See `docs/METHODOLOGY.md` §3.
+   **Candidate C addresses this limitation and is accepted but not promoted**,
+   so every number published above still carries it. The fitted UCL main-phase
+   scale is about 1.10 rather than the 1.165 that would land goals on target,
+   and it moves the European draw rate only 0.2326 -> 0.2251 against 0.1943
+   observed, so even once promoted it closes the goals and over-2.5 gaps and
+   about a quarter of the draw gap. Promotion to a published v3 is a separate
+   decision with its own gates. See `results/candidate_euro_scale/`.
 
 ## Layout
 
@@ -521,7 +541,7 @@ scripts/             17 entry points: fetch, fit, simulate, backtest, tune_*, bu
                      check_*, export_club_inputs, weekly_update
 scripts/colab/       the three football-data fetch scripts, run outside this network
 app/                 Streamlit entry point and its nine views
-tests/               730 tests (679 in .venv, all of them in .venv-app)
+tests/               757 tests (706 in .venv, all of them in .venv-app)
 results/             one archived folder per experiment, accepted or rejected
 live/<season>/       what the weekly update publishes, and all the app reads
 data/raw/            hand-fetched caches with manifests (payloads gitignored)
