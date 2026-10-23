@@ -4,8 +4,11 @@ Each iteration plays the 144 league-phase fixtures with ratings updating as it
 goes, ranks the table under Article 18, draws the knockout bracket inside the
 Article 19 constraints, and plays it out to a champion.
 
-``--model v2`` (the default) is the current model: Elo plus the pre-season
-squad-value prior plus the three GAP shot-rating residuals. ``--model v1`` and
+``--model`` defaults to whichever model ``config.MODEL_HISTORY`` declares
+published - v2 as this is written: Elo plus the pre-season squad-value prior
+plus the three GAP shot-rating residuals. ``--model v3`` is v2 plus candidate
+C's per-competition European goal scale and home advantage, accepted but not
+promoted. ``--model v1`` and
 ``--model elo`` are the earlier accepted models, kept so the three can be
 compared and their archives reproduced - both still do so bit-identically.
 """
@@ -25,6 +28,7 @@ from ucl.data import fixtures as fx
 from ucl.data import league_results, names, odds
 from ucl.data.cutoff import as_of_for_matchday
 from ucl.models import scorelines
+from ucl.models.forecast import MODELS as forecast_models
 from ucl.models.forecast import fit as fit_forecast
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
@@ -101,9 +105,18 @@ def main(argv: list[str] | None = None) -> int:
                         help="information-set date (default: the day before the next matchday)")
     parser.add_argument("--refresh", action="store_true",
                         help="re-fetch the league-phase page before reading results")
-    parser.add_argument("--model", choices=("v2", "v1", "elo"), default="v2",
-                        help="v2: v1 plus the GAP shot ratings; v1: Elo plus the "
-                             "squad-value prior; elo: the frozen baseline")
+    parser.add_argument("--model", choices=forecast_models,
+                        default=config.PUBLISHED_MODEL,
+                        help="v3: v2 plus the per-competition European goal "
+                             "scale (candidate C); v2: v1 plus the GAP shot "
+                             "ratings; v1: Elo plus the squad-value prior; "
+                             "elo: the frozen baseline. The default is "
+                             "whichever model is published.")
+    parser.add_argument("--retroactive", action="store_true",
+                        help="mark the forecast as produced after the matchday "
+                             "was played, not before it. A backfilled snapshot "
+                             "is not a forecast anyone acted on, and the column "
+                             "this writes is how the app says so.")
     args = parser.parse_args(argv)
     cfg = season_config(args.season)
     if cfg.tournament_format != "league_phase":
@@ -147,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ratings = elo_as_of(as_of)
     teams = sorted(set(fixtures.home_id) | set(fixtures.away_id))
-    if args.model in ("v1", "v2"):
+    if args.model != "elo":
         from ucl.data import transfermarkt
 
         value_as_of = transfermarkt.as_of_for_season(cfg.label)
@@ -167,7 +180,7 @@ def main(argv: list[str] | None = None) -> int:
           f"{args.iterations} iterations, seed {args.seed}")
     print("model " + " ".join(f"{k}={v:.5f}" for k, v in model.as_dict().items())
           + f" [{args.model}]")
-    if args.model in ("v1", "v2"):
+    if args.model != "elo":
         shares = model.coverage(fixtures.home_id.to_numpy(),
                                 fixtures.away_id.to_numpy())
         for covariate in model.covariates:
@@ -280,6 +293,14 @@ def main(argv: list[str] | None = None) -> int:
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     suffix = f"_md{matchday}" if matchday > 0 else ""
     out = OUTPUTS_DIR / (args.out or f"forecast_{cfg.label}{suffix}.csv")
+    if args.retroactive:
+        # Written only when asked, so a forecast produced in the normal way
+        # carries exactly the columns it always did and the byte-identity gate
+        # on v1 and v2 is untouched.
+        frame["retroactive"] = True
+        frame["retroactive_model"] = args.model
+        print(f"\n  marked retroactive: this is matchday {matchday} re-forecast "
+              f"by {args.model} after the fact, not what was published at the time")
     frame.to_csv(out, index=False, float_format="%.6f")
     if market is not None:
         priced = frame.p_market.notna()

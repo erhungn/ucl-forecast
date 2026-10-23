@@ -16,9 +16,10 @@ import numpy as np
 import pandas as pd
 
 from ucl.backtest import probabilities_from_rates
-from ucl.config import OUTPUTS_DIR, season as season_config
+from ucl.config import OUTPUTS_DIR, PUBLISHED_MODEL, season as season_config
 from ucl.data import league_results, transfermarkt
 from ucl.evaluate import log_loss, rps
+from ucl.models.forecast import MODELS as forecast_models
 from ucl.models.forecast import fit as fit_forecast
 from ucl.models.elo import elo_as_of
 from ucl.models.poisson import fit_poisson
@@ -30,7 +31,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", default="2026-27")
     parser.add_argument("--matchday", type=int, default=1)
-    parser.add_argument("--model", choices=("v2", "v1", "elo"), default="v2",
+    parser.add_argument("--model", choices=forecast_models,
+                        default=PUBLISHED_MODEL,
                         help="v2: v1 plus the GAP shot ratings; v1: Elo plus the "
                              "squad-value prior; elo: the frozen baseline")
     args = parser.parse_args(argv)
@@ -43,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # The information set is the cutoff: this is the pre-tournament forecast.
     ratings = elo_as_of(cfg.cutoff_date)
-    if args.model in ("v1", "v2"):
+    if args.model != "elo":
         value_as_of = transfermarkt.as_of_for_season(cfg.label)
         model = fit_forecast(
             args.model, ratings.pre_match,

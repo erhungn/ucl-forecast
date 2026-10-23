@@ -17,7 +17,7 @@ from ucl.webapp import loaders, paths
 
 __all__ = [
     "TRACKED", "forecast_series", "movement", "biggest_movers",
-    "chain_disagreement",
+    "chain_disagreement", "history_series", "history_note",
 ]
 
 #: The columns worth following across matchdays.
@@ -26,16 +26,63 @@ TRACKED = ("p_top8", "p_play_off", "p_eliminated", "p_champion", "mean_position"
 
 def forecast_series(season: str = paths.SEASON, matchdays=None,
                     **kwargs) -> pd.DataFrame:
-    """Long frame of ``matchday, team, <TRACKED...>`` over every snapshot."""
+    """Long frame of ``matchday, team, <TRACKED...>`` over every snapshot.
+
+    Carries a ``retroactive`` flag per row, because a series that mixes
+    forecasts made before a round with snapshots re-forecast afterwards is two
+    different things drawn as one line. It is False for every published
+    snapshot unless a backfill said otherwise.
+    """
     if matchdays is None:
         matchdays = paths.available_matchdays(season, **kwargs) or [0]
+    backfilled = loaders.retroactive_matchdays(season, **kwargs)
     pieces = []
     for matchday in matchdays:
         frame = loaders.load_forecast(matchday, season, **kwargs)
         piece = frame[["team", *TRACKED]].copy()
         piece.insert(0, "matchday", matchday)
+        piece["retroactive"] = matchday in backfilled
+        piece["produced_by"] = backfilled.get(matchday, "")
         pieces.append(piece)
     return pd.concat(pieces, ignore_index=True)
+
+
+def history_series(model: str, season: str = paths.SEASON,
+                   **kwargs) -> pd.DataFrame:
+    """What a superseded model published, read back from its archive.
+
+    On a model switch the earlier model's snapshots are moved into
+    ``live/<season>/archive_<model>/`` rather than deleted. They are the record
+    of what was published at the time, so they are readable and labelled - but
+    never concatenated with the current model's series, because the step
+    between two models is not movement in anything.
+    """
+    matchdays = paths.history_matchdays(model, season, **kwargs)
+    pieces = []
+    for matchday in matchdays:
+        frame = loaders.load_history_forecast(model, matchday, season, **kwargs)
+        piece = frame[["team", *TRACKED]].copy()
+        piece.insert(0, "matchday", matchday)
+        piece.insert(0, "model", model)
+        pieces.append(piece)
+    if not pieces:
+        return pd.DataFrame(columns=["model", "matchday", "team", *TRACKED])
+    return pd.concat(pieces, ignore_index=True)
+
+
+def history_note(season: str = paths.SEASON, **kwargs) -> str:
+    """One line naming the superseded models that still have snapshots."""
+    models = paths.history_models(season, **kwargs)
+    if not models:
+        return ""
+    parts = []
+    for model in models:
+        days = paths.history_matchdays(model, season, **kwargs)
+        span = (f"matchday {days[0]}" if len(days) == 1
+                else f"matchdays {days[0]}-{days[-1]}")
+        parts.append(f"{model} ({span})")
+    return ("Published by an earlier model and kept as the record: "
+            + ", ".join(parts))
 
 
 def movement(season: str = paths.SEASON, matchday: int | None = None,

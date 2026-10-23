@@ -63,6 +63,32 @@ st_helpers.note(
     "matchday 1, both being fitted at the cutoff, which is the check that the "
     "saved tables are what they claim to be.")
 
+# --- who scored what ------------------------------------------------------
+# A published score is written once, by whichever model was published when the
+# round was played, and is never rewritten. After a model switch this series
+# therefore spans two models, and saying so is the difference between a record
+# and a muddle. Which model wrote which file is identified from the numbers.
+scorers = scoring.scoring_models(SEASON)
+named = sorted({model for model in scorers.values() if model})
+if len(named) > 1:
+    spans = {model: [str(md) for md, who in sorted(scorers.items()) if who == model]
+             for model in named}
+    st.warning(
+        "These scores were produced by more than one model, because the "
+        "published model changed during the season and a published score is "
+        "never rewritten: "
+        + "; ".join(f"**{model}** scored matchday(s) "
+                    + ", ".join(spans[model]) for model in named)
+        + ". The aggregate above therefore mixes them. Every model's score on "
+          "every played match, from one frozen information set, is in the "
+          "candidate table below - that is the comparison to use.",
+        icon=":material/call_split:")
+elif named:
+    st_helpers.note(
+        f"Scored by model <b>{named[0]}</b>, which was the published model when "
+        f"these rounds were played. A published score is written once and never "
+        f"rewritten, so this stays {named[0]}'s record even after a promotion.")
+
 # --- running chart ---------------------------------------------------------
 pieces = []
 for label, frame in (("frozen at cutoff", frozen), ("pre-matchday", pre)):

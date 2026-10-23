@@ -20,6 +20,7 @@ __all__ = [
     "load_information", "load_tracking", "load_status", "tail_log",
     "load_positions", "load_knockout_paths", "load_ratings",
     "load_remaining_fixtures", "load_club_inputs",
+    "load_history_forecast", "retroactive_matchdays",
 ]
 
 _HINT = "run scripts/weekly_update.py to publish it"
@@ -52,11 +53,43 @@ def load_next_matchday(matchday: int, season: str = paths.SEASON,
                      parse_dates=["date"])
 
 
-def load_evaluation(matchday: int, season: str = paths.SEASON,
-                    **kwargs) -> pd.DataFrame:
-    """One matchday scored against the forecast frozen at the cutoff."""
-    return _read_csv(paths.evaluation_path(matchday, season, **kwargs),
+def load_evaluation(matchday: int, season: str = paths.SEASON, *,
+                    model: str | None = None, **kwargs) -> pd.DataFrame:
+    """One matchday scored against the forecast frozen at the cutoff.
+
+    ``model=None`` is the published record - scored by whichever model was
+    published when the matchday was played. A named model is that model's score
+    for the same matches, written beside the record rather than over it.
+    """
+    return _read_csv(paths.evaluation_path(matchday, season, model=model, **kwargs),
                      parse_dates=["date"])
+
+
+def load_history_forecast(model: str, matchday: int,
+                          season: str = paths.SEASON, **kwargs) -> pd.DataFrame:
+    """A snapshot a superseded model published, kept as its record."""
+    return _read_csv(paths.history_forecast_path(model, matchday, season, **kwargs))
+
+
+def retroactive_matchdays(season: str = paths.SEASON, **kwargs) -> dict[int, str]:
+    """Published matchdays whose forecast was produced after the fact.
+
+    ``{matchday: model}``. A backfilled snapshot - a new model re-forecasting a
+    round that has already been played - is not something anyone could have
+    acted on, so it carries a ``retroactive`` column and every view that shows
+    a series says which points are of that kind. Snapshots without the column
+    are forecasts made before the round, which is the normal case.
+    """
+    out: dict[int, str] = {}
+    for matchday in paths.available_matchdays(season, **kwargs):
+        path = paths.forecast_path(matchday, season, **kwargs)
+        if not path.exists():
+            continue
+        head = pd.read_csv(path, nrows=1)
+        if "retroactive" in head.columns and bool(head.retroactive.iloc[0]):
+            out[matchday] = str(head.get("retroactive_model",
+                                         pd.Series(["?"])).iloc[0])
+    return out
 
 
 def load_information(season: str = paths.SEASON, **kwargs) -> pd.DataFrame:

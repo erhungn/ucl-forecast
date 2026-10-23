@@ -25,6 +25,24 @@ RANDOM_SEED = 20260907
 # Default number of Monte Carlo iterations.
 N_SIMULATIONS = 50_000
 
+# --- which model is published ---------------------------------------------
+#: The models that have been *published*, oldest first. The last one is what
+#: ``scripts/weekly_update.py`` publishes by default, what the app falls back
+#: on for matchday 0, and what ``ucl.tracking`` measures every other model
+#: against. Promoting a model is appending to this tuple and running the
+#: weekly update once; ``tests/test_promotion.py`` pins every other place that
+#: has to agree, so a half-done promotion fails the suite rather than
+#: publishing a forecast whose provenance nobody can read afterwards.
+#:
+#: This is deliberately NOT the list of models the code can build - see
+#: ``ucl.models.forecast.MODELS`` for that. A model has to be buildable and
+#: runnable (and rehearsable, with ``weekly_update.py --live-dir``) before it
+#: is published, so the two lists differ in exactly the window that matters.
+MODEL_HISTORY: tuple[str, ...] = ("v1", "v2")
+
+#: The published model. One name, read by everything.
+PUBLISHED_MODEL = MODEL_HISTORY[-1]
+
 # --- Elo ------------------------------------------------------------------
 # Tuned on the backtest seasons in milestone 5; these are the starting points.
 

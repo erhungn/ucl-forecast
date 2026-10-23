@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from ucl.webapp import cards, charts, movement, paths, st_helpers
+from ucl.webapp import cards, charts, loaders, movement, paths, st_helpers
 
 SEASON = paths.SEASON
 METRICS = {"P(champion)": "p_champion", "P(top 8)": "p_top8",
@@ -54,6 +54,18 @@ if chosen:
     st_helpers.note(
         f"{label} by matchday. Matchday 0 is the pre-tournament forecast; the "
         f"faint lines are the clubs not selected.")
+    backfilled = loaders.retroactive_matchdays(SEASON)
+    if backfilled:
+        st.warning(
+            "Not every point on this line is a forecast that was made before "
+            "its matchday: "
+            + "; ".join(f"matchday **{md}** was re-forecast by {model} after "
+                        f"the round was played"
+                        for md, model in sorted(backfilled.items()))
+            + ". A retroactive snapshot fills a gap left by a model switch. It "
+              "is not something anyone could have acted on, and the movement "
+              "into and out of it is not news arriving.",
+            icon=":material/history:")
 else:
     st.info("Pick at least one club.", icon=":material/touch_app:")
 
@@ -90,3 +102,33 @@ if len(moved):
         st_helpers.note(
             "Deltas recomputed from the published snapshots; they agree with "
             "the ones the simulator wrote.")
+
+
+# --- what earlier models published ----------------------------------------
+# A model switch moves the previous model's snapshots into
+# live/<season>/archive_<model>/ rather than deleting them. They are read back
+# here, as that model's own series, and never joined to the current one: the
+# step from one model to another is not movement in any club's chances.
+superseded = paths.history_models(SEASON)
+if superseded:
+    st_helpers.section("Published by earlier models")
+    st_helpers.note(movement.history_note(SEASON))
+    for model in superseded:
+        history = movement.history_series(model, SEASON)
+        if not len(history):
+            continue
+        days = sorted(history.matchday.unique())
+        st.caption(
+            f"**{model}** - matchday(s) {', '.join(str(d) for d in days)}, as "
+            f"published at the time. Kept as the record of what this model "
+            f"said; not comparable point-by-point with the lines above, which "
+            f"come from a different model.")
+        shown = [club for club in chosen if club in set(history.team)]
+        if shown and len(days) > 1:
+            st.altair_chart(charts.trend(history, column, shown), width="stretch")
+        else:
+            latest_history = history[history.matchday == max(days)]
+            st.dataframe(
+                latest_history[["matchday", "team", column]]
+                .sort_values(column, ascending=False).head(12),
+                hide_index=True, width="stretch")

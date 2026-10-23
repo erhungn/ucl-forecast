@@ -298,8 +298,14 @@ def test_the_tracking_summary_pairs_each_model_against_the_published_one():
     # The same match-level noise for every model, which is the situation the
     # pairing exists to exploit.
     base = 0.7 + rng.normal(0, 0.3, 40)
+    # The reference arm is whichever model is published, so this builds its
+    # data from tracking.REFERENCE rather than naming one. Hardcoding "v2" here
+    # would make this test fail on the promotion it is meant to survive, and
+    # the pairing it checks is a property of the reference, not of v2.
+    reference = tracking.REFERENCE
+    other = next(name for name in tracking.MODELS if name != reference)
     rows = []
-    for model, shift in (("v2", 0.0), ("v1", 0.01), ("uniform", 0.4)):
+    for model, shift in ((reference, 0.0), (other, 0.01), ("uniform", 0.4)):
         for index in range(40):
             rows.append({"matchday": 1 + index // 18, "home": f"H{index}",
                          "away": f"A{index}", "model": model,
@@ -307,9 +313,8 @@ def test_the_tracking_summary_pairs_each_model_against_the_published_one():
                          "p_actual": 0.5})
     frame = pd.DataFrame(rows)
     board = tracking.summary(frame)
-    assert set(board.model) == {"v2", "v1", "uniform"}
-    assert tracking.REFERENCE == "v2"
-    paired = board[board.model == "v1"].iloc[0]
+    assert set(board.model) == {reference, other, "uniform"}
+    paired = board[board.model == other].iloc[0]
     assert paired.vs_reference == pytest.approx(0.01, abs=1e-9)
     # Identical noise in both series, so the paired error is ~0 while each
     # model's own spread is 0.3.

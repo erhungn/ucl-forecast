@@ -15,8 +15,12 @@ set**: the 2026-09-07 cutoff, the day before matchday 1. No model sees a result
 it is then scored on, and none sees more than the others, so the comparison is
 between the models and not between their information.
 
-Nothing here promotes anything. The published forecast stays model v1 until
-that is a separate, declared decision.
+Nothing here promotes anything, and nothing here is overwritten. Every model
+in :data:`MODELS` is scored on every played match on every run, so an arm added
+later - v3, when candidate C was accepted - is backfilled over the whole season
+from the same frozen information set, and the arms already there keep their
+numbers. The published model is :data:`ucl.config.PUBLISHED_MODEL` and promotion
+is a separate, declared decision.
 """
 
 from __future__ import annotations
@@ -24,32 +28,56 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from ucl.config import SEASONS
+from ucl.config import PUBLISHED_MODEL, SEASONS
 from ucl.evaluate import log_loss, rps
 
-__all__ = ["MODELS", "REFERENCE", "UNIFORM", "probabilities", "track",
+__all__ = ["MODELS", "REFERENCE", "UNIFORM", "LEVEL", "probabilities", "track",
            "running", "summary"]
 
 #: The models being followed, and what each adds to the one before. The order
-#: is the order they were accepted or rejected in.
-MODELS: dict[str, str] = {
-    "v2": "Elo + association offsets + squad value + GAP shot ratings (published)",
-    "v1": "Elo + association offsets + squad value (the previous published model)",
+#: is the order they were accepted or rejected in; a model stays here after it
+#: stops being published, because its scores on this season are a record and
+#: dropping the arm would erase it.
+_DESCRIPTIONS: dict[str, str] = {
+    "v3": "v2 + the per-competition European goal scale and home advantage "
+          "(candidate C)",
+    "v2": "Elo + association offsets + squad value + GAP shot ratings",
+    "v1": "Elo + association offsets + squad value",
     "v2+B": "v2 with minutes-weighted squad value instead of the total (rejected)",
 }
+
+#: ``_DESCRIPTIONS`` with the published model marked, so the log and the app say
+#: which arm is the forecast rather than leaving it to be inferred from a name.
+MODELS: dict[str, str] = {
+    name: f"{text} (published)" if name == PUBLISHED_MODEL else text
+    for name, text in _DESCRIPTIONS.items()
+}
+
 #: The model every other is compared against: whatever is published.
-REFERENCE = "v2"
+REFERENCE = PUBLISHED_MODEL
 UNIFORM = "uniform"
+
+#: Every match tracked here is a UEFA Champions League league-phase match, so a
+#: model carrying per-competition intercepts is evaluated at that level. Named
+#: once: a level that defaulted to "domestic" would score this competition
+#: under a 2.8-goal intercept instead of a 3.1-goal one and nothing would say so.
+LEVEL = "ucl_main"
 
 
 def _fitted(season_label: str, model: str):
     """The fitted model and the pieces needed to evaluate it, at the cutoff."""
-    from ucl.backtest import GAP_COLUMNS, _fitted_gap, _fitted_squad_value
+    from ucl.backtest import (
+        GAP_COLUMNS, _fitted_euro_scale, _fitted_gap, _fitted_squad_value,
+    )
 
     cutoff = SEASONS[season_label].cutoff_date
     if model == "v1":
         ratings, values, fitted = _fitted_squad_value(cutoff, season_label)
         return ratings, fitted, values, None
+    if model == "v3":
+        ratings, values, residuals, _, fitted = _fitted_euro_scale(
+            cutoff, season_label)
+        return ratings, fitted, values, residuals
     weighting = "minutes" if model == "v2+B" else "total"
     ratings, values, residuals, _, fitted = _fitted_gap(
         cutoff, season_label, weighting)
@@ -66,6 +94,7 @@ def probabilities(season_label: str, home, away, model: str) -> np.ndarray:
     from ucl.backtest import GAP_COLUMNS, probabilities_from_rates
     from ucl.data import transfermarkt
     from ucl.models import gap as gap_model
+    from ucl.models.covariates import LEVELS as COMPETITION_LEVELS
 
     if model not in MODELS:
         raise ValueError(f"unknown model {model!r}; have {sorted(MODELS)}")
@@ -87,7 +116,15 @@ def probabilities(season_label: str, home, away, model: str) -> np.ndarray:
         for measure, column in zip(gap_model.MEASURES, GAP_COLUMNS):
             symmetric[column] = gap_model.match_difference(
                 residuals[measure], home[known], away[known])
-    rate_home, rate_away = fitted.rates(elo_home, elo_away, symmetric=symmetric)
+    # ``fitted`` is the inner CovariateModel, so the competition level has to
+    # be passed here rather than coming from a ForecastModel's own level. A
+    # model that carries the levels and is called without them raises, which is
+    # the whole point of that guard: this is the one evaluation path no
+    # byte-identity gate covers.
+    levels = ({name: float(name == LEVEL) for name in COMPETITION_LEVELS}
+              if (fitted.scale or fitted.home_extra) else None)
+    rate_home, rate_away = fitted.rates(
+        elo_home, elo_away, symmetric=symmetric, levels=levels)
     out[known] = probabilities_from_rates(rate_home, rate_away)
     return out
 
@@ -153,7 +190,7 @@ def running(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def summary(frame: pd.DataFrame) -> pd.DataFrame:
-    """One row per model over everything played, with the gap to v1.
+    """One row per model over everything played, with the gap to the published one.
 
     The standard error is on the *paired* difference, not on each model's own
     log-loss: the models see the same matches, so what matters is how much

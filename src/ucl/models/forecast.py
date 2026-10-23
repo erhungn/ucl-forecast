@@ -24,8 +24,14 @@ from ucl.models.covariates import (
 __all__ = ["MODELS", "CANDIDATE_LEVELS", "GAP_COLUMNS", "gap_covariates",
            "fit_v1", "fit_v2", "fit_euro_scale", "fit"]
 
-#: The published models, newest last.
-MODELS = ("elo", "v1", "v2")
+#: Every model this code can build, newest last. Not the same list as
+#: :data:`ucl.config.MODEL_HISTORY`, which is what has been *published*: a
+#: model is buildable here first, so that it can be fitted, simulated and
+#: rehearsed before anything starts publishing it. "v3" is v2 plus candidate
+#: C's per-competition European terms, and is the same fit the candidate was
+#: accepted on - "v2+C" is accepted as an alias so the archived candidate's
+#: name keeps working and its decision files stay readable.
+MODELS = ("elo", "v1", "v2", "v3")
 
 #: Candidate C's competition levels. Domestic is the baseline and gets no
 #: intercept of its own, so naming it here would make the three indicators
@@ -96,8 +102,8 @@ def fit_v2(pre_match: pd.DataFrame, values: dict[str, float],
 
 def fit_euro_scale(pre_match: pd.DataFrame, values: dict[str, float],
                    elo_ratings: dict[str, float], *, as_of: date,
-                   value_as_of=None, measures: tuple[str, ...] | None = None
-                   ) -> ForecastModel:
+                   value_as_of=None, measures: tuple[str, ...] | None = None,
+                   label: str = "v2+C") -> ForecastModel:
     """Candidate C: model v2 plus a per-competition goal scale and home advantage.
 
     Identical to :func:`fit_v2` in every covariate, so the comparison isolates
@@ -108,10 +114,15 @@ def fit_euro_scale(pre_match: pd.DataFrame, values: dict[str, float],
     The motivation is in `docs/METHODOLOGY.md` section 3: 9.8% of the fitting
     sample is European, so `a` is set by domestic football at 2.78 goals a
     match while the UCL main phase scores 3.13.
+
+    ``label`` names the fit: "v2+C" is the candidate, "v3" the published model.
+    Nothing else differs - the same covariates, the same levels, the same
+    starting point - so a v3 forecast and candidate C's accepted fit are the
+    same arithmetic at the same cutoff, and a test asserts it.
     """
     residuals, parameters = gap_residuals(as_of, elo_ratings, measures)
     covariates = (value_covariate(values), *gap_covariates(residuals))
-    return fit_model(pre_match, covariates, label="v2+C", as_of=value_as_of,
+    return fit_model(pre_match, covariates, label=label, as_of=value_as_of,
                      levels=CANDIDATE_LEVELS, level="ucl_main",
                      details={"values": values, "residuals": residuals,
                               "gap_params": parameters, "gap_as_of": as_of})
@@ -126,7 +137,10 @@ def fit(label: str, pre_match: pd.DataFrame, values: dict[str, float],
     if label == "v2":
         return fit_v2(pre_match, values, elo_ratings, as_of=as_of,
                       value_as_of=value_as_of)
-    if label == "v2+C":
+    if label in ("v3", "v2+C"):
+        # One fit, two names: "v3" is the published name, "v2+C" the name the
+        # candidate was accepted under. The label is carried through so an
+        # artefact says which of the two produced it.
         return fit_euro_scale(pre_match, values, elo_ratings, as_of=as_of,
-                              value_as_of=value_as_of)
+                              value_as_of=value_as_of, label=label)
     raise ValueError(f"unknown model {label!r}; have {MODELS}")

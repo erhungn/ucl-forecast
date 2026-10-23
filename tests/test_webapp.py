@@ -106,8 +106,17 @@ def test_forecast_series_is_long_and_its_bands_sum_to_one(live):
 def test_frozen_scores_reproduce_the_archived_matchday_one(live):
     """The numbers in results/model_v2/README.md, recomputed by the app.
 
-    v1 scored 0.6913 / 0.1367 on the same matches; the published model is now
-    v2, so the archive the app falls back on is v2's.
+    v1 scored 0.6913 / 0.1367 on the same matches; matchday 1 was published and
+    scored by v2, so these are v2's.
+
+    **These numbers do not move when a later model is promoted**, and that is
+    the point rather than a limitation: a published score is written once, by
+    whichever model was published when the round was played, and is never
+    rewritten. A promotion adds the new model's score for the same matches
+    beside it (``matchday_1_evaluation_<model>.csv``, and every arm in
+    ``model_tracking.csv``); it does not reach back into the record. So this
+    assertion is pinned to the artefact for good, which is what
+    ``CLAUDE.md`` asks of a test that pins a published number.
     """
     frozen = scoring.frozen_series(SEASON, live_dir=live)
     summary = scoring.summarise(frozen)
@@ -128,10 +137,22 @@ def test_cumulative_running_scores_match_the_single_matchday(live):
 
 
 def test_the_pre_matchday_series_equals_the_frozen_one_at_matchday_one(live):
-    """Both are fitted at the cutoff, so matchday 1 is the equivalence check."""
-    shutil.copyfile(
-        paths.ARCHIVE_DIR.parent.parent / "outputs" / f"next_matchday_1_{SEASON}.csv",
-        live / SEASON / "next_matchday_1.csv")
+    """Both are fitted at the cutoff, so matchday 1 is the equivalence check.
+
+    The pre-match table is cut from the archive's ``remaining_fixtures``, not
+    read out of ``outputs/``. It used to be read from there, and that made this
+    test depend on which model happened to have run the simulator last: a v1 or
+    v3 run at matchday 0 overwrites that scratch file, and the test then
+    compared one model's table with another model's score and failed for a
+    reason that had nothing to do with the app. Restricted to matchday 1 the
+    archived file is that table - the archive's own README says so, and these
+    assertions are what check it.
+    """
+    remaining = pd.read_csv(ARCHIVE / f"remaining_fixtures_{SEASON}.csv")
+    first = remaining[remaining.matchday == 1]
+    assert len(first) == 18
+    first.to_csv(live / SEASON / "next_matchday_1.csv", index=False,
+                 float_format="%.6f")
     pre = scoring.pre_matchday_series(SEASON, live_dir=live)
     frozen = scoring.frozen_series(SEASON, live_dir=live)
     merged = pre.merge(frozen, on=["home", "away"], suffixes=("_pre", "_frozen"))

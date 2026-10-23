@@ -191,14 +191,22 @@ def test_the_matchday_zero_archive_points_at_the_current_model():
     archive computes a one-matchday change across two different models - which
     is not a change in anything. This caught exactly that on the v1-to-v2
     switch.
+
+    ``ARCHIVE_DIR`` is now derived from ``config.PUBLISHED_MODEL``, so asserting
+    its name against a literal would assert a constant against itself. What is
+    still worth checking is the step the derivation cannot make: that the
+    archive on disk holds the model the declaration claims, and that the
+    earlier ones are still there to compare with. ``tests/test_promotion.py``
+    pins the rest of the chain.
     """
     import json
 
+    from ucl import config
     from ucl.webapp import paths
 
-    assert paths.ARCHIVE_DIR.name == "model_v2"
-    published = json.load(open(paths.ARCHIVE_DIR / "model_2026-27.json"))
-    assert published["model"] == "v2"
+    published = json.load(
+        open(paths.ARCHIVE_DIR / f"model_{paths.SEASON}.json"))
+    assert published["model"] == config.PUBLISHED_MODEL
     for older in paths.PREVIOUS_ARCHIVES:
         assert older.exists() and older != paths.ARCHIVE_DIR
 

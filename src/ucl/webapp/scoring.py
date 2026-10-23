@@ -10,6 +10,15 @@ immediately before those matches.
 
 They coincide for matchday 1 - both are fitted at the cutoff - which is the
 equivalence check that the saved tables are what they claim to be.
+
+**Which model scored a matchday is read off the numbers, not off a label.**
+A published score is written once, by whichever model was published when that
+round was played, and is never rewritten; after a model switch the series
+therefore spans two models. :func:`scoring_models` identifies each matchday's
+scorer by finding the arm in ``model_tracking.csv`` whose probabilities
+reproduce the published file exactly. That cannot drift, because there is
+nothing to keep in sync: if a file says 0.492497 and v2 says 0.492497 and
+nothing else does, v2 wrote it.
 """
 
 from __future__ import annotations
@@ -22,7 +31,7 @@ from ucl.webapp import loaders, paths
 
 __all__ = [
     "OUTCOMES", "outcome_codes", "frozen_series", "pre_matchday_series",
-    "cumulative", "summarise",
+    "cumulative", "summarise", "scoring_models", "mixed_models",
 ]
 
 #: 1X2 is ordered home > draw > away, which is what the RPS assumes.
@@ -49,6 +58,53 @@ def frozen_series(season: str = paths.SEASON, matchdays=None,
     if not pieces:
         return pd.DataFrame(columns=["matchday", "home", "away", "series"])
     return pd.concat(pieces, ignore_index=True)
+
+
+#: Two probabilities count as the same number when they agree this closely.
+#: The published files carry six decimals, so anything under half of the last
+#: place is the same file rather than a coincidence.
+_SAME = 5e-7
+
+
+def scoring_models(season: str = paths.SEASON, **kwargs) -> dict[int, str | None]:
+    """Which model produced each published score, read off the numbers.
+
+    ``None`` for a matchday no tracked arm reproduces - which happens when the
+    model that scored it is no longer followed in ``model_tracking.csv``, and is
+    reported as unknown rather than guessed at.
+    """
+    try:
+        tracked = loaders.load_tracking(season, **kwargs)
+    except FileNotFoundError:
+        return {matchday: None for matchday in paths.scored_matchdays(season, **kwargs)}
+
+    out: dict[int, str | None] = {}
+    for matchday in paths.scored_matchdays(season, **kwargs):
+        try:
+            published = loaders.load_evaluation(matchday, season, **kwargs)
+        except FileNotFoundError:            # pragma: no cover - listed, so present
+            continue
+        out[matchday] = None
+        here = tracked[tracked.matchday == matchday]
+        for model, group in here.groupby("model"):
+            merged = published.merge(group, on=["home", "away"],
+                                     suffixes=("_published", "_tracked"))
+            if len(merged) != len(published):
+                continue
+            gap = max(
+                (merged[f"p_{side}_published"] - merged[f"p_{side}_tracked"])
+                .abs().max() for side in ("home", "draw", "away"))
+            if gap < _SAME:
+                out[matchday] = str(model)
+                break
+    return out
+
+
+def mixed_models(season: str = paths.SEASON, **kwargs) -> bool:
+    """Whether the published scores span more than one model."""
+    named = {model for model in scoring_models(season, **kwargs).values()
+             if model is not None}
+    return len(named) > 1
 
 
 def pre_matchday_series(season: str = paths.SEASON, matchdays=None,

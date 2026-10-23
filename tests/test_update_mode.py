@@ -89,6 +89,31 @@ def test_the_update_run_fixes_the_played_matches_and_simulates_the_rest():
     assert frame.p_champion.sum() == pytest.approx(1.0, abs=1e-9)
 
 
+def test_a_forecast_carries_no_retroactive_column_unless_asked():
+    """The label travels in the file, and only when it is true.
+
+    A snapshot re-forecast after its matchday was played is not a forecast
+    anyone could have acted on. It is published to fill the gap a model switch
+    leaves, so it has to be readable as what it is - and an ordinary run must
+    not carry the column at all, or the byte-identity gate on the published
+    models would be measuring this change instead of the model.
+    """
+    plain = _run("--season", "2026-27", "-n", "5", "--through-matchday", "1",
+                 "--out", "t_plain_md1.csv")
+    marked = _run("--season", "2026-27", "-n", "5", "--through-matchday", "1",
+                  "--retroactive", "--out", "t_retro_md1.csv")
+    assert plain.returncode == 0 and marked.returncode == 0, plain.stderr + marked.stderr
+    before = pd.read_csv("outputs/t_plain_md1.csv")
+    after = pd.read_csv("outputs/t_retro_md1.csv")
+    assert "retroactive" not in before.columns
+    assert after.retroactive.all()
+    assert set(after.retroactive_model) == {"v2"}
+    assert "marked retroactive" in marked.stdout
+    # Nothing else moves: the same seed, the same iterations, the same numbers.
+    pd.testing.assert_frame_equal(
+        before, after.drop(columns=["retroactive", "retroactive_model"]))
+
+
 def test_the_information_set_is_printed():
     # --out matters here: without it this run would overwrite the real
     # forecast_2026-27_md1.csv with five iterations, and simulate.py reads the

@@ -1,0 +1,147 @@
+
+=== information set (as of 2026-09-07) ===
+                        source                 status  files  cached_to    used_to             fetched
+        domestic/football_data                present     55 2026-05-24 2026-05-24 2026-10-02T11:01:09
+domestic/football_data_history                present     55 2021-05-23 2021-05-23 2026-10-02T14:46:36
+domestic/football_data_current                present     18 2026-10-19 2026-09-06 2026-10-20T13:08:19
+         european/openfootball                present     25 2026-05-30 2026-05-30                None
+            european/wikipedia                present     23 2026-10-14 2026-08-27                None
+     squad_value/transfermarkt frozen (source paused)      4 2026-06-28 2026-07-06                None
+2026-27: 144 fixtures to simulate, 36 teams, 50000 iterations, seed 20260907
+model a=0.16947 h=0.23396 b=0.69698 b_d_value=0.03987 [v1]
+  d_value          32/36 clubs, both clubs in 79.2% of the 144 fixtures; missing LASK, Sabah, Slovan Bratislava, Viking
+
+=== verification ===
+  [PASS] P(champion) sums to 1
+  [PASS] P(top8)+P(play-off)+P(eliminated) = 1 per club
+  [PASS] 8 clubs in the top-8 band per iteration
+  [PASS] 16 clubs in the play-off band per iteration
+  [PASS] 12 clubs eliminated per iteration
+  [PASS] 16 clubs reach the round of 16
+  [PASS] 8 reach the quarter-finals
+  [PASS] 4 reach the semi-finals
+  [PASS] 2 reach the final
+  [PASS] 36 clubs fill 36 positions in every iteration
+  [PASS] each club's knockout pairings sum to its stage count
+  [PASS] stage probabilities are monotone
+  unresolved league-phase ties: 0 (0.0000 per iteration)
+
+=== model vs market (27 of 36 priced, overround 1.3078, proportional de-vig) ===
+  the 9 unpriced clubs hold 0.010 of model probability; proportional de-vig gives that share to the priced clubs, so every market number reads about 1.0% high
+  largest disagreements:
+    Arsenal                model 0.229  market 0.109  model HIGH by 0.120
+    Bayern Munich          model 0.180  market 0.109  model HIGH by 0.071
+    Paris Saint-Germain    model 0.066  market 0.127  model LOW  by 0.061
+    Liverpool              model 0.028  market 0.076  model LOW  by 0.048
+    Real Madrid            model 0.065  market 0.096  model LOW  by 0.031
+    Manchester United      model 0.027  market 0.045  model LOW  by 0.018
+    Inter                  model 0.047  market 0.029  model HIGH by 0.018
+    Napoli                 model 0.005  market 0.022  model LOW  by 0.018
+    Atletico Madrid        model 0.009  market 0.026  model LOW  by 0.018
+    RB Leipzig             model 0.003  market 0.015  model LOW  by 0.012
+
+=== knockout ties ===
+  play_off        8.00 ties per iteration: aggregate 85.3%, extra time 7.6%, penalties 7.1%
+  round_of_16     8.00 ties per iteration: aggregate 85.7%, extra time 7.4%, penalties 6.8%
+  quarter_finals  4.00 ties per iteration: aggregate 85.2%, extra time 7.6%, penalties 7.1%
+  semi_finals     2.00 ties per iteration: aggregate 84.8%, extra time 7.9%, penalties 7.3%
+  final           1.00 ties per iteration: 90 minutes 73.3%, penalties 13.8%, extra time 12.9%
+
+=== matchday 1: 18 fixtures ===
+  home                   away                     home   draw   away           xG   o2.5   likely      P         3+
+  AEK Athens             LASK                    0.492  0.248  0.260  1.61-1.10   0.509 1-1       0.118  0.108
+  Borussia Dortmund      Villarreal              0.606  0.218  0.176  1.92-0.92   0.541 1-0       0.112  0.175
+  Club Brugge            Aston Villa             0.340  0.259  0.401  1.27-1.40   0.498 1-1       0.123  0.070
+  Lille                  Real Betis              0.402  0.259  0.338  1.40-1.26   0.498 1-1       0.123  0.070
+  Porto                  Manchester City         0.296  0.255  0.449  1.18-1.51   0.502 1-1       0.121  0.088
+  Real Madrid            Inter                   0.468  0.252  0.280  1.55-1.14   0.505 1-1       0.120  0.096
+  Barcelona              Feyenoord               0.802  0.131  0.067  2.69-0.66   0.651 2-0       0.127  0.375
+  Liverpool              Atletico Madrid         0.514  0.243  0.243  1.66-1.07   0.514 1-1       0.116  0.119
+  Napoli                 Arsenal                 0.168  0.213  0.618  0.91-1.95   0.545 0-1       0.112  0.184
+  Paris Saint-Germain    Slovan Bratislava       0.870  0.091  0.038  3.15-0.56   0.716 3-0       0.127  0.491
+  Sporting CP            Galatasaray             0.608  0.217  0.175  1.92-0.92   0.541 1-0       0.112  0.176
+  VfB Stuttgart          Viking                  0.524  0.241  0.235  1.69-1.05   0.516 1-1       0.115  0.124
+  Bayern Munich          Bodo/Glimt              0.751  0.158  0.092  2.44-0.73   0.613 2-0       0.125  0.307
+  Como                   RB Leipzig              0.498  0.247  0.255  1.63-1.09   0.510 1-1       0.117  0.111
+  Fenerbahce             Roma                    0.284  0.253  0.463  1.15-1.54   0.504 1-1       0.120  0.094
+  Manchester United      Sabah                   0.770  0.148  0.082  2.53-0.70   0.626 2-0       0.126  0.331
+  PSV Eindhoven          Shakhtar Donetsk        0.636  0.207  0.157  2.01-0.88   0.552 2-0       0.112  0.197
+  Slavia Praha           Lens                    0.308  0.257  0.435  1.20-1.48   0.501 1-1       0.122  0.083
+  (the modal scoreline carries only ~8-12% probability; it is not a prediction. xG are the fitted Poisson rates; o2.5 is P(3 or more goals); 3+ is P(the favourite wins by three or more).)
+
+setup 4.0s, simulation 274.6s (5.49 ms/iteration), written to forecast_gate_v1.csv, positions_2026-27.csv, ratings_2026-27.csv, knockout_paths_2026-27.csv, next_matchday_1_2026-27.csv, remaining_fixtures_2026-27.csv
+
+=== information set (as of 2026-09-07) ===
+                        source                 status  files  cached_to    used_to             fetched
+        domestic/football_data                present     55 2026-05-24 2026-05-24 2026-10-02T11:01:09
+domestic/football_data_history                present     55 2021-05-23 2021-05-23 2026-10-02T14:46:36
+domestic/football_data_current                present     18 2026-10-19 2026-09-06 2026-10-20T13:08:19
+         european/openfootball                present     25 2026-05-30 2026-05-30                None
+            european/wikipedia                present     23 2026-10-14 2026-08-27                None
+     squad_value/transfermarkt frozen (source paused)      4 2026-06-28 2026-07-06                None
+2026-27: 144 fixtures to simulate, 36 teams, 50000 iterations, seed 20260907
+model a=0.16951 h=0.23373 b=0.69818 b_d_value=0.04004 b_d_gap_sot=0.02331 b_d_gap_shots_off=-0.00342 b_d_gap_corners=-0.00319 [v2]
+  d_value          32/36 clubs, both clubs in 79.2% of the 144 fixtures; missing LASK, Sabah, Slovan Bratislava, Viking
+  d_gap_sot        29/36 clubs, both clubs in 64.6% of the 144 fixtures; missing Bodo/Glimt, LASK, Sabah, Shakhtar Donetsk, Slavia Praha, Slovan Bratislava, Viking
+  d_gap_shots_off  29/36 clubs, both clubs in 64.6% of the 144 fixtures; missing Bodo/Glimt, LASK, Sabah, Shakhtar Donetsk, Slavia Praha, Slovan Bratislava, Viking
+  d_gap_corners    29/36 clubs, both clubs in 64.6% of the 144 fixtures; missing Bodo/Glimt, LASK, Sabah, Shakhtar Donetsk, Slavia Praha, Slovan Bratislava, Viking
+
+=== verification ===
+  [PASS] P(champion) sums to 1
+  [PASS] P(top8)+P(play-off)+P(eliminated) = 1 per club
+  [PASS] 8 clubs in the top-8 band per iteration
+  [PASS] 16 clubs in the play-off band per iteration
+  [PASS] 12 clubs eliminated per iteration
+  [PASS] 16 clubs reach the round of 16
+  [PASS] 8 reach the quarter-finals
+  [PASS] 4 reach the semi-finals
+  [PASS] 2 reach the final
+  [PASS] 36 clubs fill 36 positions in every iteration
+  [PASS] each club's knockout pairings sum to its stage count
+  [PASS] stage probabilities are monotone
+  unresolved league-phase ties: 0 (0.0000 per iteration)
+
+=== model vs market (27 of 36 priced, overround 1.3078, proportional de-vig) ===
+  the 9 unpriced clubs hold 0.009 of model probability; proportional de-vig gives that share to the priced clubs, so every market number reads about 0.9% high
+  largest disagreements:
+    Arsenal                model 0.220  market 0.109  model HIGH by 0.110
+    Bayern Munich          model 0.200  market 0.109  model HIGH by 0.091
+    Paris Saint-Germain    model 0.061  market 0.127  model LOW  by 0.066
+    Liverpool              model 0.028  market 0.076  model LOW  by 0.049
+    Real Madrid            model 0.073  market 0.096  model LOW  by 0.023
+    Napoli                 model 0.005  market 0.022  model LOW  by 0.017
+    Atletico Madrid        model 0.009  market 0.026  model LOW  by 0.017
+    Inter                  model 0.046  market 0.029  model HIGH by 0.017
+    Manchester United      model 0.030  market 0.045  model LOW  by 0.014
+    Sporting CP            model 0.021  market 0.008  model HIGH by 0.014
+
+=== knockout ties ===
+  play_off        8.00 ties per iteration: aggregate 85.3%, extra time 7.6%, penalties 7.1%
+  round_of_16     8.00 ties per iteration: aggregate 85.6%, extra time 7.5%, penalties 6.9%
+  quarter_finals  4.00 ties per iteration: aggregate 85.1%, extra time 7.8%, penalties 7.1%
+  semi_finals     2.00 ties per iteration: aggregate 84.8%, extra time 7.9%, penalties 7.3%
+  final           1.00 ties per iteration: 90 minutes 73.0%, penalties 14.0%, extra time 13.0%
+
+=== matchday 1: 18 fixtures ===
+  home                   away                     home   draw   away           xG   o2.5   likely      P         3+
+  AEK Athens             LASK                    0.492  0.248  0.260  1.61-1.10   0.509 1-1       0.118  0.108
+  Borussia Dortmund      Villarreal              0.583  0.225  0.192  1.85-0.96   0.533 1-0       0.112  0.159
+  Club Brugge            Aston Villa             0.354  0.260  0.386  1.30-1.37   0.498 1-1       0.124  0.064
+  Lille                  Real Betis              0.414  0.259  0.328  1.43-1.24   0.499 1-1       0.123  0.074
+  Porto                  Manchester City         0.289  0.254  0.457  1.16-1.53   0.503 1-1       0.121  0.092
+  Real Madrid            Inter                   0.477  0.251  0.273  1.57-1.13   0.506 1-1       0.119  0.100
+  Barcelona              Feyenoord               0.800  0.132  0.068  2.68-0.66   0.649 2-0       0.127  0.371
+  Liverpool              Atletico Madrid         0.519  0.242  0.239  1.68-1.06   0.515 1-1       0.115  0.121
+  Napoli                 Arsenal                 0.173  0.216  0.611  0.92-1.93   0.542 0-1       0.112  0.178
+  Paris Saint-Germain    Slovan Bratislava       0.871  0.091  0.038  3.15-0.56   0.717 3-0       0.127  0.492
+  Sporting CP            Galatasaray             0.618  0.213  0.168  1.95-0.91   0.545 1-0       0.112  0.184
+  VfB Stuttgart          Viking                  0.524  0.241  0.235  1.69-1.05   0.516 1-1       0.115  0.124
+  Bayern Munich          Bodo/Glimt              0.751  0.157  0.091  2.44-0.73   0.613 2-0       0.125  0.308
+  Como                   RB Leipzig              0.499  0.247  0.254  1.63-1.09   0.511 1-1       0.117  0.111
+  Fenerbahce             Roma                    0.287  0.254  0.459  1.16-1.53   0.504 1-1       0.120  0.093
+  Manchester United      Sabah                   0.771  0.148  0.082  2.53-0.70   0.627 2-0       0.126  0.332
+  PSV Eindhoven          Shakhtar Donetsk        0.636  0.207  0.157  2.01-0.88   0.552 2-0       0.112  0.197
+  Slavia Praha           Lens                    0.308  0.257  0.435  1.20-1.48   0.501 1-1       0.122  0.083
+  (the modal scoreline carries only ~8-12% probability; it is not a prediction. xG are the fitted Poisson rates; o2.5 is P(3 or more goals); 3+ is P(the favourite wins by three or more).)
+
+setup 45.2s, simulation 373.6s (7.47 ms/iteration), written to forecast_gate_v2.csv, positions_2026-27.csv, ratings_2026-27.csv, knockout_paths_2026-27.csv, next_matchday_1_2026-27.csv, remaining_fixtures_2026-27.csv
